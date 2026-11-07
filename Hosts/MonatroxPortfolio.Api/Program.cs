@@ -19,4 +19,7 @@ app.MapProfileEndpoints();
 app.MapProjectEndpoints();
 app.Run();
 
-public partial class Program;
+namespace MonatroxPortfolio.Api
+{
+    public sealed class ApiAssemblyMarker;
+}

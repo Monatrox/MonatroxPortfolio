@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
+  <PropertyGroup>
+    <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
+    <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
+    <RuntimeFrameworkVersion>10.0.14</RuntimeFrameworkVersion>
+    <JsonSerializerIsReflectionEnabledByDefault>true</JsonSerializerIsReflectionEnabledByDefault>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../Modules/Profile/MonatroxPortfolio.Profile.Public/MonatroxPortfolio.Profile.Public.csproj" />
+    <ProjectReference Include="../../Modules/Projects/MonatroxPortfolio.Projects.Public/MonatroxPortfolio.Projects.Public.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+    <PackageReference Include="MudBlazor" />
+    <!-- Prerendered state and HTTP JSON use public DTO reflection metadata. -->
+    <TrimmerRootAssembly Include="MonatroxPortfolio.Profile.Public" />
+    <TrimmerRootAssembly Include="MonatroxPortfolio.Projects.Public" />
+  </ItemGroup>
+</Project>

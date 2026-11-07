@@ -2,7 +2,8 @@
   <Folder Name="/Hosts/">
     <Project Path="Hosts/MonatroxPortfolio.Api/MonatroxPortfolio.Api.csproj" />
     <Project Path="Hosts/MonatroxPortfolio.AppHost/MonatroxPortfolio.AppHost.csproj" />
-    <Project Path="Hosts/MonatroxPortfolio.BlazorServer/MonatroxPortfolio.BlazorServer.csproj" />
+    <Project Path="Hosts/MonatroxPortfolio.Blazor/MonatroxPortfolio.Blazor.csproj" />
+    <Project Path="Hosts/MonatroxPortfolio.Blazor.Client/MonatroxPortfolio.Blazor.Client.csproj" />
     <Project Path="Hosts/MonatroxPortfolio.Migrations/MonatroxPortfolio.Migrations.csproj" />
   </Folder>
   <Folder Name="/Modules/" />

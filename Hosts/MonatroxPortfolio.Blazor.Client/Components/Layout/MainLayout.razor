@@ -5,7 +5,7 @@
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<MudLayout>
+<MudLayout data-renderer="@RendererInfo.Name">
     <MudAppBar Elevation="2">
         <MudImage ObjectFit="ObjectFit.Contain" Src="Content/Images/MX Abstract Logo Cleaned_Letters_DarkTheme.png"
                   Alt="Monatrox" Style="height:75%; width:auto" />
@@ -21,7 +21,7 @@
 </MudLayout>
 
 <div id="blazor-error-ui" role="alert">
-    Connection lost or unexpected error. <a href="">Reload portfolio</a>
+    Unexpected error. <a href="">Reload portfolio</a>
 </div>
 
 @code {

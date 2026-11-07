@@ -2,7 +2,7 @@ using System.Net.Http.Json;
 using MonatroxPortfolio.Profile.Public;
 using MonatroxPortfolio.Projects.Public;
 
-namespace MonatroxPortfolio.BlazorServer.Services;
+namespace MonatroxPortfolio.Blazor.Client.Services;
 
 public sealed class PortfolioApiClient(HttpClient http)
 {

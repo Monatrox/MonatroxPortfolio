@@ -101,14 +101,42 @@ public sealed class ArchitectureTests
     }
 
     [Fact]
-    public void Frontend_has_only_Public_and_service_defaults_dependencies()
+    public void Frontend_projects_have_no_backend_implementation_or_database_dependencies()
     {
-        var project = Path.Combine(Root, "Hosts/MonatroxPortfolio.BlazorServer/MonatroxPortfolio.BlazorServer.csproj");
-        Assert.All(References(project), reference => Assert.True(reference.EndsWith(".Public") || reference == "MonatroxPortfolio.ServiceDefaults"));
-        foreach (var file in SourceFiles("Hosts/MonatroxPortfolio.BlazorServer", "*"))
+        foreach (var host in new[] { "Blazor", "Blazor.Client" })
         {
-            if (!file.EndsWith(".cs") && !file.EndsWith(".razor")) continue;
-            Assert.DoesNotMatch(@"MonatroxPortfolio\.[A-Za-z]+\.(Domain|Application|Infrastructure)|EntityFrameworkCore|DbContext", File.ReadAllText(file));
+            var project = Path.Combine(Root, $"Hosts/MonatroxPortfolio.{host}/MonatroxPortfolio.{host}.csproj");
+            Assert.All(References(project), reference => Assert.True(host == "Blazor.Client"
+                ? reference.EndsWith(".Public")
+                : reference is "MonatroxPortfolio.Blazor.Client" or "MonatroxPortfolio.ServiceDefaults"));
+            foreach (var file in SourceFiles($"Hosts/MonatroxPortfolio.{host}", "*"))
+            {
+                if (!file.EndsWith(".cs") && !file.EndsWith(".razor")) continue;
+                Assert.DoesNotMatch(@"MonatroxPortfolio\.[A-Za-z]+\.(Domain|Application|Infrastructure)|EntityFrameworkCore|DbContext", File.ReadAllText(file));
+            }
+        }
+        var client = XDocument.Load(Path.Combine(Root, "Hosts/MonatroxPortfolio.Blazor.Client/MonatroxPortfolio.Blazor.Client.csproj"));
+        Assert.Empty(client.Descendants("FrameworkReference"));
+        Assert.All(client.Descendants("PackageReference"), package =>
+            Assert.Contains(package.Attribute("Include")!.Value, new[] { "Microsoft.AspNetCore.Components.WebAssembly", "MudBlazor" }));
+    }
+
+    [Fact]
+    public void Frontend_uses_prerendered_WebAssembly_without_Server_or_Auto_fallback()
+    {
+        var program = File.ReadAllText(Path.Combine(Root, "Hosts/MonatroxPortfolio.Blazor/Program.cs"));
+        Assert.Contains("AddInteractiveWebAssemblyComponents", program);
+        Assert.Contains("AddInteractiveWebAssemblyRenderMode", program);
+        Assert.DoesNotContain("AddInteractiveServer", program);
+        var app = File.ReadAllText(Path.Combine(Root, "Hosts/MonatroxPortfolio.Blazor/Components/App.razor"));
+        Assert.Contains("<Routes @rendermode=\"InteractiveWebAssembly\"", app);
+        Assert.Contains("<HeadOutlet @rendermode=\"InteractiveWebAssembly\"", app);
+        Assert.DoesNotContain("prerender: false", app);
+        foreach (var file in SourceFiles("Hosts/MonatroxPortfolio.Blazor.Client", "*.razor"))
+        {
+            var source = File.ReadAllText(file);
+            Assert.DoesNotContain("InteractiveServer", source);
+            Assert.DoesNotContain("InteractiveAuto", source);
         }
     }
 
@@ -117,7 +145,7 @@ public sealed class ArchitectureTests
     {
         foreach (var file in SourceFiles("Modules", "*.cs").Concat(SourceFiles("Hosts/MonatroxPortfolio.Api", "*.cs")))
             if (Regex.IsMatch(File.ReadAllText(file), @"\.Map(Get|Post|Put|Patch|Delete)\(")) Assert.Contains(".Application/", file);
-        foreach (var host in new[] { "Api", "BlazorServer" })
+        foreach (var host in new[] { "Api", "Blazor" })
         {
             var source = File.ReadAllText(Path.Combine(Root, $"Hosts/MonatroxPortfolio.{host}/Program.cs"));
             Assert.DoesNotContain("EnsureCreated", source);

@@ -7,12 +7,12 @@
 
 <PageTitle>Monatrox — Zac Taylor</PageTitle>
 
-@if (_error is not null)
+@if (Error is not null)
 {
-    <MudAlert Severity="Severity.Error" role="alert">@_error</MudAlert>
-    <MudButton OnClick="LoadAsync" Color="Color.Primary" Disabled="@(!_interactive)">Retry</MudButton>
+    <MudAlert Severity="Severity.Error" role="alert">@Error</MudAlert>
+    <MudButton OnClick="LoadAsync" Color="Color.Primary" Disabled="@(!RendererInfo.IsInteractive)">Retry</MudButton>
 }
-else if (_profile is null)
+else if (Profile is null)
 {
     <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading portfolio" />
 }
@@ -25,14 +25,14 @@ else
         <MudItem xs="12" md="8" Style="margin-bottom:48px">
             <MudGrid>
                 <MudItem xs="12" lg="8" Class="pa-12">
-                    <MudText Typo="Typo.h1" Color="Color.Primary">@_profile.Alias <MudIcon Size="Size.Large" Icon="@Icons.Material.Filled.Games" /></MudText>
-                    <MudText Typo="Typo.h1"><MudIcon Size="Size.Large" Icon="@Icons.Material.Filled.Computer" /> @_profile.Name</MudText>
-                    <MudText Typo="Typo.h4">@_profile.Headline</MudText>
-                    <MudText Typo="Typo.h5" Class="pre-line mt-12">@_profile.Biography</MudText>
+                    <MudText Typo="Typo.h1" Color="Color.Primary">@Profile.Alias <MudIcon Size="Size.Large" Icon="@Icons.Material.Filled.Games" /></MudText>
+                    <MudText Typo="Typo.h1"><MudIcon Size="Size.Large" Icon="@Icons.Material.Filled.Computer" /> @Profile.Name</MudText>
+                    <MudText Typo="Typo.h4">@Profile.Headline</MudText>
+                    <MudText Typo="Typo.h5" Class="pre-line mt-12">@Profile.Biography</MudText>
                 </MudItem>
                 <MudItem xs="12" lg="4" Class="pa-12">
                     <MudText Typo="Typo.h1">Find Me</MudText>
-                    @foreach (var link in _profile.SocialLinks)
+                    @foreach (var link in Profile.SocialLinks)
                     {
                         <MudLink Underline="Underline.None" Href="@link.Url">
                             <MudText Typo="Typo.h2"><MudIcon Size="Size.Large" Icon="@SocialIcon(link.Id)" /> @link.Name</MudText>
@@ -42,7 +42,7 @@ else
             </MudGrid>
         </MudItem>
         <MudItem xs="12">
-            @if (_projects.Length == 0)
+            @if (Projects is not { Length: > 0 })
             {
                 <MudText>No projects yet.</MudText>
             }
@@ -57,7 +57,7 @@ else
                             <div class="d-flex" style="height:100%">
                                 @foreach (var project in group)
                                 {
-                                    <MudButton Class="project-card mx-auto my-auto pa-0" OnClick="() => OpenProjectAsync(project)" Disabled="@(!_interactive)">
+                                    <MudButton Class="project-card mx-auto my-auto pa-0" OnClick="() => OpenProjectAsync(project)" Disabled="@(!RendererInfo.IsInteractive)">
                                         <MudCard>
                                             <MudCardHeader>
                                                 <CardHeaderAvatar><MudIcon Icon="@Icons.Custom.Brands.MudBlazor" Size="Size.Large" /></CardHeaderAvatar>
@@ -74,7 +74,7 @@ else
             }
         </MudItem>
         <MudItem xs="12">
-            <MudButton OnClick="() => _skillsExpanded = !_skillsExpanded" Disabled="@(!_interactive)" aria-expanded="@_skillsExpanded.ToString().ToLowerInvariant()" aria-controls="skills-content">
+            <MudButton OnClick="() => _skillsExpanded = !_skillsExpanded" Disabled="@(!RendererInfo.IsInteractive)" aria-expanded="@_skillsExpanded.ToString().ToLowerInvariant()" aria-controls="skills-content">
                 <MudIcon Icon="@(_skillsExpanded ? Icons.Material.Filled.KeyboardArrowDown : Icons.Material.Filled.KeyboardArrowRight)" Size="Size.Large" />
                 <MudText Typo="Typo.h1">Tools, Skills, and Languages</MudText>
             </MudButton>
@@ -84,26 +84,26 @@ else
                 <MudItem xs="12" md="6" Class="pa-12">
                     <MudPaper Style="height:100%" Class="pa-12">
                         <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">Tools/Frameworks</MudText>
-                        @foreach (var skill in _profile.Skills.Where(x => x.Category == "Tools"))
+                        @foreach (var skill in Profile.Skills.Where(x => x.Category == "Tools"))
                         { <MudText Typo="Typo.h5">@skill.Name</MudText> }
                     </MudPaper>
                 </MudItem>
                 <MudItem xs="12" md="6" Class="pa-12">
                     <MudPaper Class="pa-12 mb-12">
                         <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">Skills</MudText>
-                        @foreach (var skill in _profile.Skills.Where(x => x.Category == "Skills"))
+                        @foreach (var skill in Profile.Skills.Where(x => x.Category == "Skills"))
                         { <MudText Typo="Typo.h5">@skill.Name</MudText> }
                     </MudPaper>
                     <MudPaper Class="pa-12">
                         <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">Main Languages</MudText>
-                        @foreach (var skill in _profile.Skills.Where(x => x.Category == "Languages"))
+                        @foreach (var skill in Profile.Skills.Where(x => x.Category == "Languages"))
                         { <MudText Typo="Typo.h5">@skill.Name</MudText> }
                     </MudPaper>
                 </MudItem>
             </MudGrid>
         </MudCollapse>
         <MudItem xs="12">
-            <MudButton OnClick="() => _backgroundExpanded = !_backgroundExpanded" Disabled="@(!_interactive)" aria-expanded="@_backgroundExpanded.ToString().ToLowerInvariant()" aria-controls="background-content">
+            <MudButton OnClick="() => _backgroundExpanded = !_backgroundExpanded" Disabled="@(!RendererInfo.IsInteractive)" aria-expanded="@_backgroundExpanded.ToString().ToLowerInvariant()" aria-controls="background-content">
                 <MudIcon Icon="@(_backgroundExpanded ? Icons.Material.Filled.KeyboardArrowDown : Icons.Material.Filled.KeyboardArrowRight)" Size="Size.Large" />
                 <MudText Typo="Typo.h1">Background and Education</MudText>
             </MudButton>
@@ -114,7 +114,7 @@ else
                     <MudPaper Style="height:100%" Class="pa-12">
                         <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">History</MudText>
                         <MudTimeline TimelineOrientation="TimelineOrientation.Vertical" TimelinePosition="TimelinePosition.Left">
-                            @foreach (var entry in _profile.Career)
+                            @foreach (var entry in Profile.Career)
                             {
                                 <MudTimelineItem Color="Color.Dark" Variant="Variant.Text">
                                     <MudText Typo="Typo.h3" Color="Color.Primary">@entry.Period</MudText>
@@ -129,7 +129,7 @@ else
                 <MudItem xs="12" md="6" Class="pa-12">
                     <MudPaper Style="height:100%" Class="pa-12">
                         <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">Education</MudText>
-                        @foreach (var entry in _profile.Education)
+                        @foreach (var entry in Profile.Education)
                         {
                             <MudText Typo="Typo.h5" Class="pre-line">@entry.Qualifications</MudText>
                             <MudText Typo="Typo.body1" Class="mb-8">@entry.Institution, @entry.Location</MudText>
@@ -143,39 +143,35 @@ else
 }
 
 @code {
-    private ProfileDto? _profile;
-    private ProjectDto[] _projects = [];
+    [PersistentState] public ProfileDto? Profile { get; set; }
+    [PersistentState] public ProjectDto[]? Projects { get; set; }
+    [PersistentState] public string? Error { get; set; }
     private ProjectDto[][] _groups = [];
-    private bool _interactive;
     private bool _skillsExpanded;
     private bool _backgroundExpanded;
-    private string? _error;
 
-    protected override Task OnInitializedAsync() => LoadAsync();
-
-    protected override void OnAfterRender(bool firstRender)
+    protected override async Task OnInitializedAsync()
     {
-        if (!firstRender) return;
-        _interactive = true;
-        StateHasChanged();
+        if (Error is null && (Profile is null || Projects is null)) await LoadAsync();
+        else _groups = (Projects ?? []).Chunk(3).ToArray();
     }
 
     private async Task LoadAsync()
     {
-        _error = null;
+        Error = null;
         try
         {
             var profile = Api.GetProfileAsync();
             var projects = Api.GetProjectsAsync();
             await Task.WhenAll(profile, projects);
-            _profile = await profile;
-            _projects = await projects;
-            _groups = _projects.Chunk(3).ToArray();
+            Profile = await profile;
+            Projects = await projects;
+            _groups = Projects.Chunk(3).ToArray();
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidDataException)
         {
             Logger.LogWarning(ex, "Portfolio API unavailable or returned invalid content");
-            _error = ex is HttpRequestException { StatusCode: HttpStatusCode.NotFound }
+            Error = ex is HttpRequestException { StatusCode: HttpStatusCode.NotFound }
                 ? "Portfolio content has not been imported yet. Run the documented content import, then retry."
                 : "Portfolio data is unavailable. Please retry.";
         }

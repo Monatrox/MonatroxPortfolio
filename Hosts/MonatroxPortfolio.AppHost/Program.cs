@@ -25,7 +25,7 @@ var api = builder.AddProject<Projects.MonatroxPortfolio_Api>("api", "http")
     .WithEnvironment("Smtp__Port", smtp.GetEndpoint("smtp").Property(EndpointProperty.Port))
     .WaitForCompletion(migrations)
     .WithHttpHealthCheck("/health");
-builder.AddProject<Projects.MonatroxPortfolio_BlazorServer>("blazor", "http")
+builder.AddProject<Projects.MonatroxPortfolio_Blazor>("blazor", "http")
     .WithReference(api)
     .WithEnvironment("Api__BaseUrl", api.GetEndpoint("http"))
     .WaitFor(api)

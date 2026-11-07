@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.DependencyInjection;
+using MonatroxPortfolio.Api;
 using MonatroxPortfolio.Profile.Public;
 using MonatroxPortfolio.Projects.Public;
 using MonatroxPortfolio.Shared.Contracts;
@@ -14,7 +15,7 @@ namespace MonatroxPortfolio.IntegrationTests;
 
 public sealed class ApiTests
 {
-    private sealed class ApiFactory(string connection) : WebApplicationFactory<Program>
+    private sealed class ApiFactory(string connection) : WebApplicationFactory<ApiAssemblyMarker>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder) => builder.UseEnvironment("Test")
             .UseSetting("ConnectionStrings:Portfolio", connection);

@@ -9,7 +9,7 @@
     <PackageReference Include="Aspire.Hosting.AppHost" />
     <PackageReference Include="MessagePack" PrivateAssets="all" />
     <ProjectReference Include="../MonatroxPortfolio.Api/MonatroxPortfolio.Api.csproj" />
-    <ProjectReference Include="../MonatroxPortfolio.BlazorServer/MonatroxPortfolio.BlazorServer.csproj" />
+    <ProjectReference Include="../MonatroxPortfolio.Blazor/MonatroxPortfolio.Blazor.csproj" />
     <ProjectReference Include="../MonatroxPortfolio.Migrations/MonatroxPortfolio.Migrations.csproj" />
   </ItemGroup>
 </Project>
