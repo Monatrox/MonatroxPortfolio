@@ -1,0 +1,7 @@
+[
+  { "id": "project-1", "name": "Project 1", "description": "Description 1", "thumbnailSrc": "thumbnail1.jpg", "link": "link1", "sortOrder": 1 },
+  { "id": "project-2", "name": "Project 2", "description": "Description 2", "thumbnailSrc": "thumbnail2.jpg", "link": "link2", "sortOrder": 2 },
+  { "id": "project-3", "name": "Project 3", "description": "Description 3", "thumbnailSrc": "thumbnail3.jpg", "link": "link3", "sortOrder": 3 },
+  { "id": "project-4", "name": "Project 4", "description": "Description 4", "thumbnailSrc": "thumbnail4.jpg", "link": "link4", "sortOrder": 4 },
+  { "id": "project-5", "name": "Project 5", "description": "Description 5", "thumbnailSrc": "thumbnail5.jpg", "link": "link5", "sortOrder": 5 }
+]

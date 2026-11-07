@@ -1,0 +1,196 @@
+@page "/"
+@using System.Net
+@using System.Text.Json
+@inject PortfolioApiClient Api
+@inject IDialogService Dialogs
+@inject ILogger<Home> Logger
+
+<PageTitle>Monatrox — Zac Taylor</PageTitle>
+
+@if (_error is not null)
+{
+    <MudAlert Severity="Severity.Error" role="alert">@_error</MudAlert>
+    <MudButton OnClick="LoadAsync" Color="Color.Primary" Disabled="@(!_interactive)">Retry</MudButton>
+}
+else if (_profile is null)
+{
+    <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading portfolio" />
+}
+else
+{
+    <MudGrid>
+        <MudItem xs="12" md="4" Class="pa-12">
+            <MudImage Fluid="true" ObjectFit="ObjectFit.Contain" Src="Content/Images/MX Abstract Logo Cleaned.png" Alt="MX logo" />
+        </MudItem>
+        <MudItem xs="12" md="8" Style="margin-bottom:48px">
+            <MudGrid>
+                <MudItem xs="12" lg="8" Class="pa-12">
+                    <MudText Typo="Typo.h1" Color="Color.Primary">@_profile.Alias <MudIcon Size="Size.Large" Icon="@Icons.Material.Filled.Games" /></MudText>
+                    <MudText Typo="Typo.h1"><MudIcon Size="Size.Large" Icon="@Icons.Material.Filled.Computer" /> @_profile.Name</MudText>
+                    <MudText Typo="Typo.h4">@_profile.Headline</MudText>
+                    <MudText Typo="Typo.h5" Class="pre-line mt-12">@_profile.Biography</MudText>
+                </MudItem>
+                <MudItem xs="12" lg="4" Class="pa-12">
+                    <MudText Typo="Typo.h1">Find Me</MudText>
+                    @foreach (var link in _profile.SocialLinks)
+                    {
+                        <MudLink Underline="Underline.None" Href="@link.Url">
+                            <MudText Typo="Typo.h2"><MudIcon Size="Size.Large" Icon="@SocialIcon(link.Id)" /> @link.Name</MudText>
+                        </MudLink>
+                    }
+                </MudItem>
+            </MudGrid>
+        </MudItem>
+        <MudItem xs="12">
+            @if (_projects.Length == 0)
+            {
+                <MudText>No projects yet.</MudText>
+            }
+            else
+            {
+                <MudCarousel Class="mud-width-full" Style="height:250px" TData="object" data-testid="project-carousel"
+                             ShowArrows="@(_groups.Length > 1)" ShowBullets="@(_groups.Length > 1)"
+                             EnableSwipeGesture="@(_groups.Length > 1)" AutoCycle="@(_groups.Length > 1)">
+                    @foreach (var group in _groups)
+                    {
+                        <MudCarouselItem Transition="Transition.Slide" Color="Color.Primary">
+                            <div class="d-flex" style="height:100%">
+                                @foreach (var project in group)
+                                {
+                                    <MudButton Class="project-card mx-auto my-auto pa-0" OnClick="() => OpenProjectAsync(project)" Disabled="@(!_interactive)">
+                                        <MudCard>
+                                            <MudCardHeader>
+                                                <CardHeaderAvatar><MudIcon Icon="@Icons.Custom.Brands.MudBlazor" Size="Size.Large" /></CardHeaderAvatar>
+                                                <CardHeaderContent><MudText Typo="Typo.h6">@project.Name</MudText></CardHeaderContent>
+                                            </MudCardHeader>
+                                            <MudCardContent><MudText>@project.Description</MudText></MudCardContent>
+                                        </MudCard>
+                                    </MudButton>
+                                }
+                            </div>
+                        </MudCarouselItem>
+                    }
+                </MudCarousel>
+            }
+        </MudItem>
+        <MudItem xs="12">
+            <MudButton OnClick="() => _skillsExpanded = !_skillsExpanded" Disabled="@(!_interactive)" aria-expanded="@_skillsExpanded.ToString().ToLowerInvariant()" aria-controls="skills-content">
+                <MudIcon Icon="@(_skillsExpanded ? Icons.Material.Filled.KeyboardArrowDown : Icons.Material.Filled.KeyboardArrowRight)" Size="Size.Large" />
+                <MudText Typo="Typo.h1">Tools, Skills, and Languages</MudText>
+            </MudButton>
+        </MudItem>
+        <MudCollapse Style="width:100%" Expanded="_skillsExpanded" id="skills-content">
+            <MudGrid Class="pa-12">
+                <MudItem xs="12" md="6" Class="pa-12">
+                    <MudPaper Style="height:100%" Class="pa-12">
+                        <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">Tools/Frameworks</MudText>
+                        @foreach (var skill in _profile.Skills.Where(x => x.Category == "Tools"))
+                        { <MudText Typo="Typo.h5">@skill.Name</MudText> }
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="6" Class="pa-12">
+                    <MudPaper Class="pa-12 mb-12">
+                        <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">Skills</MudText>
+                        @foreach (var skill in _profile.Skills.Where(x => x.Category == "Skills"))
+                        { <MudText Typo="Typo.h5">@skill.Name</MudText> }
+                    </MudPaper>
+                    <MudPaper Class="pa-12">
+                        <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">Main Languages</MudText>
+                        @foreach (var skill in _profile.Skills.Where(x => x.Category == "Languages"))
+                        { <MudText Typo="Typo.h5">@skill.Name</MudText> }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudCollapse>
+        <MudItem xs="12">
+            <MudButton OnClick="() => _backgroundExpanded = !_backgroundExpanded" Disabled="@(!_interactive)" aria-expanded="@_backgroundExpanded.ToString().ToLowerInvariant()" aria-controls="background-content">
+                <MudIcon Icon="@(_backgroundExpanded ? Icons.Material.Filled.KeyboardArrowDown : Icons.Material.Filled.KeyboardArrowRight)" Size="Size.Large" />
+                <MudText Typo="Typo.h1">Background and Education</MudText>
+            </MudButton>
+        </MudItem>
+        <MudCollapse Style="width:100%" Expanded="_backgroundExpanded" id="background-content">
+            <MudGrid Class="pa-12">
+                <MudItem xs="12" md="6" Class="pa-12">
+                    <MudPaper Style="height:100%" Class="pa-12">
+                        <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">History</MudText>
+                        <MudTimeline TimelineOrientation="TimelineOrientation.Vertical" TimelinePosition="TimelinePosition.Left">
+                            @foreach (var entry in _profile.Career)
+                            {
+                                <MudTimelineItem Color="Color.Dark" Variant="Variant.Text">
+                                    <MudText Typo="Typo.h3" Color="Color.Primary">@entry.Period</MudText>
+                                    <MudText Typo="Typo.button" Class="pre-line">@entry.Roles</MudText>
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@entry.Organization</MudText>
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@entry.Location</MudText>
+                                </MudTimelineItem>
+                            }
+                        </MudTimeline>
+                    </MudPaper>
+                </MudItem>
+                <MudItem xs="12" md="6" Class="pa-12">
+                    <MudPaper Style="height:100%" Class="pa-12">
+                        <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">Education</MudText>
+                        @foreach (var entry in _profile.Education)
+                        {
+                            <MudText Typo="Typo.h5" Class="pre-line">@entry.Qualifications</MudText>
+                            <MudText Typo="Typo.body1" Class="mb-8">@entry.Institution, @entry.Location</MudText>
+                        }
+                    </MudPaper>
+                </MudItem>
+            </MudGrid>
+        </MudCollapse>
+        @* Hobbies and Interests remains an unfinished portfolio section, as in v0. *@
+    </MudGrid>
+}
+
+@code {
+    private ProfileDto? _profile;
+    private ProjectDto[] _projects = [];
+    private ProjectDto[][] _groups = [];
+    private bool _interactive;
+    private bool _skillsExpanded;
+    private bool _backgroundExpanded;
+    private string? _error;
+
+    protected override Task OnInitializedAsync() => LoadAsync();
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (!firstRender) return;
+        _interactive = true;
+        StateHasChanged();
+    }
+
+    private async Task LoadAsync()
+    {
+        _error = null;
+        try
+        {
+            var profile = Api.GetProfileAsync();
+            var projects = Api.GetProjectsAsync();
+            await Task.WhenAll(profile, projects);
+            _profile = await profile;
+            _projects = await projects;
+            _groups = _projects.Chunk(3).ToArray();
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidDataException)
+        {
+            Logger.LogWarning(ex, "Portfolio API unavailable or returned invalid content");
+            _error = ex is HttpRequestException { StatusCode: HttpStatusCode.NotFound }
+                ? "Portfolio content has not been imported yet. Run the documented content import, then retry."
+                : "Portfolio data is unavailable. Please retry.";
+        }
+    }
+
+    private Task OpenProjectAsync(ProjectDto project) => Dialogs.ShowAsync<ProjectModal>("Project Details",
+        new DialogParameters<ProjectModal> { { x => x.Project, project } },
+        new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Large, FullWidth = true });
+
+    private static string SocialIcon(string id) => id switch
+    {
+        "linkedin" => Icons.Custom.Brands.LinkedIn,
+        "github" => Icons.Custom.Brands.GitHub,
+        "steam" => Icons.Custom.Brands.Steam,
+        "discord" => Icons.Custom.Brands.Discord,
+        _ => Icons.Material.Filled.Link
+    };
+}

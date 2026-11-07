@@ -1,0 +1,10 @@
+html, body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background: #181818; color: #F4F4F4; }
+.pre-line { white-space: pre-line; }
+.project-card { cursor: pointer; max-width: 28%; }
+.project-card:focus-visible { outline: 3px solid #99E500; outline-offset: 4px; }
+#blazor-error-ui { display: none; position: fixed; bottom: 0; width: 100%; padding: 1rem; background: #b32121; color: white; z-index: 2000; }
+#blazor-error-ui a { color: white; text-decoration: underline; }
+@media (max-width: 600px) {
+    .project-card { max-width: 31%; }
+    .project-card .mud-card-header, .project-card .mud-card-content { padding: .5rem; }
+}

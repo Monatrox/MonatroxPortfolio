@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../../../Shared/MonatroxPortfolio.Shared.Contracts/MonatroxPortfolio.Shared.Contracts.csproj" />
+  </ItemGroup>
+</Project>

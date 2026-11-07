@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><OutputType>Exe</OutputType></PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../../Modules/Profile/MonatroxPortfolio.Profile.Infrastructure/MonatroxPortfolio.Profile.Infrastructure.csproj" />
+    <ProjectReference Include="../../Modules/Projects/MonatroxPortfolio.Projects.Infrastructure/MonatroxPortfolio.Projects.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

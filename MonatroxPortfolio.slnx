@@ -1,0 +1,32 @@
+<Solution>
+  <Folder Name="/Hosts/">
+    <Project Path="Hosts/MonatroxPortfolio.Api/MonatroxPortfolio.Api.csproj" />
+    <Project Path="Hosts/MonatroxPortfolio.AppHost/MonatroxPortfolio.AppHost.csproj" />
+    <Project Path="Hosts/MonatroxPortfolio.BlazorServer/MonatroxPortfolio.BlazorServer.csproj" />
+    <Project Path="Hosts/MonatroxPortfolio.Migrations/MonatroxPortfolio.Migrations.csproj" />
+  </Folder>
+  <Folder Name="/Modules/" />
+  <Folder Name="/Modules/Profile/">
+    <Project Path="Modules/Profile/MonatroxPortfolio.Profile.Application/MonatroxPortfolio.Profile.Application.csproj" />
+    <Project Path="Modules/Profile/MonatroxPortfolio.Profile.Domain/MonatroxPortfolio.Profile.Domain.csproj" />
+    <Project Path="Modules/Profile/MonatroxPortfolio.Profile.Infrastructure/MonatroxPortfolio.Profile.Infrastructure.csproj" />
+    <Project Path="Modules/Profile/MonatroxPortfolio.Profile.Public/MonatroxPortfolio.Profile.Public.csproj" />
+    <Project Path="Modules/Profile/MonatroxPortfolio.Profile.Tests/MonatroxPortfolio.Profile.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Modules/Projects/">
+    <Project Path="Modules/Projects/MonatroxPortfolio.Projects.Application/MonatroxPortfolio.Projects.Application.csproj" />
+    <Project Path="Modules/Projects/MonatroxPortfolio.Projects.Domain/MonatroxPortfolio.Projects.Domain.csproj" />
+    <Project Path="Modules/Projects/MonatroxPortfolio.Projects.Infrastructure/MonatroxPortfolio.Projects.Infrastructure.csproj" />
+    <Project Path="Modules/Projects/MonatroxPortfolio.Projects.Public/MonatroxPortfolio.Projects.Public.csproj" />
+    <Project Path="Modules/Projects/MonatroxPortfolio.Projects.Tests/MonatroxPortfolio.Projects.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Shared/">
+    <Project Path="Shared/MonatroxPortfolio.ServiceDefaults/MonatroxPortfolio.ServiceDefaults.csproj" />
+    <Project Path="Shared/MonatroxPortfolio.Shared.Contracts/MonatroxPortfolio.Shared.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="Tests/MonatroxPortfolio.ArchitectureTests/MonatroxPortfolio.ArchitectureTests.csproj" />
+    <Project Path="Tests/MonatroxPortfolio.BrowserTests/MonatroxPortfolio.BrowserTests.csproj" />
+    <Project Path="Tests/MonatroxPortfolio.IntegrationTests/MonatroxPortfolio.IntegrationTests.csproj" />
+  </Folder>
+</Solution>

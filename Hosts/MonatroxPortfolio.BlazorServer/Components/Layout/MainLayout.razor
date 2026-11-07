@@ -1,0 +1,36 @@
+@inherits LayoutComponentBase
+
+<MudThemeProvider Theme="Theme" IsDarkMode="true" />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<MudLayout>
+    <MudAppBar Elevation="2">
+        <MudImage ObjectFit="ObjectFit.Contain" Src="Content/Images/MX Abstract Logo Cleaned_Letters_DarkTheme.png"
+                  Alt="Monatrox" Style="height:75%; width:auto" />
+        <MudSpacer />
+        <MudIconButton Icon="@Icons.Material.Filled.Apps" Color="Color.Inherit" Edge="Edge.End"
+                       Disabled="true" aria-label="Navigation placeholder" />
+    </MudAppBar>
+    <MudMainContent>
+        <MudContainer Class="mt-16 px-8" MaxWidth="MaxWidth.False">@Body</MudContainer>
+    </MudMainContent>
+    <MudDivider Class="mt-12" DividerType="DividerType.Middle" />
+    <MudText Class="ma-3" Typo="Typo.body1" Align="Align.Center">Created by Monatrox - 2024</MudText>
+</MudLayout>
+
+<div id="blazor-error-ui" role="alert">
+    Connection lost or unexpected error. <a href="">Reload portfolio</a>
+</div>
+
+@code {
+    private static readonly MudTheme Theme = new()
+    {
+        PaletteDark = new PaletteDark()
+        {
+            Background = "#181818", Primary = "#99E500", TextPrimary = "#F4F4F4", Secondary = "#E50099",
+            AppbarBackground = "#333538", DrawerBackground = "#333538", Surface = "#333538", BackgroundGray = "#333538"
+        }
+    };
+}
