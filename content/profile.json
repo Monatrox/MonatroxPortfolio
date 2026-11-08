@@ -56,7 +56,7 @@
   ],
   "career": [
     { "id": "mitas", "period": "2014 - 2015", "roles": "Junior Developer", "organization": "The Mitas Group, Inc.", "location": "McKinney, TX", "sortOrder": 1 },
-    { "id": "digital-empire", "period": "2014 - Present", "roles": "Co-Founder & Co-Owner, Game Developer", "organization": "Digital Empire Development, LLC", "location": "McKinney, TX", "sortOrder": 2 },
+    { "id": "digital-empire", "period": "2014 - 2020", "roles": "Co-Founder & Co-Owner, Game Developer", "organization": "Digital Empire Development, LLC", "location": "McKinney, TX", "sortOrder": 2 },
     { "id": "falkon", "period": "2020 - Present", "roles": "Developer (2020)\nSenior Developer (2021)\nTeam Lead (2022)", "organization": "Falkon Technologies", "location": "McKinney, TX", "sortOrder": 3 }
   ],
   "education": [
