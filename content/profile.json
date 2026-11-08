@@ -4,10 +4,9 @@
   "headline": "Team Lead at Falkon Technologies",
   "biography": "I'm a backend .NET developer currently working at Falkon Technologies with experience in both Web and Game development.\n\nMy current role at Falkon consists of leading and managing a team of devs to ensure smooth delivery of various features and apps to several of Falkon's clients. This includes standard senior development and project planning duties, maintaining communication with the client, and managing the growth and performance of an incredibly flexible team of developers.",
   "socialLinks": [
-    { "id": "linkedin", "name": "LinkedIn", "url": "#", "sortOrder": 1 },
-    { "id": "github", "name": "Github", "url": "#", "sortOrder": 2 },
-    { "id": "steam", "name": "Steam", "url": "#", "sortOrder": 3 },
-    { "id": "discord", "name": "Discord", "url": "#", "sortOrder": 4 }
+    { "id": "linkedin", "name": "LinkedIn", "url": "https://www.linkedin.com/in/zactaylor-dev", "sortOrder": 1 },
+    { "id": "github", "name": "GitHub", "url": "https://github.com/Monatrox", "sortOrder": 2 },
+    { "id": "discord", "name": "Discord", "url": "#", "sortOrder": 3 }
   ],
   "skills": [
     { "id": "visual-studio", "name": "Visual Studio", "category": "Tools", "sortOrder": 1 },

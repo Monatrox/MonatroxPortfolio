@@ -1,0 +1,589 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string"
+    },
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "thumbnailSrc": {
+      "type": "string"
+    },
+    "link": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "sortOrder": {
+      "type": [
+        "string",
+        "integer"
+      ],
+      "pattern": "^-?(?:0|[1-9]\\d*)$"
+    },
+    "page": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "type": [
+            "string",
+            "integer"
+          ],
+          "pattern": "^-?(?:0|[1-9]\\d*)$"
+        },
+        "hero": {
+          "type": "object",
+          "properties": {
+            "eyebrow": {
+              "type": "string"
+            },
+            "title": {
+              "type": "string"
+            },
+            "subtitle": {
+              "type": "string"
+            },
+            "introMarkdown": {
+              "type": "string"
+            },
+            "tags": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "visual": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": [
+                  "type"
+                ],
+                "anyOf": [
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "markdown"
+                      },
+                      "markdown": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "markdown"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "cards"
+                      },
+                      "cards": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "markdown": {
+                              "type": "string"
+                            },
+                            "eyebrow": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "default": null
+                            },
+                            "footerMarkdown": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "default": null
+                            }
+                          },
+                          "required": [
+                            "title",
+                            "markdown"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "columns": {
+                        "type": [
+                          "string",
+                          "integer"
+                        ],
+                        "pattern": "^-?(?:0|[1-9]\\d*)$",
+                        "default": 2
+                      }
+                    },
+                    "required": [
+                      "cards"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "columns"
+                      },
+                      "blocks": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/properties/page/properties/hero/properties/visual/items"
+                        }
+                      },
+                      "columns": {
+                        "type": [
+                          "string",
+                          "integer"
+                        ],
+                        "pattern": "^-?(?:0|[1-9]\\d*)$",
+                        "default": 2
+                      }
+                    },
+                    "required": [
+                      "blocks"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "panel"
+                      },
+                      "blocks": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/properties/page/properties/hero/properties/visual/items"
+                        }
+                      },
+                      "title": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "tone": {
+                        "type": "string",
+                        "default": "surface"
+                      }
+                    },
+                    "required": [
+                      "blocks"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "table"
+                      },
+                      "caption": {
+                        "type": "string"
+                      },
+                      "headers": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "rows": {
+                        "type": "array",
+                        "items": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "required": [
+                      "caption",
+                      "headers",
+                      "rows"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "code"
+                      },
+                      "title": {
+                        "type": "string"
+                      },
+                      "language": {
+                        "type": "string"
+                      },
+                      "code": {
+                        "type": "string"
+                      },
+                      "captionMarkdown": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      }
+                    },
+                    "required": [
+                      "title",
+                      "language",
+                      "code"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "callout"
+                      },
+                      "markdown": {
+                        "type": "string"
+                      },
+                      "tone": {
+                        "type": "string",
+                        "default": "note"
+                      },
+                      "title": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      }
+                    },
+                    "required": [
+                      "markdown"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "steps"
+                      },
+                      "steps": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "markdown": {
+                              "type": "string"
+                            },
+                            "eyebrow": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "default": null
+                            }
+                          },
+                          "required": [
+                            "title",
+                            "markdown"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "captionMarkdown": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      },
+                      "tone": {
+                        "type": "string",
+                        "default": "plain"
+                      }
+                    },
+                    "required": [
+                      "steps"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "diagram"
+                      },
+                      "nodes": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "markdown": {
+                              "type": "string"
+                            },
+                            "eyebrow": {
+                              "type": [
+                                "string",
+                                "null"
+                              ],
+                              "default": null
+                            },
+                            "tone": {
+                              "type": "string",
+                              "default": "plain"
+                            }
+                          },
+                          "required": [
+                            "title",
+                            "markdown"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "layout": {
+                        "type": "string",
+                        "default": "chain"
+                      },
+                      "captionMarkdown": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      }
+                    },
+                    "required": [
+                      "nodes"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "tabs"
+                      },
+                      "tabs": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "title": {
+                              "type": "string"
+                            },
+                            "blocks": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/properties/page/properties/hero/properties/visual/items"
+                              }
+                            }
+                          },
+                          "required": [
+                            "title",
+                            "blocks"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "captionMarkdown": {
+                        "type": [
+                          "string",
+                          "null"
+                        ],
+                        "default": null
+                      }
+                    },
+                    "required": [
+                      "tabs"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "details"
+                      },
+                      "summary": {
+                        "type": "string"
+                      },
+                      "blocks": {
+                        "type": "array",
+                        "items": {
+                          "$ref": "#/properties/page/properties/hero/properties/visual/items"
+                        }
+                      }
+                    },
+                    "required": [
+                      "summary",
+                      "blocks"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "properties": {
+                      "type": {
+                        "const": "calculator"
+                      },
+                      "assumptionsMarkdown": {
+                        "type": "string"
+                      },
+                      "instances": {
+                        "type": [
+                          "string",
+                          "integer"
+                        ],
+                        "pattern": "^-?(?:0|[1-9]\\d*)$",
+                        "default": 40
+                      },
+                      "rate": {
+                        "type": [
+                          "string",
+                          "integer"
+                        ],
+                        "pattern": "^-?(?:0|[1-9]\\d*)$",
+                        "default": 25
+                      },
+                      "windowSeconds": {
+                        "type": [
+                          "string",
+                          "integer"
+                        ],
+                        "pattern": "^-?(?:0|[1-9]\\d*)$",
+                        "default": 60
+                      },
+                      "errorRate": {
+                        "type": [
+                          "string",
+                          "number"
+                        ],
+                        "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d\u002B)?$",
+                        "default": 0.001
+                      }
+                    },
+                    "required": [
+                      "assumptionsMarkdown"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            },
+            "context": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "default": null
+            }
+          },
+          "required": [
+            "eyebrow",
+            "title",
+            "subtitle",
+            "introMarkdown",
+            "tags",
+            "visual"
+          ],
+          "additionalProperties": false
+        },
+        "overview": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string"
+              },
+              "markdown": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "title",
+              "markdown"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "introMarkdown": {
+                "type": "string"
+              },
+              "blocks": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/properties/page/properties/hero/properties/visual/items"
+                }
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "introMarkdown",
+              "blocks"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "introduction": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/properties/page/properties/hero/properties/visual/items"
+          },
+          "default": null
+        }
+      },
+      "required": [
+        "schemaVersion",
+        "hero",
+        "overview",
+        "sections",
+        "notes"
+      ],
+      "additionalProperties": false,
+      "default": null
+    }
+  },
+  "required": [
+    "id",
+    "name",
+    "description",
+    "thumbnailSrc",
+    "link",
+    "sortOrder"
+  ],
+  "additionalProperties": false
+}

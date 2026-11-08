@@ -1,0 +1,19 @@
+@inject IJSRuntime JS
+
+<div class="case-code">
+    <div class="case-code-head"><span>@Block.Title</span><MudButton OnClick="CopyAsync" Disabled="@(!RendererInfo.IsInteractive)" Variant="Variant.Outlined" Color="Color.Inherit" Size="Size.Small" aria-label="@($"Copy {Block.Title}")">@(_status == "Code copied." ? "Copied" : "Copy")</MudButton></div>
+    <pre><code class="@($"language-{Block.Language}")">@Block.Code</code></pre>
+    <span class="case-copy-status" role="status" aria-live="polite">@_status</span>
+</div>
+@if (Block.CaptionMarkdown is not null)
+{ <div class="case-caption"><ProjectMarkdown Text="@Block.CaptionMarkdown" /></div> }
+
+@code {
+    [Parameter, EditorRequired] public CodeBlockDto Block { get; set; } = null!;
+    private string? _status;
+    private async Task CopyAsync()
+    {
+        try { await JS.InvokeVoidAsync("navigator.clipboard.writeText", Block.Code); _status = "Code copied."; }
+        catch (JSException) { _status = "Copy unavailable. Select code and press Control+C or Command+C."; }
+    }
+}

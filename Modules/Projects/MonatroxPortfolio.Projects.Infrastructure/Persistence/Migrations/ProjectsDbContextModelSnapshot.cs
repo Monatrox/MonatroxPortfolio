@@ -43,6 +43,29 @@ namespace MonatroxPortfolio.Projects.Infrastructure.Persistence.Migrations
 
                     b.ToTable("Projects_Projects", (string)null);
                 });
+
+            modelBuilder.Entity("MonatroxPortfolio.Projects.Domain.ProjectPage", b =>
+                {
+                    b.Property<string>("ProjectId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DocumentJson")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("ProjectId");
+
+                    b.ToTable("Projects_ProjectPages", (string)null);
+                });
+
+            modelBuilder.Entity("MonatroxPortfolio.Projects.Domain.ProjectPage", b =>
+                {
+                    b.HasOne("MonatroxPortfolio.Projects.Domain.PortfolioProject", null)
+                        .WithOne()
+                        .HasForeignKey("MonatroxPortfolio.Projects.Domain.ProjectPage", "ProjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
 #pragma warning restore 612, 618
         }
     }

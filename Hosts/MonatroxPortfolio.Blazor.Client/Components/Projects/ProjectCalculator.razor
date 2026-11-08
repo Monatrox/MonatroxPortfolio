@@ -1,0 +1,35 @@
+@using System.Globalization
+
+<div class="case-calculator">
+    <div class="case-calc-controls">
+        <div><label>Producer instances <output>@_instances</output></label><MudSlider T="int" Min="1" Max="200" @bind-Value="_instances" Disabled="@(!RendererInfo.IsInteractive)" aria-label="Producer instances" /></div>
+        <div><label>Events / instance / second <output>@_rate</output></label><MudSlider T="int" Min="1" Max="500" @bind-Value="_rate" Disabled="@(!RendererInfo.IsInteractive)" aria-label="Events per instance per second" /></div>
+        <div><label>Window <output>@_seconds s</output></label><MudSlider T="int" Min="10" Max="300" Step="10" @bind-Value="_seconds" Disabled="@(!RendererInfo.IsInteractive)" aria-label="Window seconds" /></div>
+    </div>
+    <div class="case-calc-results" aria-live="polite" aria-atomic="true">
+        <div>
+            <div class="case-bar-label"><span>Store every event</span><strong>@Format(Events) records</strong></div><div class="case-bar"><span style="width:100%"></span></div>
+            <div class="case-bar-label"><span>Count + error detail</span><strong>@Format(Retained) records</strong></div><div class="case-bar case-bar-after"><span style="@($"width:{Math.Clamp(Retained * 100m / Events, 0, 100).ToString(CultureInfo.InvariantCulture)}%")"></span></div>
+        </div>
+        <div class="case-calc-stat"><strong>@Reduction%</strong><p>fewer final sink records in this model</p><p>@Format(Errors) full error events + 1 aggregate containing all @Format(Events) contributions.</p></div>
+    </div>
+    <div class="case-calc-foot"><ProjectMarkdown Text="@Block.AssumptionsMarkdown" />
+        @if (!RendererInfo.IsInteractive) { <p>Default example: @Block.Instances instances × @Block.Rate events/second × @Block.WindowSeconds seconds. Enable JavaScript to adjust it after WebAssembly starts.</p> }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public CalculatorBlockDto Block { get; set; } = null!;
+    private CalculatorBlockDto? _loaded;
+    private int _instances, _rate, _seconds;
+    private decimal Events => (decimal)_instances * _rate * _seconds;
+    private decimal Errors => decimal.Ceiling(Events * Block.ErrorRate);
+    private decimal Retained => Errors + 1;
+    private string Reduction => ((1 - Retained / Events) * 100).ToString("F2", CultureInfo.InvariantCulture);
+    private static string Format(decimal value) => value.ToString("N0", CultureInfo.GetCultureInfo("en-US"));
+    protected override void OnParametersSet()
+    {
+        if (ReferenceEquals(_loaded, Block)) return;
+        _loaded = Block; _instances = Block.Instances; _rate = Block.Rate; _seconds = Block.WindowSeconds;
+    }
+}

@@ -8,4 +8,5 @@ public interface IProjectQueries
 {
     Task<IReadOnlyList<ProjectDto>> ListAsync(CancellationToken cancellationToken = default);
     Task<Result<ProjectDto>> GetAsync(string id, CancellationToken cancellationToken = default);
+    Task<Result<ProjectPageDto>> GetPageAsync(string id, CancellationToken cancellationToken = default);
 }

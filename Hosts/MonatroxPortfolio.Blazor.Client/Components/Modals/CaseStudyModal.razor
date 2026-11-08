@@ -1,0 +1,15 @@
+<MudDialog Class="case-dialog" ContentClass="case-dialog-scroll">
+    <TitleContent>
+        <div class="case-dialog-heading">
+            <MudText Typo="Typo.h6">@Project.Name</MudText>
+            <MudLink Href="@Project.Link" Target="_blank" rel="noopener noreferrer">Open full page <span aria-hidden="true">↗</span></MudLink>
+        </div>
+    </TitleContent>
+    <DialogContent>
+        <ProjectDetails Id="@Project.Id" Embedded="true" />
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [Parameter, EditorRequired] public ProjectDto Project { get; set; } = null!;
+}

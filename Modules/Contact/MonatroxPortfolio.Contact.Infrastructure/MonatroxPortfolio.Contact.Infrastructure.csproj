@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../MonatroxPortfolio.Contact.Application/MonatroxPortfolio.Contact.Application.csproj" />
+    <PackageReference Include="MailKit" />
+  </ItemGroup>
+</Project>

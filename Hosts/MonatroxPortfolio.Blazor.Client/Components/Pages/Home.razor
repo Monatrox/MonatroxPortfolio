@@ -1,124 +1,172 @@
 @page "/"
+@implements IDisposable
+@inject NavigationManager Navigation
 @using System.Net
 @using System.Text.Json
 @inject PortfolioApiClient Api
 @inject IDialogService Dialogs
+@inject IJSRuntime JS
 @inject ILogger<Home> Logger
 
-<PageTitle>Monatrox — Zac Taylor</PageTitle>
+<PageTitle>@(IsGamer ? "Monatrox" : "Zac Taylor — Engineering & Technical Leadership")</PageTitle>
 
 @if (Error is not null)
 {
-    <MudAlert Severity="Severity.Error" role="alert">@Error</MudAlert>
-    <MudButton OnClick="LoadAsync" Color="Color.Primary" Disabled="@(!RendererInfo.IsInteractive)">Retry</MudButton>
+    <div class="page-message">
+        <MudAlert Severity="Severity.Error" role="alert">@Error</MudAlert>
+        <MudButton OnClick="LoadAsync" Color="Color.Primary" Disabled="@(!RendererInfo.IsInteractive)">Retry</MudButton>
+    </div>
 }
 else if (Profile is null)
 {
-    <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading portfolio" />
+    <div class="page-message">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading portfolio" />
+    </div>
 }
 else
 {
-    <MudGrid>
-        <MudItem xs="12" md="4" Class="pa-12">
-            <MudImage Fluid="true" ObjectFit="ObjectFit.Contain" Src="Content/Images/MX Abstract Logo Cleaned.png" Alt="MX logo" />
-        </MudItem>
-        <MudItem xs="12" md="8" Style="margin-bottom:48px">
-            <MudGrid>
-                <MudItem xs="12" lg="8" Class="pa-12">
-                    <MudText Typo="Typo.h1" Color="Color.Primary">@Profile.Alias <MudIcon Size="Size.Large" Icon="@Icons.Material.Filled.Games" /></MudText>
-                    <MudText Typo="Typo.h1"><MudIcon Size="Size.Large" Icon="@Icons.Material.Filled.Computer" /> @Profile.Name</MudText>
-                    <MudText Typo="Typo.h4">@Profile.Headline</MudText>
-                    <MudText Typo="Typo.h5" Class="pre-line mt-12">@Profile.Biography</MudText>
-                </MudItem>
-                <MudItem xs="12" lg="4" Class="pa-12">
-                    <MudText Typo="Typo.h1">Find Me</MudText>
-                    @foreach (var link in Profile.SocialLinks)
+    <section class="identity-stage" aria-labelledby="hero-name">
+        <div class="hero-identity" role="group" aria-label="Choose identity">
+            <h1 id="hero-name" class="identity-selector" aria-label="@(IsGamer ? Profile.Alias : Profile.Name)">
+                <MudButton Class="identity-option" OnClick="() => SelectView.InvokeAsync(true)" Disabled="@(!RendererInfo.IsInteractive)"
+                           aria-label="@($"Show {Profile.Alias}")" aria-pressed="@IsGamer.ToString().ToLowerInvariant()">
+                    <span class="identity-name">@Profile.Alias<MudIcon Icon="@Icons.Material.Filled.Games" aria-hidden="true" /></span>
+                </MudButton>
+                <MudButton Class="identity-option" OnClick="() => SelectView.InvokeAsync(false)" Disabled="@(!RendererInfo.IsInteractive)"
+                           aria-label="@($"Show {Profile.Name}")" aria-pressed="@((!IsGamer).ToString().ToLowerInvariant())">
+                    <span class="identity-name"><MudIcon Icon="@Icons.Material.Filled.Computer" aria-hidden="true" />@Profile.Name</span>
+                </MudButton>
+            </h1>
+        </div>
+        <figure class="identity-visual">
+            <div class="identity-image">
+                <MudImage Fluid="true" ObjectFit="@(IsGamer ? ObjectFit.Contain : ObjectFit.Cover)"
+                          Src="@(IsGamer ? "Content/Images/MX Abstract Logo Cleaned.png" : "Content/Images/zac-taylor-portrait.jpg")"
+                          Alt="@(IsGamer ? "Monatrox identity logo" : "Portrait of Zac Taylor")" />
+            </div>
+            <figcaption>@(IsGamer ? Profile.Alias : Profile.Name)</figcaption>
+        </figure>
+        <div class="hero-copy">
+            <p class="hero-statement">Backend engineering.<br /><span>People, projects &amp; delivery.</span></p>
+            <p class="hero-role">@Profile.Headline</p>
+        </div>
+        <div class="hero-contact">
+            <div class="social-links" role="group" aria-label="Social profiles">
+                <span class="eyebrow">Find me</span>
+                @foreach (var link in Profile.SocialLinks)
+                {
+                    @if (link.Id == "discord" && link.Url == "#")
                     {
-                        <MudLink Underline="Underline.None" Href="@link.Url">
-                            <MudText Typo="Typo.h2"><MudIcon Size="Size.Large" Icon="@SocialIcon(link.Id)" /> @link.Name</MudText>
-                        </MudLink>
+                        <MudButton Class="social-contact" OnClick="CopyDiscordAsync" Disabled="@(!RendererInfo.IsInteractive)" aria-label="Copy Discord username monatrox">Discord · monatrox <span aria-hidden="true">⧉</span></MudButton>
                     }
-                </MudItem>
-            </MudGrid>
-        </MudItem>
-        <MudItem xs="12">
-            @if (Projects is not { Length: > 0 })
-            {
-                <MudText>No projects yet.</MudText>
-            }
-            else
-            {
-                <MudCarousel Class="mud-width-full" Style="height:250px" TData="object" data-testid="project-carousel"
-                             ShowArrows="@(_groups.Length > 1)" ShowBullets="@(_groups.Length > 1)"
-                             EnableSwipeGesture="@(_groups.Length > 1)" AutoCycle="@(_groups.Length > 1)">
-                    @foreach (var group in _groups)
+                    else if (link.Url == "#")
                     {
-                        <MudCarouselItem Transition="Transition.Slide" Color="Color.Primary">
-                            <div class="d-flex" style="height:100%">
-                                @foreach (var project in group)
-                                {
-                                    <MudButton Class="project-card mx-auto my-auto pa-0" OnClick="() => OpenProjectAsync(project)" Disabled="@(!RendererInfo.IsInteractive)">
-                                        <MudCard>
-                                            <MudCardHeader>
-                                                <CardHeaderAvatar><MudIcon Icon="@Icons.Custom.Brands.MudBlazor" Size="Size.Large" /></CardHeaderAvatar>
-                                                <CardHeaderContent><MudText Typo="Typo.h6">@project.Name</MudText></CardHeaderContent>
-                                            </MudCardHeader>
-                                            <MudCardContent><MudText>@project.Description</MudText></MudCardContent>
-                                        </MudCard>
-                                    </MudButton>
-                                }
-                            </div>
-                        </MudCarouselItem>
+                        <span class="social-placeholder" title="URL awaiting update">@link.Name</span>
                     }
-                </MudCarousel>
-            }
-        </MudItem>
-        <MudItem xs="12">
-            <MudButton OnClick="() => _skillsExpanded = !_skillsExpanded" Disabled="@(!RendererInfo.IsInteractive)" aria-expanded="@_skillsExpanded.ToString().ToLowerInvariant()" aria-controls="skills-content">
-                <MudIcon Icon="@(_skillsExpanded ? Icons.Material.Filled.KeyboardArrowDown : Icons.Material.Filled.KeyboardArrowRight)" Size="Size.Large" />
-                <MudText Typo="Typo.h1">Tools, Skills, and Languages</MudText>
+                    else
+                    {
+                        <MudLink Href="@link.Url" Underline="Underline.None">@link.Name <span aria-hidden="true">↗</span></MudLink>
+                    }
+                }
+                <MudButton Class="social-contact" OnClick="OpenContactAsync" Disabled="@(!RendererInfo.IsInteractive)" aria-label="Email — Contact Me" aria-haspopup="dialog">Email <MudIcon Icon="@Icons.Material.Filled.MailOutline" Size="Size.Small" /></MudButton>
+                <span class="contact-copy-status" role="status" aria-live="polite">@_discordCopyStatus</span>
+            </div>
+            <div class="hero-actions">
+                <MudButton Href="#projects" Variant="Variant.Filled" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ArrowForward" Class="primary-action">Explore projects</MudButton>
+                <MudLink Href="#background" Underline="Underline.None" Class="secondary-action">My background <span aria-hidden="true">↗</span></MudLink>
+            </div>
+        </div>
+        <MudLink Href="#about" Underline="Underline.None" Class="hero-scroll">More about me <span aria-hidden="true">↓</span></MudLink>
+    </section>
+
+    <section class="about-section" id="about" aria-labelledby="about-title">
+        <MudPaper Elevation="0" Class="about-copy detail-panel">
+            <div class="section-heading"><div><p class="eyebrow">About me</p><h2 id="about-title">Engineering +<br />technical leadership<span class="name-period" aria-hidden="true">.</span></h2></div></div>
+            <p class="hero-biography pre-line">@Profile.Biography</p>
+        </MudPaper>
+        <MudPaper Elevation="0" Class="about-visual detail-panel">
+            <MudImage ObjectFit="ObjectFit.Cover" loading="lazy" decoding="async"
+                      Src="@(IsGamer ? "Content/Images/monatrox-about.jpg" : "Content/Images/zac-taylor-about.jpg")"
+                      Alt="@(IsGamer ? "Monatrox portrait" : "Zac Taylor portrait")" />
+        </MudPaper>
+    </section>
+
+    <section class="project-section" id="projects" aria-labelledby="projects-title">
+        <div class="section-heading">
+            <div><p class="eyebrow">01 / My work</p><h2 id="projects-title">Projects &amp; systems<span class="name-period" aria-hidden="true">.</span></h2></div>
+            <p class="section-note">Project context, technical choices,<br />and practical examples.</p>
+        </div>
+        @if (Projects is not { Length: > 0 })
+        {
+            <MudText>No projects yet.</MudText>
+        }
+        else
+        {
+            <div class="project-grid" data-testid="project-grid">
+                @foreach (var (project, index) in Projects.Select((item, index) => (item, index)))
+                {
+                    <MudButton Class="project-card" Href="@project.Link" Disabled="@(string.IsNullOrWhiteSpace(project.Link))"
+                               aria-label="@(IsCaseStudy(project) ? $"Read {project.Name} case study" : $"Open {project.Name} details")" aria-haspopup="dialog">
+                        <span class="project-card-top"><span class="project-reference">@project.Id</span><span class="project-number" aria-hidden="true">@((index + 1).ToString("00"))</span></span>
+                        <span class="project-preview" aria-hidden="true"><span class="preview-node"></span><span class="preview-wire"></span><span class="preview-node preview-node-end"></span></span>
+                        <span class="project-title">@project.Name</span>
+                        <span class="project-description">@project.Description</span>
+                        <span class="project-card-footer">@(IsCaseStudy(project) ? "Read case study" : "View project") <MudIcon Icon="@Icons.Material.Filled.ArrowForward" Size="Size.Small" /></span>
+                    </MudButton>
+                }
+            </div>
+        }
+    </section>
+
+    <section class="supporting-content" aria-label="Expertise and background">
+        <h2 class="section-toggle-heading" id="skills">
+            <MudButton OnClick="() => _skillsExpanded = !_skillsExpanded" Disabled="@(!RendererInfo.IsInteractive)" Class="support-toggle"
+                       aria-label="Tools, Skills, and Languages" aria-expanded="@_skillsExpanded.ToString().ToLowerInvariant()" aria-controls="skills-content">
+                <span class="section-index" aria-hidden="true">02</span><span class="support-title">Tools, Skills, and Languages</span>
+                <MudIcon Icon="@(_skillsExpanded ? Icons.Material.Filled.Remove : Icons.Material.Filled.Add)" />
             </MudButton>
-        </MudItem>
-        <MudCollapse Style="width:100%" Expanded="_skillsExpanded" id="skills-content">
-            <MudGrid Class="pa-12">
-                <MudItem xs="12" md="6" Class="pa-12">
-                    <MudPaper Style="height:100%" Class="pa-12">
-                        <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">Tools/Frameworks</MudText>
+        </h2>
+        <MudCollapse Expanded="_skillsExpanded" id="skills-content">
+            <MudGrid Spacing="4" Class="detail-grid">
+                <MudItem xs="12" md="6">
+                    <MudPaper Elevation="0" Class="detail-panel">
+                        <MudText Typo="Typo.h3">Tools/Frameworks</MudText>
                         @foreach (var skill in Profile.Skills.Where(x => x.Category == "Tools"))
-                        { <MudText Typo="Typo.h5">@skill.Name</MudText> }
+                        { <MudText Typo="Typo.body1">@skill.Name</MudText> }
                     </MudPaper>
                 </MudItem>
-                <MudItem xs="12" md="6" Class="pa-12">
-                    <MudPaper Class="pa-12 mb-12">
-                        <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">Skills</MudText>
+                <MudItem xs="12" md="6">
+                    <MudPaper Elevation="0" Class="detail-panel">
+                        <MudText Typo="Typo.h3">Skills</MudText>
                         @foreach (var skill in Profile.Skills.Where(x => x.Category == "Skills"))
-                        { <MudText Typo="Typo.h5">@skill.Name</MudText> }
+                        { <MudText Typo="Typo.body1">@skill.Name</MudText> }
                     </MudPaper>
-                    <MudPaper Class="pa-12">
-                        <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">Main Languages</MudText>
+                    <MudPaper Elevation="0" Class="detail-panel">
+                        <MudText Typo="Typo.h3">Main Languages</MudText>
                         @foreach (var skill in Profile.Skills.Where(x => x.Category == "Languages"))
-                        { <MudText Typo="Typo.h5">@skill.Name</MudText> }
+                        { <MudText Typo="Typo.body1">@skill.Name</MudText> }
                     </MudPaper>
                 </MudItem>
             </MudGrid>
         </MudCollapse>
-        <MudItem xs="12">
-            <MudButton OnClick="() => _backgroundExpanded = !_backgroundExpanded" Disabled="@(!RendererInfo.IsInteractive)" aria-expanded="@_backgroundExpanded.ToString().ToLowerInvariant()" aria-controls="background-content">
-                <MudIcon Icon="@(_backgroundExpanded ? Icons.Material.Filled.KeyboardArrowDown : Icons.Material.Filled.KeyboardArrowRight)" Size="Size.Large" />
-                <MudText Typo="Typo.h1">Background and Education</MudText>
+        <h2 class="section-toggle-heading" id="background">
+            <MudButton OnClick="() => _backgroundExpanded = !_backgroundExpanded" Disabled="@(!RendererInfo.IsInteractive)" Class="support-toggle"
+                       aria-label="Background and Education" aria-expanded="@_backgroundExpanded.ToString().ToLowerInvariant()" aria-controls="background-content">
+                <span class="section-index" aria-hidden="true">03</span><span class="support-title">Background and Education</span>
+                <MudIcon Icon="@(_backgroundExpanded ? Icons.Material.Filled.Remove : Icons.Material.Filled.Add)" />
             </MudButton>
-        </MudItem>
-        <MudCollapse Style="width:100%" Expanded="_backgroundExpanded" id="background-content">
-            <MudGrid Class="pa-12">
-                <MudItem xs="12" md="6" Class="pa-12">
-                    <MudPaper Style="height:100%" Class="pa-12">
-                        <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">History</MudText>
+        </h2>
+        <MudCollapse Expanded="_backgroundExpanded" id="background-content">
+            <MudGrid Spacing="4" Class="detail-grid">
+                <MudItem xs="12" md="6">
+                    <MudPaper Elevation="0" Class="detail-panel">
+                        <MudText Typo="Typo.h3">History</MudText>
                         <MudTimeline TimelineOrientation="TimelineOrientation.Vertical" TimelinePosition="TimelinePosition.Left">
                             @foreach (var entry in Profile.Career)
                             {
-                                <MudTimelineItem Color="Color.Dark" Variant="Variant.Text">
-                                    <MudText Typo="Typo.h3" Color="Color.Primary">@entry.Period</MudText>
-                                    <MudText Typo="Typo.button" Class="pre-line">@entry.Roles</MudText>
+                                <MudTimelineItem Color="Color.Primary" Variant="Variant.Text">
+                                    <MudText Typo="Typo.h4">@entry.Period</MudText>
+                                    <MudText Typo="Typo.body1" Class="pre-line">@entry.Roles</MudText>
                                     <MudText Typo="Typo.body2" Class="mud-text-secondary">@entry.Organization</MudText>
                                     <MudText Typo="Typo.body2" Class="mud-text-secondary">@entry.Location</MudText>
                                 </MudTimelineItem>
@@ -126,34 +174,62 @@ else
                         </MudTimeline>
                     </MudPaper>
                 </MudItem>
-                <MudItem xs="12" md="6" Class="pa-12">
-                    <MudPaper Style="height:100%" Class="pa-12">
-                        <MudText Color="Color.Primary" Typo="Typo.h2" Class="mb-8">Education</MudText>
+                <MudItem xs="12" md="6">
+                    <MudPaper Elevation="0" Class="detail-panel">
+                        <MudText Typo="Typo.h3">Education</MudText>
                         @foreach (var entry in Profile.Education)
                         {
-                            <MudText Typo="Typo.h5" Class="pre-line">@entry.Qualifications</MudText>
+                            <MudText Typo="Typo.h4" Class="pre-line">@entry.Qualifications</MudText>
                             <MudText Typo="Typo.body1" Class="mb-8">@entry.Institution, @entry.Location</MudText>
                         }
                     </MudPaper>
                 </MudItem>
             </MudGrid>
         </MudCollapse>
-        @* Hobbies and Interests remains an unfinished portfolio section, as in v0. *@
-    </MudGrid>
+        @* Hobbies and Interests remains an unfinished portfolio section. *@
+    </section>
 }
 
 @code {
+    [CascadingParameter(Name = "GamerView")] public bool IsGamer { get; set; }
+    [CascadingParameter(Name = "SelectView")] public EventCallback<bool> SelectView { get; set; }
     [PersistentState] public ProfileDto? Profile { get; set; }
     [PersistentState] public ProjectDto[]? Projects { get; set; }
     [PersistentState] public string? Error { get; set; }
-    private ProjectDto[][] _groups = [];
+    private string? _discordCopyStatus;
+    private async Task CopyDiscordAsync()
+    {
+        try { await JS.InvokeVoidAsync("navigator.clipboard.writeText", "monatrox"); _discordCopyStatus = "Copied monatrox."; }
+        catch (JSException) { _discordCopyStatus = "Copy unavailable. Discord username: monatrox."; }
+    }
+    private Task OpenContactAsync() => Dialogs.ShowAsync<ContactModal>("Contact Me",
+        new DialogOptions { CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, BackdropClick = false });
+
     private bool _skillsExpanded;
     private bool _backgroundExpanded;
+    private IDisposable? _projectNavigation;
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender) _projectNavigation = Navigation.RegisterLocationChangingHandler(OnProjectNavigationAsync);
+    }
+
+    private async ValueTask OnProjectNavigationAsync(LocationChangingContext context)
+    {
+        if (!context.IsNavigationIntercepted) return;
+        var project = Projects?.FirstOrDefault(x => IsCaseStudy(x) && Navigation.ToAbsoluteUri(x.Link!).AbsoluteUri == context.TargetLocation);
+        if (project is null) return;
+        context.PreventNavigation();
+        await Dialogs.ShowAsync<CaseStudyModal>(project.Name,
+            new DialogParameters<CaseStudyModal> { { x => x.Project, project } },
+            new DialogOptions { CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.ExtraLarge, FullWidth = true });
+    }
+
+    public void Dispose() => _projectNavigation?.Dispose();
 
     protected override async Task OnInitializedAsync()
     {
         if (Error is null && (Profile is null || Projects is null)) await LoadAsync();
-        else _groups = (Projects ?? []).Chunk(3).ToArray();
     }
 
     private async Task LoadAsync()
@@ -166,7 +242,6 @@ else
             await Task.WhenAll(profile, projects);
             Profile = await profile;
             Projects = await projects;
-            _groups = Projects.Chunk(3).ToArray();
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidDataException)
         {
@@ -177,16 +252,5 @@ else
         }
     }
 
-    private Task OpenProjectAsync(ProjectDto project) => Dialogs.ShowAsync<ProjectModal>("Project Details",
-        new DialogParameters<ProjectModal> { { x => x.Project, project } },
-        new DialogOptions { CloseOnEscapeKey = true, MaxWidth = MaxWidth.Large, FullWidth = true });
-
-    private static string SocialIcon(string id) => id switch
-    {
-        "linkedin" => Icons.Custom.Brands.LinkedIn,
-        "github" => Icons.Custom.Brands.GitHub,
-        "steam" => Icons.Custom.Brands.Steam,
-        "discord" => Icons.Custom.Brands.Discord,
-        _ => Icons.Material.Filled.Link
-    };
+    private static bool IsCaseStudy(ProjectDto project) => project.Link?.StartsWith("/projects/", StringComparison.Ordinal) == true;
 }

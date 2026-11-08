@@ -23,5 +23,19 @@ public sealed class ProjectStore(ProjectsDbContext db) : IProjectStore
         }
     }
 
+    public Task<ProjectPage?> GetPageAsync(string id, CancellationToken cancellationToken) =>
+        db.Pages.AsNoTracking().SingleOrDefaultAsync(x => x.ProjectId == id, cancellationToken);
+
+    public async Task StagePagesAsync(IReadOnlyList<ProjectPage> pages, CancellationToken cancellationToken)
+    {
+        var ids = pages.Select(x => x.ProjectId).ToArray();
+        var existing = await db.Pages.Where(x => ids.Contains(x.ProjectId)).ToDictionaryAsync(x => x.ProjectId, cancellationToken);
+        foreach (var page in pages)
+        {
+            if (existing.TryGetValue(page.ProjectId, out var current)) db.Entry(current).CurrentValues.SetValues(page);
+            else db.Pages.Add(page);
+        }
+    }
+
     public async Task CommitAsync(CancellationToken cancellationToken) => await db.SaveChangesAsync(cancellationToken);
 }

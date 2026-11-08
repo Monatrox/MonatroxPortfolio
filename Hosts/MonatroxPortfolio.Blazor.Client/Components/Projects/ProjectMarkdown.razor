@@ -1,0 +1,24 @@
+@using System.Text.Encodings.Web
+@using Markdig
+@using Markdig.Syntax
+@using Markdig.Syntax.Inlines
+
+<div class="case-markdown">@_html</div>
+
+@code {
+    [Parameter, EditorRequired] public string Text { get; set; } = "";
+    private MarkupString _html;
+    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder().DisableHtml().UsePipeTables().Build();
+
+    protected override void OnParametersSet()
+    {
+        var document = Markdown.Parse(Text, Pipeline);
+        var links = document.Descendants<LinkInline>().Select(x => x.Url)
+            .Concat(document.Descendants<AutolinkInline>().Select(x => x.Url));
+        // Defense in depth if a response bypasses the backend's import validation.
+        var safe = links.All(url => !string.IsNullOrWhiteSpace(url) && !url.Any(char.IsControl) &&
+            !url.StartsWith("//", StringComparison.Ordinal) && !url.Contains('\\') &&
+            (Uri.TryCreate(url, UriKind.Absolute, out var uri) ? uri.Scheme is "http" or "https" : !url.Contains(':')));
+        _html = new(safe ? Markdown.ToHtml(document, Pipeline) : HtmlEncoder.Default.Encode(Text));
+    }
+}

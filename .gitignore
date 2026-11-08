@@ -4,6 +4,9 @@
 TestResults/
 artifacts/
 
+# Local project-page source references
+/docs/projects/
+
 # IDE-local settings
 .idea/
 .vs/

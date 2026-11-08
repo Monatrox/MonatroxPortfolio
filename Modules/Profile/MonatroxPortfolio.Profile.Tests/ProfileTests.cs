@@ -28,7 +28,7 @@ public sealed class ProfileTests
         Assert.True((await importer.ImportAsync(Json)).IsSuccess);
         var initial = (await queries.GetAsync()).Value!;
         Assert.Equal(44, initial.Skills.Length);
-        Assert.Equal(4, initial.SocialLinks.Length);
+        Assert.Equal(3, initial.SocialLinks.Length);
         Assert.Equal(3, initial.Career.Length);
         Assert.Equal(2, initial.Education.Length);
         var changed = initial with
@@ -42,7 +42,7 @@ public sealed class ProfileTests
         Assert.Equal("Updated headline", updated.Headline);
         Assert.Equal(44, updated.Skills.Length);
         Assert.Contains(updated.Skills, x => x.Id == initial.Skills[0].Id && x.Name == "Updated tool");
-        Assert.Equal(4, updated.SocialLinks.Length);
+        Assert.Equal(3, updated.SocialLinks.Length);
         Assert.Equal(3, updated.Career.Length);
         Assert.Equal(2, updated.Education.Length);
 
@@ -57,7 +57,7 @@ public sealed class ProfileTests
         Assert.True((await importer.ImportAsync(additionsJson)).IsSuccess);
         Assert.True((await importer.ImportAsync(additionsJson)).IsSuccess);
         var expanded = (await queries.GetAsync()).Value!;
-        Assert.Equal(5, expanded.SocialLinks.Length);
+        Assert.Equal(4, expanded.SocialLinks.Length);
         Assert.Equal(45, expanded.Skills.Length);
         Assert.Equal(4, expanded.Career.Length);
         Assert.Equal(3, expanded.Education.Length);

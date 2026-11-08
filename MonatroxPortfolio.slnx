@@ -7,6 +7,13 @@
     <Project Path="Hosts/MonatroxPortfolio.Migrations/MonatroxPortfolio.Migrations.csproj" />
   </Folder>
   <Folder Name="/Modules/" />
+  <Folder Name="/Modules/Contact/">
+    <Project Path="Modules/Contact/MonatroxPortfolio.Contact.Application/MonatroxPortfolio.Contact.Application.csproj" />
+    <Project Path="Modules/Contact/MonatroxPortfolio.Contact.Domain/MonatroxPortfolio.Contact.Domain.csproj" />
+    <Project Path="Modules/Contact/MonatroxPortfolio.Contact.Infrastructure/MonatroxPortfolio.Contact.Infrastructure.csproj" />
+    <Project Path="Modules/Contact/MonatroxPortfolio.Contact.Public/MonatroxPortfolio.Contact.Public.csproj" />
+    <Project Path="Modules/Contact/MonatroxPortfolio.Contact.Tests/MonatroxPortfolio.Contact.Tests.csproj" />
+  </Folder>
   <Folder Name="/Modules/Profile/">
     <Project Path="Modules/Profile/MonatroxPortfolio.Profile.Application/MonatroxPortfolio.Profile.Application.csproj" />
     <Project Path="Modules/Profile/MonatroxPortfolio.Profile.Domain/MonatroxPortfolio.Profile.Domain.csproj" />

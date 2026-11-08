@@ -1,0 +1,169 @@
+{
+  "id": "portfolio",
+  "name": "Portfolio",
+  "description": "An intentionally overengineered demo of Aspire and a modular monolith.",
+  "thumbnailSrc": "Content/Images/MX Abstract Logo Cleaned_Letters_DarkTheme.png",
+  "link": "/projects/portfolio",
+  "sortOrder": 2,
+  "page": {
+    "schemaVersion": 1,
+    "hero": {
+      "eyebrow": "Aspire + modular monolith · .NET 10",
+      "title": "Portfolio",
+      "subtitle": "Intentionally overengineered.",
+      "introMarkdown": "This portfolio is intentionally overengineered: a working demonstration of Aspire and a modular monolith. Clear ownership, repeatable startup and visible request flow are the point.",
+      "tags": ["Aspire / Podman", "Modular monolith", "Blazor WASM", "EF Core / SQLite"],
+      "visual": [
+        {
+          "type": "panel",
+          "blocks": [
+            { "type": "markdown", "markdown": "Two ideas, one working example" },
+            {
+              "type": "diagram",
+              "layout": "branch",
+              "nodes": [
+                { "title": "A small portfolio", "markdown": "Real page reads and contact submissions.", "tone": "dark" },
+                { "title": "Aspire", "markdown": "Wire, run and observe the local stack.", "tone": "accent" },
+                { "title": "Modular monolith", "markdown": "Separate ownership inside one API.", "tone": "accent" }
+              ],
+              "captionMarkdown": "Aspire handles the running pieces. Module boundaries handle the code inside the API. Neither requires turning the modules into microservices."
+            }
+          ]
+        }
+      ]
+    },
+    "overview": [
+      { "title": "Purpose", "markdown": "An architecture demo with real workloads." },
+      { "title": "Aspire", "markdown": "One startup definition; connected diagnostics." },
+      { "title": "Modular monolith", "markdown": "Explicit ownership without separate service deployments." }
+    ],
+    "sections": [
+      {
+        "id": "features",
+        "title": "What the extra structure buys",
+        "introMarkdown": "Profiles, case studies and contact mail keep the examples small.",
+        "blocks": [
+          {
+            "type": "cards",
+            "columns": 3,
+            "cards": [
+              { "title": "One place to wire the stack", "markdown": "AppHost centralizes endpoints, configuration and startup dependencies. One command starts the preview." },
+              { "title": "Ownership you can check", "markdown": "Three modules share an API, with implementation references checked by architecture tests." },
+              { "title": "A visible side effect", "markdown": "Contact mail lands in smtp4dev, ready to inspect without a real email account." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "boundaries",
+        "title": "Three modules. One API.",
+        "introMarkdown": "One API process avoids a separate deployment and network boundary for each feature.",
+        "blocks": [
+          {
+            "type": "diagram",
+            "layout": "branch",
+            "nodes": [
+              { "title": "API host", "markdown": "Composes the modules; rules stay inside them.", "tone": "dark" },
+              { "title": "Profile", "markdown": "Biography, links, skills and career.", "tone": "accent" },
+              { "title": "Projects", "markdown": "Listings, documents and content validation.", "tone": "accent" },
+              { "title": "Contact", "markdown": "Message validation and SMTP delivery.", "tone": "accent" }
+            ]
+          },
+          {
+            "type": "table",
+            "caption": "The five layers used by each module",
+            "headers": ["Layer", "Responsibility"],
+            "rows": [
+              ["Public", "DTOs and contracts another module may reference."],
+              ["Domain", "Framework-free models and invariants."],
+              ["Application", "HTTP endpoints, use cases and persistence/delivery ports."],
+              ["Infrastructure", "EF Core storage or SMTP adapters."],
+              ["Tests", "Behavior checks within that module."]
+            ]
+          },
+          { "type": "markdown", "markdown": "Profile and Projects share a SQLite file, not tables or contexts. Contact stores no messages. Architecture tests reject foreign implementation references and cycles." },
+          {
+            "type": "callout",
+            "title": "Where it's overengineered",
+            "tone": "warning",
+            "markdown": "A smaller app could serve this content. Extra projects and orchestration make the benefits inspectable; they aren't requirements for a portfolio. Aspire isn't a prerequisite for a modular monolith, either."
+          }
+        ]
+      },
+      {
+        "id": "local-testing",
+        "title": "Aspire: run it, then inspect it",
+        "introMarkdown": "AppHost supplies API addresses and SMTP settings, then waits for dependencies. That replaces separate launch commands and manually synchronized configuration.",
+        "blocks": [
+          {
+            "type": "diagram",
+            "layout": "branch",
+            "nodes": [
+              { "title": "Aspire", "markdown": "Service wiring, startup order and diagnostics.", "tone": "dark" },
+              { "title": "Frontend", "eyebrow": "localhost:5420", "markdown": "API address supplied by AppHost.", "tone": "accent" },
+              { "title": "API", "eyebrow": "localhost:5410", "markdown": "Module endpoints; waits for mail capture.", "tone": "accent" },
+              { "title": "smtp4dev", "eyebrow": "localhost:5430", "markdown": "Capture mail without a live email account.", "tone": "accent" }
+            ],
+            "captionMarkdown": "The dashboard groups logs, HTTP traces and health by resource. SQLite uses a file; smtp4dev holds test mail."
+          },
+          {
+            "type": "cards",
+            "columns": 2,
+            "cards": [
+              { "title": "Follow a page read", "markdown": "Open a case study and follow its frontend-to-API request in the dashboard. Projects owns the document." },
+              { "title": "Inspect a side effect", "markdown": "Submit the contact form and inspect its message in smtp4dev. The UI confirms local capture, not inbox delivery." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "rendering",
+        "title": "The frontend, in brief",
+        "introMarkdown": "The frontend demonstrates prerendered WASM, not a persistent server circuit.",
+        "blocks": [
+          {
+            "type": "steps",
+            "tone": "dark",
+            "steps": [
+              { "title": "Prerender", "markdown": "The site host reads the API and returns populated HTML." },
+              { "title": "Hand off", "markdown": "Public data and error state travel with the page. WASM starts without fetching them again." },
+              { "title": "Interact", "markdown": "Palette, expanders and loaded examples run in the browser. New documents and email still need the API." }
+            ],
+            "captionMarkdown": "Browser requests use `/api` on the site origin; YARP forwards them to the backend. No Server or Auto render mode."
+          }
+        ]
+      },
+      {
+        "id": "development",
+        "title": "Change, check, preview",
+        "introMarkdown": "Business changes stay in their module; UI stays in the frontend. Tests isolate SQLite and SMTP.",
+        "blocks": [
+          { "type": "markdown", "markdown": "Case studies are JSON documents with Markdown and typed blocks. Validation runs before import; stable IDs update records, while unlisted content is preserved." },
+          {
+            "type": "columns",
+            "columns": 2,
+            "blocks": [
+              {
+                "type": "code",
+                "title": "Content changes",
+                "language": "shell",
+                "code": "bash scripts/dev.sh validate\nbash scripts/dev.sh import",
+                "captionMarkdown": "Content updates are explicit, never startup seeds."
+              },
+              {
+                "type": "code",
+                "title": "Preview and checks",
+                "language": "shell",
+                "code": "bash scripts/dev.sh\n\n# In another terminal:\nPORTFOLIO_BROWSER_URL=http://127.0.0.1:5420 \\\n  bash scripts/verify.sh",
+                "captionMarkdown": "Requires the pinned SDK and rootless Podman. Verify runs architecture/module/API tests, EF model checks and browser smoke. Use the same suite to check trimmed Release output."
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Current scope: public reads and contact submission. No admin UI, sign-in or production email delivery."
+    ]
+  }
+}

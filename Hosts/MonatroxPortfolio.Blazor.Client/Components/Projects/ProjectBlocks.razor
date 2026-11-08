@@ -1,0 +1,85 @@
+@foreach (var block in Blocks)
+{
+    @switch (block)
+    {
+        case MarkdownBlockDto text:
+            <ProjectMarkdown Text="@text.Markdown" />
+            break;
+        case CardsBlockDto cards:
+            <div class="case-cards" style="@($"--case-columns:{cards.Columns}")">
+                @foreach (var card in cards.Cards)
+                {
+                    <article class="case-card">
+                        @if (card.Eyebrow is not null) { <p class="case-eyebrow">@card.Eyebrow</p> }
+                        <h3>@card.Title</h3><ProjectMarkdown Text="@card.Markdown" />
+                        @if (card.FooterMarkdown is not null) { <div class="case-card-foot"><ProjectMarkdown Text="@card.FooterMarkdown" /></div> }
+                    </article>
+                }
+            </div>
+            break;
+        case ColumnsBlockDto columns:
+            <div class="case-columns" style="@($"--case-columns:{columns.Columns}")">
+                @foreach (var child in columns.Blocks)
+                { <div><ProjectBlocks Blocks="@(new[] { child })" /></div> }
+            </div>
+            break;
+        case PanelBlockDto panel:
+            <div class="case-panel" data-tone="@panel.Tone">
+                @if (panel.Title is not null) { <h3>@panel.Title</h3> }
+                <ProjectBlocks Blocks="panel.Blocks" />
+            </div>
+            break;
+        case TableBlockDto table:
+            <div class="case-table-scroll" role="region" aria-label="@table.Caption" tabindex="0">
+                <table><caption class="case-sr-only">@table.Caption</caption><thead><tr>@foreach (var header in table.Headers) { <th scope="col">@header</th> }</tr></thead>
+                    <tbody>@foreach (var row in table.Rows) { <tr>@foreach (var cell in row) { <td><ProjectMarkdown Text="@cell" /></td> }</tr> }</tbody>
+                </table>
+            </div>
+            break;
+        case CodeBlockDto code:
+            <ProjectCode Block="code" />
+            break;
+        case CalloutBlockDto callout:
+            <aside class="case-callout" data-tone="@callout.Tone">
+                @if (callout.Title is not null) { <h3>@callout.Title</h3> }
+                <ProjectMarkdown Text="@callout.Markdown" />
+            </aside>
+            break;
+        case StepsBlockDto steps:
+            <figure>
+                <ol class="case-steps" data-tone="@steps.Tone" style="@($"--case-columns:{Math.Min(steps.Steps.Length, 4)}")">
+                    @foreach (var step in steps.Steps)
+                    {
+                        <li>@if (step.Eyebrow is not null) { <p class="case-eyebrow">@step.Eyebrow</p> }<h3>@step.Title</h3><ProjectMarkdown Text="@step.Markdown" /></li>
+                    }
+                </ol>
+                @if (steps.CaptionMarkdown is not null) { <figcaption><ProjectMarkdown Text="@steps.CaptionMarkdown" /></figcaption> }
+            </figure>
+            break;
+        case DiagramBlockDto diagram:
+            <figure class="case-diagram" data-layout="@diagram.Layout">
+                <div class="case-nodes" style="@($"--case-columns:{(diagram.Layout == "branch" ? Math.Max(1, diagram.Nodes.Length - 1) : diagram.Nodes.Length)}")">
+                    @foreach (var node in diagram.Nodes)
+                    {
+                        <div class="case-node" data-tone="@node.Tone">
+                            @if (node.Eyebrow is not null) { <p class="case-eyebrow">@node.Eyebrow</p> }
+                            <h3>@node.Title</h3><ProjectMarkdown Text="@node.Markdown" />
+                        </div>
+                    }
+                </div>
+                @if (diagram.CaptionMarkdown is not null) { <figcaption><ProjectMarkdown Text="@diagram.CaptionMarkdown" /></figcaption> }
+            </figure>
+            break;
+        case TabsBlockDto tabs:
+            <ProjectWorkflowTabs Block="tabs" />
+            break;
+        case DetailsBlockDto details:
+            <details class="case-details"><summary>@details.Summary</summary><ProjectBlocks Blocks="details.Blocks" /></details>
+            break;
+        case CalculatorBlockDto calculator:
+            <ProjectCalculator Block="calculator" />
+            break;
+    }
+}
+
+@code { [Parameter, EditorRequired] public ProjectBlockDto[] Blocks { get; set; } = []; }

@@ -6,7 +6,7 @@ namespace MonatroxPortfolio.ArchitectureTests;
 public sealed class ArchitectureTests
 {
     private static readonly string Root = FindRoot();
-    private static readonly string[] Modules = ["Profile", "Projects"];
+    private static readonly string[] Modules = ["Contact", "Profile", "Projects"];
     private static readonly string[] Layers = ["Application", "Domain", "Infrastructure", "Public", "Tests"];
     private static string FindRoot()
     {
@@ -118,7 +118,7 @@ public sealed class ArchitectureTests
         var client = XDocument.Load(Path.Combine(Root, "Hosts/MonatroxPortfolio.Blazor.Client/MonatroxPortfolio.Blazor.Client.csproj"));
         Assert.Empty(client.Descendants("FrameworkReference"));
         Assert.All(client.Descendants("PackageReference"), package =>
-            Assert.Contains(package.Attribute("Include")!.Value, new[] { "Microsoft.AspNetCore.Components.WebAssembly", "MudBlazor" }));
+            Assert.Contains(package.Attribute("Include")!.Value, new[] { "Microsoft.AspNetCore.Components.WebAssembly", "MudBlazor", "Markdig" }));
     }
 
     [Fact]

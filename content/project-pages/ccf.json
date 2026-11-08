@@ -1,0 +1,419 @@
+{
+  "id": "ccf",
+  "name": "CCF",
+  "description": "Gift cards, assistance awards, and events in one dashboard.",
+  "thumbnailSrc": "Content/Images/MX Abstract Logo Cleaned_Letters_DarkTheme.png",
+  "link": "/projects/ccf",
+  "sortOrder": 0,
+  "page": {
+    "schemaVersion": 1,
+    "hero": {
+      "eyebrow": "A pro bono project · in production for several years",
+      "title": "CCF",
+      "subtitle": "Gift cards, assistance awards, and events in one dashboard.",
+      "introMarkdown": "Built at no charge with CCF’s team, this application organizes the records behind their day-to-day work. Its features came from direct requests, meetings, and demonstrations with the people using it.",
+      "tags": [
+        "Pro bono",
+        "Member-led development",
+        "Active production use"
+      ],
+      "visual": [
+        {
+          "type": "panel",
+          "blocks": [
+            {
+              "type": "markdown",
+              "markdown": "Organized around the work"
+            },
+            {
+              "type": "diagram",
+              "nodes": [
+                {
+                  "title": "A family’s record",
+                  "markdown": "Patient · parents · siblings · contact details",
+                  "tone": "dark"
+                },
+                {
+                  "title": "Assistance awarded",
+                  "markdown": "Gift cards, parking support, amounts, and notes",
+                  "eyebrow": null,
+                  "tone": "accent"
+                },
+                {
+                  "title": "Event participation",
+                  "markdown": "Registrations, attendees, and emergency contacts",
+                  "eyebrow": null,
+                  "tone": "accent"
+                }
+              ],
+              "layout": "branch",
+              "captionMarkdown": "Workflow illustration, not an application screenshot. Assistance and event records stay connected to the family."
+            }
+          ],
+          "title": null,
+          "tone": "surface"
+        }
+      ],
+      "context": "Carson’s Crusaders Foundation"
+    },
+    "overview": [
+      {
+        "title": "Built for CCF’s team",
+        "markdown": "A shared place to manage family records, assistance, and event participation."
+      },
+      {
+        "title": "Shaped in CCF meetings",
+        "markdown": "Direct requests and demos guided what was built within a constrained scope."
+      },
+      {
+        "title": "Designed for local upkeep",
+        "markdown": "A trained CCF member could handle routine database support without a code change."
+      }
+    ],
+    "sections": [
+      {
+        "id": "foundation",
+        "title": "The organization behind the software",
+        "introMarkdown": "Carson’s Crusaders Foundation supports children and families affected by pediatric cancer. Established in memory of Carson Richardson, its work includes help with treatment-related travel and support for siblings.",
+        "blocks": [
+          {
+            "type": "cards",
+            "cards": [
+              {
+                "title": "Helping families get to treatment",
+                "markdown": "CCF provides gas cards, parking vouchers, and other transportation assistance through affiliated hospitals. Medical professionals apply on behalf of families.",
+                "eyebrow": "Transportation assistance",
+                "footerMarkdown": "**The dashboard’s role:** connect a family’s record with the assistance awarded, including the type, amount, card reference, and notes.\n\n[CCF’s transportation program ↗](https://carsonscrusadersfoundation.org/our-transportation-program/)"
+              },
+              {
+                "title": "Making room for brothers and sisters",
+                "markdown": "CCF hosts events where siblings can enjoy time together and meet children in similar circumstances. Its birthday program also recognizes siblings with gifts.",
+                "eyebrow": "Sibling Superstars",
+                "footerMarkdown": "**The dashboard’s role:** keep sibling information with the family and organize event registrations and attendee details.\n\n[CCF’s sibling support program ↗](https://carsonscrusadersfoundation.org/our-sibling-support-program/)"
+              }
+            ],
+            "columns": 2
+          },
+          {
+            "type": "markdown",
+            "markdown": "The foundation also promotes childhood cancer awareness. This project focused on its operational records: families, assistance awards, and events. Learn more about CCF’s history and wider work on [the foundation’s website](https://carsonscrusadersfoundation.org/)."
+          }
+        ]
+      },
+      {
+        "id": "workflows",
+        "title": "What the team can do",
+        "introMarkdown": "The dashboard follows CCF’s existing work: find the family, record the assistance, or organize participation in an event.",
+        "blocks": [
+          {
+            "type": "table",
+            "caption": "Dashboard capabilities and their practical purpose",
+            "headers": [
+              "Task",
+              "What the application provides",
+              "Why it helps"
+            ],
+            "rows": [
+              [
+                "Find a family’s record",
+                "Patient lookup and linked parent, sibling, contact, and treatment-facility information.",
+                "The team can see the context for assistance and event participation together."
+              ],
+              [
+                "Record an assistance award",
+                "Benefit type, amount, the last six card digits, and notes linked to the recipient.",
+                "A team member can see what was recorded for that family and identify the card involved."
+              ],
+              [
+                "Review family participation",
+                "Benefits, siblings, and event registrations on the family detail page.",
+                "Related records can be reviewed from the same place."
+              ],
+              [
+                "Prepare an event",
+                "Event name, location, year, registration cutoff, and active status.",
+                "Staff can maintain event information through the dashboard."
+              ],
+              [
+                "Organize attendance",
+                "Registrations with attendees, adult counts, shirt sizes, and emergency contacts; a filterable attendee list.",
+                "Event preparation has the practical details needed for the people attending."
+              ]
+            ]
+          },
+          {
+            "type": "markdown",
+            "markdown": "### Follow a typical task"
+          },
+          {
+            "type": "tabs",
+            "tabs": [
+              {
+                "title": "Record assistance",
+                "blocks": [
+                  {
+                    "type": "markdown",
+                    "markdown": "### Record assistance for a family"
+                  },
+                  {
+                    "type": "steps",
+                    "steps": [
+                      {
+                        "title": "Find the family",
+                        "markdown": "Open the patient’s record and review the assistance already listed.",
+                        "eyebrow": null
+                      },
+                      {
+                        "title": "Enter the award",
+                        "markdown": "Choose its type, enter the amount and card reference, and add any notes.",
+                        "eyebrow": null
+                      },
+                      {
+                        "title": "Keep it connected",
+                        "markdown": "Save the benefit to the recipient’s record, alongside their existing assistance.",
+                        "eyebrow": null
+                      }
+                    ],
+                    "tone": "plain"
+                  },
+                  {
+                    "type": "callout",
+                    "title": null,
+                    "markdown": "**Result:** the team has a record of the award and who received it.",
+                    "tone": "accent"
+                  }
+                ]
+              },
+              {
+                "title": "Prepare an event",
+                "blocks": [
+                  {
+                    "type": "markdown",
+                    "markdown": "### Prepare for a sibling event"
+                  },
+                  {
+                    "type": "steps",
+                    "steps": [
+                      {
+                        "title": "Set up the event",
+                        "markdown": "Enter the name, location, year, and registration cutoff.",
+                        "eyebrow": null
+                      },
+                      {
+                        "title": "Record participation",
+                        "markdown": "Link a family’s registration to the event; include attendee information and emergency contacts.",
+                        "eyebrow": null
+                      },
+                      {
+                        "title": "Review the attendee list",
+                        "markdown": "Use the event detail page to view, sort, and filter the people attending.",
+                        "eyebrow": null
+                      }
+                    ],
+                    "tone": "plain"
+                  },
+                  {
+                    "type": "callout",
+                    "title": null,
+                    "markdown": "**Result:** event details and family participation can be managed in the same application.",
+                    "tone": "accent"
+                  }
+                ]
+              },
+              {
+                "title": "Maintain a form choice",
+                "blocks": [
+                  {
+                    "type": "markdown",
+                    "markdown": "### Maintain a choice used by a form"
+                  },
+                  {
+                    "type": "steps",
+                    "steps": [
+                      {
+                        "title": "Identify the lookup",
+                        "markdown": "For example, a treatment-facility choice is loaded from the database.",
+                        "eyebrow": null
+                      },
+                      {
+                        "title": "Use the trained support process",
+                        "markdown": "A designated CCF member maintains the corresponding MySQL lookup through the existing database structure.",
+                        "eyebrow": null
+                      },
+                      {
+                        "title": "Check the form",
+                        "markdown": "Confirm that the updated choice is available when the application loads the list.",
+                        "eyebrow": null
+                      }
+                    ],
+                    "tone": "plain"
+                  },
+                  {
+                    "type": "callout",
+                    "title": null,
+                    "markdown": "**Result:** routine lookup maintenance can happen without changing and redeploying application code.",
+                    "tone": "accent"
+                  }
+                ]
+              }
+            ],
+            "captionMarkdown": "These are descriptions of workflows found in the source, not a live demo. No production records are loaded."
+          }
+        ]
+      },
+      {
+        "id": "collaboration",
+        "title": "Built with the people who use it",
+        "introMarkdown": "CCF members drove the product’s requirements. Several meetings and demonstrations at CCF meetings shaped a focused build around their direct requests.",
+        "blocks": [
+          {
+            "type": "steps",
+            "steps": [
+              {
+                "title": "Start with the work",
+                "markdown": "CCF members described the records and tasks they needed help managing.",
+                "eyebrow": "01 · Direct requests"
+              },
+              {
+                "title": "Build for those tasks",
+                "markdown": "The application used familiar concepts: families, benefits, siblings, and events.",
+                "eyebrow": "02 · Focused build"
+              },
+              {
+                "title": "Put it in front of CCF",
+                "markdown": "Demonstrations gave members a concrete application to respond to and guide.",
+                "eyebrow": "03 · Meetings & demos"
+              },
+              {
+                "title": "Plan for continued use",
+                "markdown": "A CCF member received training for database-led support after delivery.",
+                "eyebrow": "04 · Training"
+              }
+            ],
+            "tone": "dark"
+          },
+          {
+            "type": "cards",
+            "cards": [
+              {
+                "title": "A constrained, pro bono build",
+                "markdown": "The software was provided free of charge. A tightly constrained build made the team’s requests the basis for deciding what to include.",
+                "eyebrow": null,
+                "footerMarkdown": null
+              },
+              {
+                "title": "Familiar concepts carried through",
+                "markdown": "The screens and underlying records mirror the organization’s activities. A CCF member could learn how those records fit together when supporting the system.",
+                "eyebrow": null,
+                "footerMarkdown": null
+              }
+            ],
+            "columns": 2
+          }
+        ]
+      },
+      {
+        "id": "support",
+        "title": "Designed to be supported by CCF",
+        "introMarkdown": "The support plan was part of the design: routine upkeep should primarily involve a trained member working with MySQL, rather than requiring application code changes each time.",
+        "blocks": [
+          {
+            "type": "diagram",
+            "nodes": [
+              {
+                "title": "Use the dashboard",
+                "markdown": "Manage family details, record assistance, and maintain events and registrations.",
+                "eyebrow": "Everyday work",
+                "tone": "accent"
+              },
+              {
+                "title": "MySQL",
+                "markdown": "Store the operational data and provide lookup choices and stored procedures used by the application.",
+                "eyebrow": "Shared records",
+                "tone": "accent"
+              },
+              {
+                "title": "A designated CCF member",
+                "markdown": "Handle routine database support using an understandable record structure and the training provided.",
+                "eyebrow": "Trained upkeep",
+                "tone": "accent"
+              }
+            ],
+            "layout": "chain"
+          },
+          {
+            "type": "markdown",
+            "markdown": "A support model, not a database access guide. Application features still need code changes when the workflow itself changes."
+          },
+          {
+            "type": "table",
+            "caption": "Support needs and where they are handled",
+            "headers": [
+              "Need",
+              "Where it belongs"
+            ],
+            "rows": [
+              [
+                "A new award or registration",
+                "Normal work in the dashboard, linked to the relevant family or event."
+              ],
+              [
+                "A routine lookup update",
+                "The existing MySQL lookup structure, maintained by a trained member. Forms load choices through database procedures."
+              ],
+              [
+                "A new workflow or screen",
+                "An application change. Database-led support was intended to reduce routine code work, not replace development entirely."
+              ]
+            ]
+          },
+          {
+            "type": "markdown",
+            "markdown": "The application uses C# and ASP.NET Core MVC with MySQL and stored procedures. The important design choice for this project was keeping its records and maintenance understandable to the team who would own it."
+          }
+        ]
+      },
+      {
+        "id": "use",
+        "title": "Several years of everyday use",
+        "introMarkdown": "The dashboard remains in active production use and has helped CCF manage its operations for multiple years.",
+        "blocks": [
+          {
+            "type": "panel",
+            "blocks": [
+              {
+                "type": "markdown",
+                "markdown": "### Learn more about Carson’s Crusaders"
+              },
+              {
+                "type": "markdown",
+                "markdown": "The foundation’s public site explains its transportation assistance, sibling programs, and ways to get involved."
+              },
+              {
+                "type": "markdown",
+                "markdown": "[Visit the foundation ↗](https://carsonscrusadersfoundation.org/)"
+              }
+            ],
+            "title": null,
+            "tone": "accent"
+          },
+          {
+            "type": "markdown",
+            "markdown": "Project scope, collaboration, training, and production history are described by the developer. Features were checked against the project’s source. Organization and program descriptions come from CCF’s public pages linked above. No production data or usage metrics are presented."
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Project notes · CCF operations dashboard · Pro bono development \n Public program information reviewed 7 November 2026."
+    ],
+    "introduction": [
+      {
+        "type": "callout",
+        "title": "A private production system",
+        "markdown": "The application itself cannot be shown publicly because it is an active production project. This page describes its purpose and workflows without showing production screens or records.",
+        "tone": "warning"
+      }
+    ]
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "id": "your-project",
+  "name": "Your project",
+  "description": "Replace with a short description for the homepage card.",
+  "thumbnailSrc": "Content/Images/MX Abstract Logo Cleaned_Letters_DarkTheme.png",
+  "link": "/projects/your-project",
+  "sortOrder": 10,
+  "page": {
+    "schemaVersion": 1,
+    "hero": {
+      "eyebrow": "Replace with honest project context",
+      "title": "Your project",
+      "subtitle": "What it does, in one sentence.",
+      "introMarkdown": "Who it helps and what you built. Use **emphasis**, `inline code`, and [source links](https://example.com).",
+      "tags": ["Replace with actual technology or context"],
+      "visual": [
+        {
+          "type": "diagram",
+          "layout": "chain",
+          "nodes": [
+            { "title": "Input", "markdown": "What enters the system." },
+            { "title": "Outcome", "markdown": "What it produces.", "tone": "dark" }
+          ],
+          "captionMarkdown": "Illustration, not an application screenshot. Replace with a useful caption."
+        }
+      ]
+    },
+    "overview": [
+      { "title": "Purpose", "markdown": "Replace with context." },
+      { "title": "Your contribution", "markdown": "Describe your actual role." },
+      { "title": "Current state", "markdown": "Distinguish planned work from delivered work." }
+    ],
+    "introduction": [],
+    "sections": [
+      {
+        "id": "context",
+        "title": "The work behind the project",
+        "introMarkdown": "Replace with a short introduction.",
+        "blocks": [
+          { "type": "markdown", "markdown": "Write your story here. Separate paragraphs with \n\n. Do not invent metrics or outcomes." },
+          {
+            "type": "cards",
+            "columns": 2,
+            "cards": [
+              { "title": "Decision", "markdown": "What you chose and why.", "footerMarkdown": "The tradeoff or limitation." },
+              { "title": "Evidence", "markdown": "What you tested or observed.", "footerMarkdown": "Link sources where useful." }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "example",
+        "title": "A concrete example",
+        "introMarkdown": "Optional. Remove section if it adds no value.",
+        "blocks": [
+          { "type": "code", "title": "Example", "language": "text", "code": "Replace with a real, safe example.", "captionMarkdown": "Explain setup and assumptions." },
+          { "type": "callout", "tone": "warning", "markdown": "Replace with real limitations or remove this block." }
+        ]
+      }
+    ],
+    "notes": ["DRAFT: replace template text before importing into a published environment."]
+  }
+}

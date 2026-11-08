@@ -1,6 +1,6 @@
 # MonatroxPortfolio
 
-.NET 10 modular monolith API, prerendered Blazor WebAssembly/MudBlazor frontend, EF Core/SQLite, Aspire + Podman and smtp4dev. Current work: [docs/wasm-migration.md](docs/wasm-migration.md). Original baseline: [docs/v1-plan.md](docs/v1-plan.md).
+.NET 10 modular monolith API, prerendered Blazor WebAssembly/MudBlazor frontend, EF Core/SQLite, Aspire + Podman and smtp4dev. Project-page authoring: [docs/project-pages.md](docs/project-pages.md). Contact/email behavior: [docs/contact.md](docs/contact.md). Current design: [docs/professional-design.md](docs/professional-design.md); accepted header uses original white/lime logo in avatar bubble inside floating capsule. Hosting milestone: [docs/wasm-migration.md](docs/wasm-migration.md). Original baseline: [docs/v1-plan.md](docs/v1-plan.md).
 
 ## Run locally
 
@@ -25,12 +25,12 @@ bash scripts/dev.sh         # Aspire: migrations -> API -> Blazor; smtp4dev alon
 ```
 
 - Portfolio: http://127.0.0.1:5420
-- Browser API gateway: http://127.0.0.1:5420/api/profile and `/api/projects`, `/api/projects/{id}`
+- Browser API gateway: http://127.0.0.1:5420/api/profile and `/api/projects`, `/api/projects/{id}`, `/api/projects/{id}/page`
 - Independently hosted API: http://127.0.0.1:5410/api/profile
 - smtp4dev inbox: http://127.0.0.1:5430
 - Aspire dashboard: http://127.0.0.1:15400 (login link printed in AppHost output)
 
-All published development endpoints are loopback-only, including Podman container bindings. SMTP port is allocated dynamically; Aspire shows it and supplies `Smtp:Host`/`Smtp:Port` to API. No application sends mail yet. smtp4dev's inbox is disposable; no persistent mail volume, outbound relay or production email service is configured.
+All published development endpoints are loopback-only, including Podman container bindings. SMTP port is allocated dynamically; Aspire shows it and supplies `Smtp:Host`/`Smtp:Port` to API. Contact Me sends fixed-recipient messages to smtp4dev in local capture mode; **these are not delivered to zac@monatrox.com**. Form explicitly identifies capture mode. Inbox is disposable; no persistent mail volume, outbound relay or production email service is configured.
 
 Normal startup applies migrations only. It **does not import content**. An unpopulated profile displays an import instruction; an API outage displays an error with Retry. `/health` and `/alive` check process health, not database readiness or imported content. Ctrl+C stops Aspire's managed processes/containers.
 
@@ -40,17 +40,18 @@ SQLite lives at `data/portfolio.db`, ignored by Git. To use another existing dat
 
 ### Content updates
 
-Edit [content/profile.json](content/profile.json) and [content/projects.json](content/projects.json), then run:
+Edit [content/profile.json](content/profile.json), legacy [content/projects.json](content/projects.json), or individual `content/project-pages/*.json` case studies. New pages start from `content/project-page.template.json`; [authoring guide](docs/project-pages.md) covers blocks, schema/editor help and evidence notes. Then run:
 
 ```bash
+bash scripts/dev.sh validate  # No database opened/modified.
 bash scripts/dev.sh import
 ```
 
-Imports validate both documents before writes. Unknown fields, missing required fields, duplicate IDs, invalid categories and unsafe URL schemes are rejected. Stable IDs update existing rows; new IDs add rows. Omitted rows/collection items are **not deleted**. Changing an ID adds a new record rather than renaming the old one. Each module commits independently; a later storage failure can leave an earlier module imported. Fix the problem and rerun; back up data before operational changes.
+Imports validate every module document and discovered project file before writes. Unknown fields, missing required fields, duplicate IDs, invalid categories and unsafe URL schemes are rejected. Stable IDs update existing rows; new IDs add rows. Omitted rows/collection items are **not deleted**. Changing an ID adds a new record rather than renaming the old one. Each module commits independently; a later storage failure can leave an earlier module imported. Fix the problem and rerun; back up data before operational changes.
 
 Project link/thumbnail references accept HTTP(S), relative paths, and root-relative web paths such as `/images/project.png`. Network-path URLs (`//host`), backslashes, control characters, and file/script schemes are rejected.
 
-Provided content deliberately preserves the old source's biography, 44 skills, career/education, social `#` links and five dummy projects. Project detail image/description/additional-information sections remain visual placeholders, not completed content. No old databases or Identity data were imported.
+Provided content preserves the old source's biography, 44 skills, career/education. LinkedIn/GitHub use supplied real URLs; Discord shows `monatrox` with Copy rather than a guessed profile link. Email opens validated Contact Me modal. Five dummy projects and their placeholder dialog were removed; CCF, Distill and this portfolio's architecture demo are published. Importer regression fixtures remain test-only. Distill is self-contained, with in-document setup examples and one repository-root link rather than file links. CCF and Distill have reference-derived draft case studies in scrollable homepage dialogs, with the same shared content available at dedicated URLs for direct/new-tab access; claims/evidence are author-supplied, not independently verified or approved for production publication. No old databases or Identity data were imported.
 
 ### Run without containers
 
@@ -100,15 +101,15 @@ Or run just browser smoke:
 dotnet run --project Tests/MonatroxPortfolio.BrowserTests -- http://127.0.0.1:5420
 ```
 
-Browser check expects the supplied sample content. Covers HTML content without JavaScript, WASM runtime, no startup API refetch or Server circuits, dark background, no heading autofocus, skills/background toggles, keyboard dialog, placeholders, carousel, offline local interactions and same-origin 404/503 recovery through Retry. On Nobara, Playwright warns and uses its Ubuntu fallback build; local smoke passed. No official Playwright OS-support, screenshot-perfect/mobile/production acceptance claim.
+Browser check expects supplied portfolio content and imported CCF/Distill/Portfolio pages. Covers no-JS HTML, WASM runtime, no startup API refetch/Server circuits, professional/gamer palettes, permanent avatar-bubble capsule in both modes with original white/lime logo, contrasting header text, no preview controls and mobile overflow checks, person-focused labels without mode/slogan clutter, oversized stacked selectors/opposed icons, professional portrait/gamer logo swap, mode-specific About portraits, aligned About/supporting cards, LinkedIn/GitHub targets, Discord copy, local-capture-only email form with validation/focus return/light-dark/mobile layouts and draft-preserving 503/429 handling, stable selector colors during blocked WASM startup/after handoff/without JS, identity-first landing screen with below-fold biography/projects, state-preserving keyboard view switching, no heading autofocus, skip-link/top-link focus, skills/background toggles, keyboard dialog/focus return, exactly three real project-grid entries without demo cards, scrollable case-study dialogs with unchanged portfolio URL/title, focus/scroll restoration, native Ctrl-click/direct-page access, full no-JS dedicated-page content and no handoff refetch, padded keyboard workflow tabs with colored active indicators, intact inline Markdown, code copy, native disclosures, offline calculator controls, missing-page/503 recovery and 320px–1366px page overflow checks, 1920×1080/1366×768 landing-screen fit, 1920px/1366px/1024px card alignment and basic 320px/390px/768px overflow checks, reduced motion, offline local interactions and same-origin 404/503 recovery through Retry. Review screenshots are written to `/tmp/monatrox-professional-design/` on Linux. On Nobara, Playwright uses its Ubuntu fallback build. No official Playwright OS-support, full accessibility/responsive audit, screenshot-perfect or production acceptance claim.
 
 ## Architecture
 
-- `Modules/Profile` and `Modules/Projects`: Application, Domain, Infrastructure, Public, Tests.
+- `Modules/Profile`, `Modules/Projects` and `Modules/Contact`: Application, Domain, Infrastructure, Public, Tests. Contact owns validated public email submissions/SMTP, with no message database or EF migration.
 - Endpoints/use cases/validation/Public implementations belong to **Application**; EF mappings, contexts, migrations and persistence implementations belong to **Infrastructure**.
 - Cross-module access uses only provider **Public** projects. Domain/Public remain framework-free. No foreign table access or shared business entity library.
 - API host composes modules. `Hosts/MonatroxPortfolio.Blazor` owns HTML shell, prerender HTTP registration and transport-only YARP gateway; it references client project and shared service defaults. `Hosts/MonatroxPortfolio.Blazor.Client` owns UI/typed HTTP client and references only module Public contracts. Client contains no server-framework/service-default/database dependencies. Frontend never accesses backend implementations.
-- Each module has its own prefixed tables and migration history (`__ProfileMigrations`, `__ProjectsMigrations`) in one file. API/frontend startup never applies migrations.
+- Profile and Projects have their own prefixed tables and migration history (`__ProfileMigrations`, `__ProjectsMigrations`) in one file; Contact has no database. API/frontend startup never applies migrations.
 - `Shared` contains technical contracts and `MonatroxPortfolio.ServiceDefaults` health/telemetry/discovery helpers. Migration/import interfaces are host tooling, not module-to-module business APIs.
 - Profile collections have read-only views and guarded domain add methods. EF hydrates their backing fields; imports update/add matching IDs without exposing mutable collections.
 - No required generic repository, mediator, messaging broker or distributed cache.
@@ -126,4 +127,4 @@ Use Projects.Infrastructure for project schema changes. Do not use `EnsureCreate
 
 ## Dependency notes
 
-SDK/package/image pins are versioned. SDK 10.0.114 and runtime 10.0.14 support patched Blazor WASM packages/browser runtime 10.0.14 and Release linker. Frontend host requires runtime 10.0.14; EF remains pinned to 10.0.9, MudBlazor to 9.11.0, Aspire to 13.6.0 and YARP to 2.3.0. Explicit patched native SQLite and MessagePack dependencies address upstream transitive advisories; warnings are not suppressed. Review/update pins and audit dependencies before deployment. Professional/gamer redesign, diagonal identity selector, authentication/admin, Contact Me behavior and production hosting remain future work.
+SDK/package/image pins are versioned. SDK 10.0.114 and runtime 10.0.14 support patched Blazor WASM packages/browser runtime 10.0.14 and Release linker. Frontend host requires runtime 10.0.14; EF remains pinned to 10.0.9, MudBlazor to 9.11.0, Markdig to 1.6.0, MailKit to 4.18.2, Aspire to 13.6.0 and YARP to 2.3.0. Explicit patched native SQLite and MessagePack dependencies address upstream transitive advisories; warnings are not suppressed. Review/update pins and audit dependencies before deployment. Professional visual draft is active; further design refinement, full gamer presentation/diagonal entry, authentication/admin, real-email provider/deployment hardening and production hosting remain future work. Contact limits/privacy and server-only SMTP configuration are documented in [docs/contact.md](docs/contact.md).

@@ -1,0 +1,8 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../MonatroxPortfolio.Contact.Domain/MonatroxPortfolio.Contact.Domain.csproj" />
+    <ProjectReference Include="../MonatroxPortfolio.Contact.Public/MonatroxPortfolio.Contact.Public.csproj" />
+    <ProjectReference Include="../../../Shared/MonatroxPortfolio.Shared.Contracts/MonatroxPortfolio.Shared.Contracts.csproj" />
+  </ItemGroup>
+</Project>

@@ -16,6 +16,12 @@ public static class ProjectEndpoints
             return result.IsSuccess ? Results.Ok(result.Value) : Results.Problem(
                 statusCode: StatusCodes.Status404NotFound, title: result.Error!.Code, detail: result.Error.Message);
         });
+        endpoints.MapGet("/api/projects/{id}/page", async (string id, IProjectQueries queries, CancellationToken ct) =>
+        {
+            var result = await queries.GetPageAsync(id, ct);
+            return result.IsSuccess ? Results.Ok(result.Value) : Results.Problem(
+                statusCode: StatusCodes.Status404NotFound, title: result.Error!.Code, detail: result.Error.Message);
+        });
         return endpoints;
     }
 }

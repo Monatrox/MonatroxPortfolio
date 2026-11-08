@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Logging;
 using MonatroxPortfolio.Blazor;
+using MonatroxPortfolio.Projects.Public;
+using MonatroxPortfolio.Shared.Contracts;
 
 namespace MonatroxPortfolio.IntegrationTests;
 
@@ -22,6 +24,9 @@ public sealed class FrontendTests
         private readonly WebApplication app;
         private int profileRequests;
         private int projectRequests;
+        private int pageRequests;
+        public bool UnsafeMarkdown { get; set; }
+        public int PageRequests => Volatile.Read(ref pageRequests);
         public HttpStatusCode ProfileStatus { get; set; } = HttpStatusCode.OK;
         public int ProfileRequests => Volatile.Read(ref profileRequests);
         public int ProjectRequests => Volatile.Read(ref projectRequests);
@@ -43,7 +48,19 @@ public sealed class FrontendTests
             app.MapGet("/api/projects", () =>
             {
                 Interlocked.Increment(ref projectRequests);
-                return Results.Text(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "content/projects.json")), "application/json");
+                var projects = Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory, "content/project-pages"), "*.json")
+                    .Select(file => JsonSerializer.Deserialize<ProjectImportDto>(File.ReadAllText(file), ContentJson.Options)!)
+                    .OrderBy(x => x.SortOrder)
+                    .Select(x => new ProjectDto(x.Id, x.Name, x.Description, x.ThumbnailSrc, x.Link, x.SortOrder));
+                return Results.Json(projects);
+            });
+            app.MapGet("/api/projects/{id}/page", (string id) =>
+            {
+                Interlocked.Increment(ref pageRequests);
+                if (id is not ("ccf" or "distill" or "portfolio")) return Results.NotFound();
+                var input = JsonSerializer.Deserialize<ProjectImportDto>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "content/project-pages", id + ".json")), ContentJson.Options)!;
+                var document = UnsafeMarkdown ? input.Page! with { Notes = ["<script id='unsafe'>alert(1)</script>", "[bad](javascript:alert%281%29)"] } : input.Page!;
+                return Results.Json(new ProjectPageDto(id, document));
             });
             app.MapGet("/api/echo", (HttpRequest request) => Results.Json(new { Path = request.Path.Value, Query = request.QueryString.Value }));
             app.MapGet("/api/refused", () => Results.Problem(statusCode: 409, title: "upstream.conflict", detail: "Preserve this response."));
@@ -64,13 +81,66 @@ public sealed class FrontendTests
         using var client = factory.CreateClient();
         var html = await client.GetStringAsync("/");
         Assert.Contains("Team Lead at Falkon Technologies", html);
-        Assert.Contains("Project 1", html);
+        Assert.Contains("CCF", html);
+        Assert.Contains("Distill", html);
+        Assert.Contains("Read Portfolio case study", html);
+        Assert.DoesNotContain("Open Project 1 details", html);
         Assert.Contains("\"type\":\"webassembly\"", html);
         Assert.Contains("Blazor-WebAssembly-Component-State:", html);
         Assert.DoesNotContain("\"type\":\"server\"", html);
         Assert.DoesNotContain(upstream.Address, html);
         Assert.Equal(1, upstream.ProfileRequests);
         Assert.Equal(1, upstream.ProjectRequests);
+    }
+
+    [Theory]
+    [InlineData("ccf", "CCF")]
+    [InlineData("distill", "Distill")]
+    [InlineData("portfolio", "Portfolio")]
+    public async Task Project_pages_prerender_full_body_and_handoff_once(string id, string title)
+    {
+        await using var upstream = new UpstreamApi();
+        await upstream.StartAsync();
+        await using var factory = new FrontendFactory(upstream.Address);
+        using var client = factory.CreateClient();
+        var html = await client.GetStringAsync("/projects/" + id);
+        Assert.Contains(">" + title + "</h1>", html);
+        Assert.Contains("Blazor-WebAssembly-Component-State:", html);
+        Assert.DoesNotContain("\"type\":\"server\"", html);
+        Assert.Equal(1, upstream.PageRequests);
+        Assert.Equal(0, upstream.ProfileRequests);
+        Assert.Equal(0, upstream.ProjectRequests);
+        if (id == "ccf") Assert.Contains("No production records are loaded.", html);
+        else if (id == "distill")
+        {
+            Assert.Contains("99.90%", html);
+            Assert.Contains("&lt;DistillClient&gt;", html);
+            Assert.Contains("The <code>ILogger</code> provider batches", html);
+            Assert.DoesNotContain("github.com/Monatrox/distill/blob/", html);
+            Assert.Contains("Optional startup sink manifest", html);
+        }
+        else
+        {
+            Assert.Contains("Three modules. One API.", html);
+            Assert.Contains("Intentionally overengineered.", html);
+            Assert.Contains("demonstration of Aspire and a modular monolith", html);
+            Assert.Contains("Aspire: run it, then inspect it", html);
+            Assert.Contains("Where it&#x27;s overengineered", html);
+            Assert.DoesNotContain("migration", html, StringComparison.OrdinalIgnoreCase);
+        }
+    }
+
+    [Fact]
+    public async Task Markdown_does_not_execute_html_or_unsafe_links_even_when_upstream_bypasses_import_validation()
+    {
+        await using var upstream = new UpstreamApi { UnsafeMarkdown = true };
+        await upstream.StartAsync();
+        await using var factory = new FrontendFactory(upstream.Address);
+        using var client = factory.CreateClient();
+        var html = await client.GetStringAsync("/projects/ccf");
+        Assert.Contains("&lt;script", html);
+        Assert.DoesNotContain("<script id=", html);
+        Assert.DoesNotContain("href=\"javascript:", html);
     }
 
     [Fact]

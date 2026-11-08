@@ -1,0 +1,22 @@
+<div class="case-tabs">
+    @if (RendererInfo.IsInteractive)
+    {
+        <MudTabs Elevation="0" Rounded="true" Color="Color.Default" SliderColor="Color.Primary" aria-label="Example workflows">
+            @foreach (var tab in Block.Tabs)
+            {
+                <MudTabPanel Text="@tab.Title"><div class="case-workflow-panel"><ProjectBlocks Blocks="tab.Blocks" /></div></MudTabPanel>
+            }
+        </MudTabs>
+    }
+    else
+    {
+        @foreach (var tab in Block.Tabs)
+        {
+            <div class="case-tab-fallback"><h3>@tab.Title</h3><ProjectBlocks Blocks="tab.Blocks" /></div>
+        }
+    }
+</div>
+@if (Block.CaptionMarkdown is not null)
+{ <div class="case-caption"><ProjectMarkdown Text="@Block.CaptionMarkdown" /></div> }
+
+@code { [Parameter, EditorRequired] public TabsBlockDto Block { get; set; } = null!; }

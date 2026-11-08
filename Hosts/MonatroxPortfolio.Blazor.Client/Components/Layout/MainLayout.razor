@@ -1,23 +1,42 @@
 @inherits LayoutComponentBase
 
-<MudThemeProvider Theme="Theme" IsDarkMode="true" />
+<MudThemeProvider Theme="Theme" IsDarkMode="_gamerView" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
 
-<MudLayout data-renderer="@RendererInfo.Name">
-    <MudAppBar Elevation="2">
-        <MudImage ObjectFit="ObjectFit.Contain" Src="Content/Images/MX Abstract Logo Cleaned_Letters_DarkTheme.png"
-                  Alt="Monatrox" Style="height:75%; width:auto" />
-        <MudSpacer />
-        <MudIconButton Icon="@Icons.Material.Filled.Apps" Color="Color.Inherit" Edge="Edge.End"
-                       Disabled="true" aria-label="Navigation placeholder" />
+<MudLayout Class="portfolio-shell" data-renderer="@RendererInfo.Name" data-view="@(_gamerView ? "gamer" : "professional")">
+    <a class="skip-link" href="#main-content" @onclick="FocusMainAsync" @onclick:preventDefault>Skip to content</a>
+    <MudAppBar Fixed="false" Elevation="0" Class="site-header">
+        <div class="site-header-inner">
+            <MudLink Href="/" Underline="Underline.None" Class="site-brand" aria-label="Home">
+                <span class="brand-mark">
+                    <MudImage Src="Content/Images/MX Abstract Logo Cleaned_Letters_DarkTheme.png" Alt="MX logo" ObjectFit="ObjectFit.Contain" />
+                </span>
+                <span class="brand-wordmark">@(_gamerView ? "Monatrox" : "Zac Taylor")</span>
+            </MudLink>
+            <nav class="site-nav" aria-label="Sections">
+                <div class="nav-primary">
+                    <MudLink Href="/#projects" Underline="Underline.None" Color="Color.Inherit">Work <span aria-hidden="true">01</span></MudLink>
+                    <MudLink Href="/#skills" Underline="Underline.None" Color="Color.Inherit">Expertise <span aria-hidden="true">02</span></MudLink>
+                </div>
+                <div class="nav-secondary">
+                    <MudLink Href="/#background" Underline="Underline.None" Color="Color.Inherit">Background <span aria-hidden="true">03</span></MudLink>
+                </div>
+            </nav>
+        </div>
     </MudAppBar>
-    <MudMainContent>
-        <MudContainer Class="mt-16 px-8" MaxWidth="MaxWidth.False">@Body</MudContainer>
-    </MudMainContent>
-    <MudDivider Class="mt-12" DividerType="DividerType.Middle" />
-    <MudText Class="ma-3" Typo="Typo.body1" Align="Align.Center">Created by Monatrox - 2024</MudText>
+    <main class="portfolio-main" id="main-content" tabindex="-1" @ref="_main">
+        <CascadingValue Name="GamerView" Value="_gamerView">
+            <CascadingValue Name="SelectView" Value="EventCallback.Factory.Create<bool>(this, SelectView)">
+                @Body
+            </CascadingValue>
+        </CascadingValue>
+    </main>
+    <footer class="site-footer">
+        <span>Zac Taylor <span aria-hidden="true">/</span> Monatrox</span>
+        <MudLink Href="#main-content" OnClick="FocusMainAsync" Underline="Underline.None" role="link">Back to top ↑</MudLink>
+    </footer>
 </MudLayout>
 
 <div id="blazor-error-ui" role="alert">
@@ -25,12 +44,31 @@
 </div>
 
 @code {
+    private bool _gamerView;
+    private ElementReference _main;
+    private void SelectView(bool gamer) => _gamerView = gamer;
+    private async Task FocusMainAsync() => await _main.FocusAsync();
+
     private static readonly MudTheme Theme = new()
     {
+        PaletteLight = new PaletteLight()
+        {
+            Background = "#F5F3EC", Surface = "#FCFBF7", BackgroundGray = "#ECEDE3",
+            Primary = "#526B17", PrimaryContrastText = "#FFFFFF", Secondary = "#A8D438",
+            TextPrimary = "#252B23", TextSecondary = "#62695C",
+            AppbarBackground = "#F5F3EC", AppbarText = "#252B23",
+            Info = "#1F617F", Error = "#A73524", Success = "#2F641D",
+            Divider = "#D5D8CB", LinesDefault = "#D5D8CB"
+        },
         PaletteDark = new PaletteDark()
         {
-            Background = "#181818", Primary = "#99E500", TextPrimary = "#F4F4F4", Secondary = "#E50099",
-            AppbarBackground = "#333538", DrawerBackground = "#333538", Surface = "#333538", BackgroundGray = "#333538"
-        }
+            Background = "#181A18", Surface = "#232720", BackgroundGray = "#1F251B",
+            Primary = "#B0DC4A", PrimaryContrastText = "#252B23", Secondary = "#A8D438",
+            TextPrimary = "#EEF1E9", TextSecondary = "#BBC4B1",
+            AppbarBackground = "#181A18", AppbarText = "#EEF1E9",
+            Info = "#8AC7F0", Error = "#FFB4A8", Success = "#B4DA91",
+            Divider = "#454E3F", LinesDefault = "#454E3F"
+        },
+        LayoutProperties = new() { DefaultBorderRadius = "3px" }
     };
 }

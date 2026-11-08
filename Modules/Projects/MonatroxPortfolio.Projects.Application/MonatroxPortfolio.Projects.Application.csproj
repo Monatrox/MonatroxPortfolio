@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Markdig" />
     <ProjectReference Include="../MonatroxPortfolio.Projects.Domain/MonatroxPortfolio.Projects.Domain.csproj" />
     <ProjectReference Include="../MonatroxPortfolio.Projects.Public/MonatroxPortfolio.Projects.Public.csproj" />
   </ItemGroup>

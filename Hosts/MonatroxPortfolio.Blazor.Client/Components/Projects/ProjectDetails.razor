@@ -1,0 +1,89 @@
+@implements IDisposable
+@using System.Net
+@using System.Text.Json
+@inject PortfolioApiClient Api
+@inject ILogger<ProjectDetails> Logger
+
+@if (!Embedded)
+{
+    <PageTitle>@(Page?.Document.Hero.Title ?? "Project") — @(GamerView ? "Monatrox" : "Zac Taylor")</PageTitle>
+}
+
+@if (Error is not null)
+{
+    <div class="page-message">
+        <MudAlert Severity="Severity.Error" role="alert">@Error</MudAlert>
+        @if (!NotFound) { <MudButton OnClick="LoadAsync" Disabled="@(!RendererInfo.IsInteractive)">Retry</MudButton> }
+        @if (!Embedded) { <MudLink Href="/#projects">Back to my work</MudLink> }
+    </div>
+}
+else if (Page is { } model)
+{
+    <article class="case-study">
+        <header class="case-hero">
+            <div>
+                <p class="case-eyebrow">@model.Document.Hero.Eyebrow</p>
+                <h1>@model.Document.Hero.Title</h1>
+                @if (model.Document.Hero.Context is not null) { <p class="case-context">@model.Document.Hero.Context</p> }
+                <p class="case-subtitle">@model.Document.Hero.Subtitle</p>
+                <div class="case-intro"><ProjectMarkdown Text="@model.Document.Hero.IntroMarkdown" /></div>
+                <div class="case-tags">@foreach (var tag in model.Document.Hero.Tags) { <span>@tag</span> }</div>
+            </div>
+            <div class="case-hero-visual"><ProjectBlocks Blocks="model.Document.Hero.Visual" /></div>
+        </header>
+        <div class="case-overview">
+            @foreach (var fact in model.Document.Overview) { <div><h2>@fact.Title</h2><ProjectMarkdown Text="@fact.Markdown" /></div> }
+        </div>
+        <div class="case-introduction"><ProjectBlocks Blocks="@(model.Document.Introduction ?? [])" /></div>
+        @foreach (var part in model.Document.Sections)
+        {
+            <section class="case-section" id="@part.Id" aria-labelledby="@($"{part.Id}-title")">
+                <div class="case-section-head"><span class="case-section-num" aria-hidden="true">@((Array.IndexOf(model.Document.Sections, part) + 1).ToString("00"))</span><div><h2 id="@($"{part.Id}-title")">@part.Title</h2>@if (!string.IsNullOrWhiteSpace(part.IntroMarkdown)) { <ProjectMarkdown Text="@part.IntroMarkdown" /> }</div></div>
+                <div class="case-section-body"><ProjectBlocks Blocks="part.Blocks" /></div>
+            </section>
+        }
+        <aside class="case-notes" aria-label="Sources and qualifications">
+            @foreach (var note in model.Document.Notes) { <ProjectMarkdown Text="@note" /> }
+        </aside>
+    </article>
+}
+else
+{
+    <div class="page-message"><MudProgressCircular Indeterminate="true" Color="Color.Primary" aria-label="Loading project page" /></div>
+}
+
+@code {
+    [Parameter] public string Id { get; set; } = "";
+    [Parameter] public bool Embedded { get; set; }
+    [CascadingParameter(Name = "GamerView")] public bool GamerView { get; set; }
+    [PersistentState] public ProjectPageDto? Page { get; set; }
+    [PersistentState] public string? LoadedId { get; set; }
+    [PersistentState] public string? Error { get; set; }
+    [PersistentState] public bool NotFound { get; set; }
+
+    private CancellationTokenSource? _load;
+    protected override async Task OnParametersSetAsync()
+    {
+        if (LoadedId != Id) await LoadAsync();
+    }
+    private async Task LoadAsync()
+    {
+        _load?.Cancel(); _load?.Dispose();
+        _load = new CancellationTokenSource();
+        var token = _load.Token;
+        Page = null; Error = null; NotFound = false; LoadedId = Id;
+        try
+        {
+            var page = await Api.GetProjectPageAsync(Id, token);
+            if (!token.IsCancellationRequested) Page = page;
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidDataException)
+        {
+            Logger.LogWarning(ex, "Project page unavailable: {ProjectId}", Id);
+            NotFound = ex is HttpRequestException { StatusCode: HttpStatusCode.NotFound };
+            Error = NotFound ? "This project page is not available." : "Project page is unavailable. Please retry.";
+        }
+    }
+    public void Dispose() { _load?.Cancel(); _load?.Dispose(); }
+}

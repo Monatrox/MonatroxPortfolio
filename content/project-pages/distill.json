@@ -1,0 +1,567 @@
+{
+  "id": "distill",
+  "name": "Distill",
+  "description": "A Rust service for structured logs and aggregates.",
+  "thumbnailSrc": "Content/Images/MX Abstract Logo Cleaned_Letters_DarkTheme.png",
+  "link": "/projects/distill",
+  "sortOrder": 1,
+  "page": {
+    "schemaVersion": 1,
+    "hero": {
+      "eyebrow": "Architecture & developer guide · v0.1.0",
+      "title": "Distill",
+      "subtitle": "A Rust service for structured logs and aggregates.",
+      "introMarkdown": "Applications send events to named channels. Each channel decides which events retain their full detail, how the stream is summarized, and where the results are stored.",
+      "tags": [
+        "Rust / Tokio / Axum",
+        "RabbitMQ",
+        ".NET / Aspire",
+        "Self-hosted · MIT"
+      ],
+      "visual": [
+        {
+          "type": "panel",
+          "blocks": [
+            {
+              "type": "markdown",
+              "markdown": "One channel · warning threshold · count"
+            },
+            {
+              "type": "markdown",
+              "markdown": "**orders.production**\n\nStructured events from your applications"
+            },
+            {
+              "type": "table",
+              "caption": "Illustrative severity routing",
+              "headers": [
+                "Level",
+                "Policy"
+              ],
+              "rows": [
+                [
+                  "Trace → Info",
+                  "**Contribute to the count**\n\nIndividual detail is not stored in the sink"
+                ],
+                [
+                  "Warning → Critical",
+                  "**Count + full event**\n\nPreserve the payload and context"
+                ]
+              ]
+            },
+            {
+              "type": "markdown",
+              "markdown": "Every event counts, including errors. Remove the aggregator to store every event individually."
+            }
+          ],
+          "title": null,
+          "tone": "surface"
+        }
+      ],
+      "context": null
+    },
+    "overview": [
+      {
+        "title": "For application developers",
+        "markdown": "Keep structured logging; declare the storage policy once per channel version."
+      },
+      {
+        "title": "For operating a service",
+        "markdown": "Retain incident detail alongside summaries of repetitive traffic."
+      },
+      {
+        "title": "For the data owner",
+        "markdown": "Write to PostgreSQL, MySQL, SQL Server, or a conforming HTTP receiver. Query results there."
+      }
+    ],
+    "sections": [
+      {
+        "id": "architecture",
+        "title": "Where the responsibilities sit",
+        "introMarkdown": "HTTP adapters translate requests. Channel actors own processing state. RabbitMQ holds delivery work; SQLite holds recovery state; the configured sink holds the results.",
+        "blocks": [
+          {
+            "type": "panel",
+            "blocks": [
+              {
+                "type": "diagram",
+                "nodes": [
+                  {
+                    "title": "Application",
+                    "markdown": "JSON · Protobuf \n OTLP/HTTP JSON · .NET",
+                    "eyebrow": "Produce",
+                    "tone": "plain"
+                  },
+                  {
+                    "title": "Axum HTTP",
+                    "markdown": "Authentication, limits, \n decoding and validation",
+                    "eyebrow": "Adapt",
+                    "tone": "plain"
+                  },
+                  {
+                    "title": "Channel actors",
+                    "markdown": "Explicit name + version \n Bounded mailboxes",
+                    "eyebrow": "Classify",
+                    "tone": "plain"
+                  },
+                  {
+                    "title": "RabbitMQ",
+                    "markdown": "Publication confirmed \n before acceptance",
+                    "eyebrow": "Durable admission",
+                    "tone": "dark"
+                  }
+                ],
+                "layout": "chain"
+              },
+              {
+                "type": "panel",
+                "blocks": [
+                  {
+                    "type": "columns",
+                    "blocks": [
+                      {
+                        "type": "markdown",
+                        "markdown": "Persist the event with its stable identity. Acknowledge after the write succeeds."
+                      },
+                      {
+                        "type": "markdown",
+                        "markdown": "Commit the source ID and updated window together, then acknowledge the input. At flush, commit the snapshot and pending output together; publish it for sink delivery."
+                      }
+                    ],
+                    "columns": 2
+                  }
+                ],
+                "title": "After admission: consumers process the declared routes",
+                "tone": "accent"
+              },
+              {
+                "type": "columns",
+                "blocks": [
+                  {
+                    "type": "markdown",
+                    "markdown": "**Accepted** = broker-confirmed admission. \n The sink write can still be pending."
+                  },
+                  {
+                    "type": "markdown",
+                    "markdown": "**Recovery** requires retained broker data \n and the private SQLite state volume."
+                  },
+                  {
+                    "type": "markdown",
+                    "markdown": "**Reading results** uses your sink’s tools. \n Distill has no built-in log-search UI."
+                  }
+                ],
+                "columns": 3
+              },
+              {
+                "type": "markdown",
+                "markdown": "RabbitMQ is a delivery boundary, not the final log store. SQLite stores configuration, duplicate history, checkpoints, and pending aggregate outputs."
+              }
+            ],
+            "title": null,
+            "tone": "surface"
+          },
+          {
+            "type": "table",
+            "caption": "Implementation responsibilities and the reason for each boundary",
+            "headers": [
+              "Area",
+              "Owns",
+              "Why this boundary helps"
+            ],
+            "rows": [
+              [
+                "Domain contracts",
+                "Events, channels, aggregate specifications",
+                "Shared data contracts stay separate from HTTP and storage drivers."
+              ],
+              [
+                "Channel processing",
+                "Routing, actors, aggregation, schemas, recovery",
+                "A channel’s mutable window has one owner; policy and recovery can be exercised directly."
+              ],
+              [
+                "Broker delivery",
+                "Publication, consumers, retries, dead letters",
+                "Delivery failures and acknowledgements follow one broker protocol."
+              ],
+              [
+                "Storage adapters",
+                "`Sink` contract and four drivers",
+                "Drivers share event and aggregate write semantics; the core does not need SQL dialect logic."
+              ],
+              [
+                "HTTP API and configuration",
+                "API adapters; process settings and CLI",
+                "Transport details and deployment settings have distinct places to change."
+              ],
+              [
+                ".NET integrations",
+                "Client, `ILogger` provider, Aspire integration",
+                "Direct API users do not need the logging provider or orchestration package."
+              ]
+            ]
+          }
+        ]
+      },
+      {
+        "id": "usage",
+        "title": "Declare a policy. Send an event.",
+        "introMarkdown": "This example counts checkout activity and keeps warnings and errors intact. It assumes a running Distill instance and a registered sink named `primary`.",
+        "blocks": [
+          {
+            "type": "columns",
+            "blocks": [
+              {
+                "type": "panel",
+                "blocks": [
+                  {
+                    "type": "markdown",
+                    "markdown": "1 Create an immutable channel version"
+                  },
+                  {
+                    "type": "code",
+                    "title": "Private admin · POST /channels",
+                    "language": "json",
+                    "code": "{\n  \"name\": \"checkout.requests\",\n  \"version\": \"1\",\n  \"sink_id\": \"primary\",\n  \"preset\": \"errors_only\",\n  \"aggregator\": {\n    \"function\": \"count\",\n    \"granularity\": \"per_t_time\",\n    \"parameter\": 60\n  }\n}"
+                  },
+                  {
+                    "type": "markdown",
+                    "markdown": "The preset sets the threshold to `warning`. The override changes its default five-minute count to 60 seconds. Identical declarations can be repeated; changed content requires a new version."
+                  }
+                ],
+                "title": null,
+                "tone": "plain"
+              },
+              {
+                "type": "panel",
+                "blocks": [
+                  {
+                    "type": "markdown",
+                    "markdown": "2 Write through the channel-bound endpoint"
+                  },
+                  {
+                    "type": "code",
+                    "title": "Public ingest · shell",
+                    "language": "shell",
+                    "code": "curl \"$DISTILL_URL/channels/checkout.requests/events\" \\\n  -H \"X-API-Key: $DISTILL_INGEST_KEY\" \\\n  -H 'Content-Type: application/json' \\\n  -d '{\n    \"version\": \"1\",\n    \"severity\": \"error\",\n    \"message\": \"Payment authorization failed\",\n    \"attributes\": {\n      \"order_id\": \"ord-123\",\n      \"provider\": \"payments-a\"\n    },\n    \"metadata\": { \"trace_id\": \"trace-abc\" }\n  }'"
+                  },
+                  {
+                    "type": "markdown",
+                    "markdown": "This event contributes to the count and is stored individually. The server supplies an ID and timestamp when omitted. For retry safety, supply stable values and reuse the original event."
+                  }
+                ],
+                "title": null,
+                "tone": "plain"
+              }
+            ],
+            "columns": 2
+          },
+          {
+            "type": "details",
+            "summary": "Setup and validation requests",
+            "blocks": [
+              {
+                "type": "markdown",
+                "markdown": "Start with `docker compose up --build` or `podman compose up --build`. Compose supplies Distill, RabbitMQ, and a TLS proxy; it supplies no sink. The admin listener is private to the Distill container. Run provisioning there or through a deliberately configured private network path. The localhost proxy certificate needs local trust."
+              },
+              {
+                "type": "markdown",
+                "markdown": "For a native database, migrate its schema first: `distill sink migrate primary --file sinks.json`. Alternatively, register a conforming HTTP receiver with `POST /sinks`; private receiver hosts must pass `DISTILL_SINK_ALLOWLIST`."
+              },
+              {
+                "type": "code",
+                "title": "Private admin · shell · run where the listener is reachable",
+                "language": "shell",
+                "code": "# Save the channel JSON above as channel.json.\ncurl \"$DISTILL_ADMIN_URL/channels\" \\\n  -H \"X-API-Key: $DISTILL_ADMIN_KEY\" \\\n  -H 'Content-Type: application/json' \\\n  --data-binary @channel.json\n\n# Use /channels/validate instead to validate without creating.\n# Preview routing without enqueueing an event:\ncurl \"$DISTILL_ADMIN_URL/channels/checkout.requests/test\" \\\n  -H \"X-API-Key: $DISTILL_ADMIN_KEY\" \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"version\":\"1\",\"severity\":\"error\",\"message\":\"Example\"}'"
+              },
+              {
+                "type": "markdown",
+                "markdown": "Use the configured URLs and credentials for each listener. Provision sinks through the private admin API before declaring their channels, or supply an optional startup manifest. Runtime registrations persist in SQLite; manifest changes take effect at restart. Database schemas still need explicit migration."
+              },
+              {
+                "type": "code",
+                "title": "Optional startup sink manifest · sinks.json",
+                "language": "json",
+                "code": "{\n  \"default_sink_id\": \"primary\",\n  \"sinks\": [\n    {\n      \"sink_id\": \"primary\",\n      \"driver\": \"postgres\",\n      \"connection_string_env\": \"DISTILL_POSTGRES_URL\"\n    }\n  ]\n}",
+                "captionMarkdown": "Set `DISTILL_SINKS_CONFIG_PATH` to the manifest path and provide `DISTILL_POSTGRES_URL` in the service environment. Use `connection_string_file` for a mounted secret instead. Keep database credentials out of committed manifests."
+              }
+            ]
+          },
+          {
+            "type": "columns",
+            "blocks": [
+              {
+                "type": "panel",
+                "blocks": [
+                  {
+                    "type": "markdown",
+                    "markdown": "### Use existing .NET logging code"
+                  },
+                  {
+                    "type": "markdown",
+                    "markdown": "`AddDistillClient` registers the client, logging provider, and readiness check. Aspire’s `WithReference(distill)` supplies the endpoint and key. Reconcile the finite channel set before serving traffic."
+                  },
+                  {
+                    "type": "markdown",
+                    "markdown": "For numeric aggregation, use the structured property `value`. The `metrics` preset averages `payload.value` over 60 seconds and also retains error-level events."
+                  }
+                ],
+                "title": null,
+                "tone": "plain"
+              },
+              {
+                "type": "code",
+                "title": "Application Program.cs · abbreviated",
+                "language": "csharp",
+                "code": "builder.AddDistillClient(\"distill\", options =>\n    options.DefaultChannel = \"checkout.latency\");\n\nvar app = builder.Build();\nvar client = app.Services.GetRequiredService<DistillClient>();\nawait client.ReconcileChannelAsync(new CreateChannelRequest\n{\n    Name = \"checkout.latency\", Version = \"1\",\n    SinkId = \"primary\", Preset = ChannelPreset.Metrics\n});\n\napp.Logger.LogInformation(\"Checkout took {value} ms\", 184);\napp.Run();"
+              }
+            ],
+            "columns": 2
+          },
+          {
+            "type": "callout",
+            "title": null,
+            "markdown": "**The client queue has a separate contract.**\n\nThe `ILogger` provider batches in memory and drops the newest record on overflow by default. Its callbacks report drops and failed delivery. Use the asynchronous client API when application code must handle admission failure.",
+            "tone": "warning"
+          },
+          {
+            "type": "details",
+            "summary": "Aspire hosting and other configuration choices",
+            "blocks": [
+              {
+                "type": "code",
+                "title": "AppHost · local PostgreSQL example",
+                "language": "csharp",
+                "code": "var database = builder.AddPostgres(\"pg\").AddDatabase(\"distill-db\");\nvar distill = builder.AddDistill(\"distill\")\n    .WithLocalBuild()\n    .WithSink(database, name: \"primary\")\n    .WithEnvironment(\"DISTILL_AUTO_MIGRATE\", \"true\"); // local development\n\nbuilder.AddProject<Projects.Checkout>(\"checkout\")\n    .WithReference(distill);"
+              },
+              {
+                "type": "markdown",
+                "markdown": "Adapted from `DistillTesting`. The AppHost needs a `UserSecretsId` so generated credentials survive local runs with retained volumes. Production uses explicit database migrations. The integration manages RabbitMQ and persistent state; `WithLocalBuild` uses the repository’s Dockerfile."
+              },
+              {
+                "type": "table",
+                "caption": "Common channel configuration choices",
+                "headers": [
+                  "Need",
+                  "Configuration"
+                ],
+                "rows": [
+                  [
+                    "Keep every event",
+                    "`raw_events` or `audit`; no aggregator."
+                  ],
+                  [
+                    "Count routine events; keep warnings",
+                    "`errors_only`; default count window is 300 seconds."
+                  ],
+                  [
+                    "Measure a numeric value",
+                    "`metrics` averages `payload.value`; override the function with sum, min, or max."
+                  ],
+                  [
+                    "Keep counts only below Info",
+                    "`count` also stores Info and higher individually. Override the threshold to summarize ordinary Info traffic."
+                  ],
+                  [
+                    "Validate stable payload contracts",
+                    "Attach a runtime Protobuf descriptor to the immutable channel version."
+                  ]
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "scale",
+        "title": "A fleet’s activity, without every routine record",
+        "introMarkdown": "Suppose checkout instances share one count channel. All requests contribute; only errors retain full detail. Adjust the workload to compare final sink records.",
+        "blocks": [
+          {
+            "type": "calculator",
+            "assumptionsMarkdown": "**Illustrative arithmetic, not a benchmark.** Assumes a 0.1% error rate (rounded up), one shared channel/version, one completed non-rolling count window, and no early buffer/TTL flush. Threshold is `error`; no warnings are modeled.\n\nFormula: events = instances × rate × seconds; retained records = ⌈events × 0.001⌉ + 1. This counts final event/aggregate records, not bytes, broker traffic, SQLite duplicate history, or write operations. Every source event still enters the durable path.",
+            "instances": 40,
+            "rate": 25,
+            "windowSeconds": 60,
+            "errorRate": 0.001
+          },
+          {
+            "type": "table",
+            "caption": "Practical uses in a distributed application",
+            "headers": [
+              "Operational question",
+              "Channel policy",
+              "What a developer can investigate"
+            ],
+            "rows": [
+              [
+                "Did traffic drop, or did failures rise?",
+                "Count checkout requests; retain error events with service, provider, and trace identifiers.",
+                "Compare total activity across windows, then inspect preserved failures for shared context."
+              ],
+              [
+                "Did a rollout increase latency?",
+                "Average `payload.value` in milliseconds; use separate channels per deployment cohort.",
+                "Compare cohort means and retained slow-request warnings. A mean does not provide p95 or p99."
+              ],
+              [
+                "Are workers completing useful work?",
+                "Sum processed-item values in one channel; count completion events in another.",
+                "Distinguish fewer completed jobs from smaller job sizes. Preserve failures for retries and diagnosis."
+              ]
+            ]
+          },
+          {
+            "type": "markdown",
+            "markdown": "Aggregation is per channel/version, with one function per channel; arbitrary metadata does not create separate groups. Route by region or cohort explicitly. Correlation IDs help connect retained events; they do not reconstruct routine events that were summarized."
+          }
+        ]
+      },
+      {
+        "id": "decisions",
+        "title": "The decisions behind the behavior",
+        "introMarkdown": "The strongest engineering work is at the failure boundaries: when admission succeeds, what a retry means, and which state must survive a restart.",
+        "blocks": [
+          {
+            "type": "cards",
+            "cards": [
+              {
+                "title": "Confirm admission before reporting success",
+                "markdown": "A single routed event is published to RabbitMQ before the request is accepted. Delayed sink writes do not require the producer to keep the request open.",
+                "eyebrow": null,
+                "footerMarkdown": "Cost: a broker dependency and confirmation latency on ingestion. Acceptance promises queued work, not an immediately queryable row."
+              },
+              {
+                "title": "Commit contributions before acknowledging inputs",
+                "markdown": "SQLite records the source ID, content fingerprint, and updated aggregate window in one transaction. A redelivered input can be recognized after process replacement.",
+                "eyebrow": null,
+                "footerMarkdown": "Cost: local durable state and duplicate-history growth. The broker and SQLite volumes are both part of recovery."
+              },
+              {
+                "title": "Deliver cumulative snapshots with revisions",
+                "markdown": "Rolling outputs have stable IDs and increasing revisions. Sinks accept identical retries, ignore stale revisions, and reject conflicting content at the same revision.",
+                "eyebrow": null,
+                "footerMarkdown": "HTTP receivers must implement this contract atomically; a generic webhook is insufficient. Rolling means an expanding series, not a sliding time window."
+              },
+              {
+                "title": "Make configuration identities immutable",
+                "markdown": "Applications can register sinks and reconcile channel versions at startup. Explicit producer versions coexist, so a rollout can keep the old policy active while introducing a new one.",
+                "eyebrow": null,
+                "footerMarkdown": "Changed definitions need a new version. Version retirement and cross-version merging are not automatic."
+              },
+              {
+                "title": "Bound overload instead of accumulating indefinitely",
+                "markdown": "Mailboxes, buffers, process memory accounting, and broker queues have limits. Full broker queues reject publication; delayed retries live in durable queues rather than sleeping in the consumer.",
+                "eyebrow": null,
+                "footerMarkdown": "Producers must handle failed admission. Exhausted deliveries remain in a dead-letter queue for investigation."
+              },
+              {
+                "title": "Separate administration from event ingestion",
+                "markdown": "The public router exposes ingestion and operational endpoints. Sink and channel management use a separate private listener. HTTP sinks apply outbound destination checks; native schemas use explicit migrations.",
+                "eyebrow": null,
+                "footerMarkdown": "Operators must provide a private provisioning path. Shared API keys do not supply per-client identity or channel-level permissions."
+              }
+            ],
+            "columns": 2
+          },
+          {
+            "type": "steps",
+            "steps": [
+              {
+                "title": "Sink writes revision 7",
+                "markdown": "The acknowledgement is lost. Distill cannot assume the write failed.",
+                "eyebrow": "Failure example · 1"
+              },
+              {
+                "title": "The same snapshot returns",
+                "markdown": "A durable retry carries the same aggregate ID, revision, and content.",
+                "eyebrow": "2"
+              },
+              {
+                "title": "The sink accepts the duplicate",
+                "markdown": "It leaves the stored result unchanged instead of adding the count again.",
+                "eyebrow": "3"
+              },
+              {
+                "title": "Delivery completes",
+                "markdown": "The consumer acknowledges the message. A later stale revision cannot overwrite revision 7.",
+                "eyebrow": "4"
+              }
+            ],
+            "tone": "dark"
+          }
+        ]
+      },
+      {
+        "id": "evidence",
+        "title": "Testing and current limits",
+        "introMarkdown": "Tests check event delivery, aggregate correctness, and restart recovery across the service, RabbitMQ, storage drivers, and .NET clients.",
+        "blocks": [
+          {
+            "type": "columns",
+            "blocks": [
+              {
+                "type": "panel",
+                "blocks": [
+                  {
+                    "type": "markdown",
+                    "markdown": "### What the tests cover"
+                  },
+                  {
+                    "type": "markdown",
+                    "markdown": "- **Recovery and failure injection** Broker tests cover in-flight restart, duplicate inputs, queue overflow, retry isolation, and controlled shutdown.\n- **One persistence contract, four implementations** Real-service tests check duplicate writes, newer/stale snapshots, conflicting revisions, and final persisted values.\n- **A client that accounts for application behavior** Provider checks cover burst draining, partial retries, overflow reporting, immutable enqueue snapshots, and bounded disposal.\n- **Distribution and operations are included** Fresh package-consumer tests, explicit migrations, readiness, metrics, and protected dead-letter inspection accompany release workflow gates."
+                  }
+                ],
+                "title": null,
+                "tone": "plain"
+              },
+              {
+                "type": "panel",
+                "blocks": [
+                  {
+                    "type": "markdown",
+                    "markdown": "### Results and remaining work"
+                  },
+                  {
+                    "type": "markdown",
+                    "markdown": "- **Recorded local qualification · 7 November 2026** Recorded local results report 59 Rust unit tests, four external sink contracts, .NET contracts, and package-consumer checks passing. These are recorded results, not a live CI badge.\n- **One active Distill instance per broker vhost** Distributed producers are supported; active replication of the logger is deferred. SQLite WAL requires compatible persistent local storage.\n- **Production-target validation is outstanding** Hosted release evidence and actual Aspire/Azure deployment compatibility remain unverified. Local integration workloads establish no sustained-throughput SLA.\n- **A focused processing service** No full-text search interface, percentile aggregation, automatic retention/compression, or multi-tenant access model is implemented in V1."
+                  }
+                ],
+                "title": null,
+                "tone": "plain"
+              }
+            ],
+            "columns": 2
+          },
+          {
+            "type": "panel",
+            "blocks": [
+              {
+                "type": "markdown",
+                "markdown": "Consumer example · DistillTesting / Blazor + Aspire"
+              },
+              {
+                "type": "markdown",
+                "markdown": "### The application owns its channels"
+              },
+              {
+                "type": "markdown",
+                "markdown": "The inspected AppHost supports PostgreSQL, an HTTP receiver, or a reference to an existing Distill instance. The Blazor application reconciles versioned counter and weather channels before startup. Counter events use the SDK; weather measurements use `ILogger` with `{value}`."
+              },
+              {
+                "type": "markdown",
+                "markdown": "Recorded qualification runs two producer versions, forces logger and broker restarts, and checks exact persisted aggregates after recovery. Five counter clicks produced count `5`, sum `15`, average `3`, minimum `1`, and maximum `5`."
+              }
+            ],
+            "title": null,
+            "tone": "surface"
+          }
+        ]
+      }
+    ],
+    "notes": [
+      "Based on source revision `338b655` and the DistillTesting consumer, reviewed 7 November 2026. Examples are abbreviated and setup depends on the deployment. Local qualification results are recorded evidence, not a live CI status or production guarantee.",
+      "[Repository ↗](https://github.com/Monatrox/distill)"
+    ],
+    "introduction": []
+  }
+}

@@ -11,5 +11,6 @@
     <Using Include="Xunit" />
     <Compile Include="../Support/TemporaryDirectory.cs" Link="TemporaryDirectory.cs" />
     <None Include="../../content/*.json" Link="content/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../../content/project-pages/*.json" Link="content/project-pages/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

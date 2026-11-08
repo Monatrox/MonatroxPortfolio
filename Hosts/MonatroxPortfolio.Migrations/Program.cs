@@ -1,13 +1,24 @@
+using System.Text.Json;
+using System.Text.Json.Schema;
+using System.Text.Json.Serialization.Metadata;
 using Microsoft.Extensions.Configuration;
+using MonatroxPortfolio.Projects.Public;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using MonatroxPortfolio.Profile.Infrastructure;
 using MonatroxPortfolio.Projects.Infrastructure;
 using MonatroxPortfolio.Shared.Contracts;
 
-if (args.Length != 0 && (args.Length != 2 || args[0] != "--import"))
+if (args is ["--project-schema"])
 {
-    Console.Error.WriteLine("Usage: MonatroxPortfolio.Migrations [--import <content-directory>]");
+    var options = new JsonSerializerOptions(ContentJson.Options) { TypeInfoResolver = new DefaultJsonTypeInfoResolver() };
+    Console.WriteLine(options.GetJsonSchemaAsNode(typeof(ProjectImportDto), new() { TreatNullObliviousAsNonNullable = true }).ToJsonString(new() { WriteIndented = true }));
+    return 0;
+}
+
+if (args.Length != 0 && (args.Length != 2 || args[0] is not ("--import" or "--validate")))
+{
+    Console.Error.WriteLine("Usage: MonatroxPortfolio.Migrations [--import <content-directory> | --validate <content-directory> | --project-schema]");
     return 1;
 }
 
@@ -17,7 +28,8 @@ try
 {
     var builder = Host.CreateApplicationBuilder();
     var connection = builder.Configuration.GetConnectionString("Portfolio")
-        ?? throw new InvalidOperationException("Set ConnectionStrings__Portfolio to an explicit SQLite connection string.");
+        ?? (args is ["--validate", _] ? "Data Source=:memory:"
+            : throw new InvalidOperationException("Set ConnectionStrings__Portfolio to an explicit SQLite connection string."));
     builder.Services.AddProfile(connection);
     builder.Services.AddProjects(connection);
     using var host = builder.Build();
@@ -28,10 +40,26 @@ try
         foreach (var importer in scope.ServiceProvider.GetServices<IContentImporter>())
         {
             var json = await File.ReadAllTextAsync(Path.Combine(args[1], importer.FileName), cancellation.Token);
+            if (importer.AdditionalDirectory is { } directory && Directory.Exists(Path.Combine(args[1], directory)))
+            {
+                var documents = JsonSerializer.Deserialize<List<JsonElement>>(json, ContentJson.Options)
+                    ?? throw new InvalidDataException($"{importer.FileName} must contain an array.");
+                foreach (var file in Directory.EnumerateFiles(Path.Combine(args[1], directory), "*.json").Order(StringComparer.Ordinal))
+                {
+                    using var document = JsonDocument.Parse(await File.ReadAllTextAsync(file, cancellation.Token));
+                    documents.Add(document.RootElement.Clone());
+                }
+                json = JsonSerializer.Serialize(documents, ContentJson.Options);
+            }
             var validation = importer.Validate(json);
             if (!validation.IsSuccess) throw new InvalidOperationException($"{importer.FileName}: {validation.Error!.Message}");
             prepared.Add((importer, json));
         }
+    }
+    if (args is ["--validate", _])
+    {
+        Console.WriteLine("Content validated. No database opened or modified.");
+        return 0;
     }
     foreach (var migration in scope.ServiceProvider.GetServices<IModuleMigration>())
         await migration.MigrateAsync(cancellation.Token);

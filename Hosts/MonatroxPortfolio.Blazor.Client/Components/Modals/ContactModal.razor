@@ -1,0 +1,96 @@
+@implements IDisposable
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Net
+@using System.Text.Json
+@inject PortfolioApiClient Api
+
+<MudDialog Class="contact-dialog">
+    <DialogContent>
+        <p>Messages for <strong>zac@monatrox.com</strong>.</p>
+        @if (_receipt is not null)
+        {
+            <MudAlert Severity="Severity.Success" role="status" Class="mt-4">
+                @(_receipt.CapturedLocally ? "Captured locally in smtp4dev. Not delivered to Zac’s inbox." : "Message handed to the email service for delivery.")
+            </MudAlert>
+            <MudButton OnClick="() => Dialog.Close()" Color="Color.Primary" Class="mt-4">Done</MudButton>
+        }
+        else
+        {
+            @if (_info is null && _error is null)
+            { <MudProgressCircular Indeterminate="true" Size="Size.Small" aria-label="Checking email service" /> }
+            @if (_info?.CapturedLocally == true)
+            { <MudAlert Severity="Severity.Info" Class="mt-4">Local preview: messages are captured by smtp4dev, not delivered to zac@monatrox.com.</MudAlert> }
+            @if (_error is not null)
+            { <MudAlert Severity="Severity.Error" role="alert" Class="mt-4">@_error</MudAlert> }
+            @if (_info is null || !_info.Available)
+            { <MudButton OnClick="LoadInfoAsync" Disabled="@_sending" Class="mt-2">Retry email service</MudButton> }
+            <EditForm Model="_form" OnValidSubmit="SendAsync" FormName="contact">
+                <DataAnnotationsValidator />
+                <MudTextField T="string" Label="Your name" @bind-Value="_form.Name" For="@(() => _form.Name)" Immediate="true" MaxLength="100" Disabled="@_sending" autocomplete="name" Class="mt-4" />
+                <MudTextField T="string" Label="Your email" @bind-Value="_form.Email" For="@(() => _form.Email)" Immediate="true" InputType="InputType.Email" MaxLength="254" Disabled="@_sending" autocomplete="email" Class="mt-4" />
+                <MudTextField T="string" Label="Message" @bind-Value="_form.Message" For="@(() => _form.Message)" Immediate="true" Lines="6" MaxLength="5000" Counter="5000" Disabled="@_sending" Class="mt-4" />
+                <div class="contact-honeypot" aria-hidden="true"><label>Website<input @bind="_form.Website" tabindex="-1" autocomplete="off" /></label></div>
+                <p class="contact-privacy">No message database is kept by this site. The email service and recipient mailbox may retain messages.</p>
+                <div class="contact-actions">
+                    <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(_sending || _info?.Available != true)">@(_sending ? "Sending…" : "Send message")</MudButton>
+                    <MudButton OnClick="() => Dialog.Cancel()" Disabled="@_sending">Cancel</MudButton>
+                </div>
+            </EditForm>
+        }
+    </DialogContent>
+</MudDialog>
+
+@code {
+    [CascadingParameter] public IMudDialogInstance Dialog { get; set; } = null!;
+    private readonly ContactForm _form = new();
+    private readonly CancellationTokenSource _lifetime = new();
+    private ContactDeliveryInfoDto? _info;
+    private ContactReceiptDto? _receipt;
+    private string? _error;
+    private bool _sending;
+    private sealed class ContactForm
+    {
+        [Required(ErrorMessage = "Enter your name."), StringLength(100)] public string Name { get; set; } = "";
+        [Required(ErrorMessage = "Enter your email."), EmailAddress(ErrorMessage = "Enter a valid email address."), StringLength(254)] public string Email { get; set; } = "";
+        [Required(ErrorMessage = "Enter a message."), StringLength(5000)] public string Message { get; set; } = "";
+        public string Website { get; set; } = "";
+    }
+    protected override Task OnInitializedAsync() => LoadInfoAsync();
+    private async Task LoadInfoAsync()
+    {
+        _error = null;
+        try
+        {
+            _info = await Api.GetContactInfoAsync(_lifetime.Token);
+            if (!_info.Available) _error = "Email service is unavailable. Please try again later or use LinkedIn.";
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested) { }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidDataException)
+        { _error = "Email service is unavailable. Please try again later or use LinkedIn."; }
+    }
+    private async Task SendAsync()
+    {
+        if (_sending || _info?.Available != true) return;
+        _sending = true; _error = null;
+        try
+        {
+            _receipt = await Api.SendContactAsync(new(_form.Name, _form.Email, _form.Message, _form.Website), _lifetime.Token);
+            _form.Name = ""; _form.Email = ""; _form.Message = "";
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested) { }
+        catch (HttpRequestException ex)
+        {
+            _error = ex.StatusCode switch
+            {
+                HttpStatusCode.TooManyRequests => "Too many attempts. Please wait 10 minutes before trying again.",
+                HttpStatusCode.BadRequest => "Please check your name, email and message.",
+                _ => "Message could not be confirmed. Your draft is still here; please retry later."
+            };
+        }
+        catch (Exception ex) when (ex is TaskCanceledException or JsonException or InvalidDataException)
+        { _error = "Message could not be confirmed. Your draft is still here; please retry later."; }
+        finally { _sending = false; }
+    }
+    public void Dispose() { _lifetime.Cancel(); _lifetime.Dispose(); }
+}
