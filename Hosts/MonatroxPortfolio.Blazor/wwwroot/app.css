@@ -182,6 +182,12 @@ html, body { background: var(--page-bg); color: var(--ink); font-family: var(--f
     .site-brand { min-width: 44px; justify-content: center; }
     .brand-wordmark { display: none; }
 }
+@media (max-width: 460px) {
+    .site-header .mud-toolbar { padding-inline: 4px; }
+    .site-header-inner { padding-inline: 4px; }
+    .site-brand { min-width: 32px; }
+    .brand-mark { width: 32px; height: 32px; padding: 3px; }
+}
 @media (max-width: 520px) {
     .hero-statement { font-size: 25px; }
     .hero-biography { font-size: 14px; }

@@ -1,9 +1,11 @@
 # Professional presentation — working brief
 
-## Checkpoint
+## Original design checkpoint (historical)
+
+The brief through “Later work” records the original design scope; “Status” below records implementation.
 
 - WASM migration accepted and pushed to main: `7c83539`.
-- Current branch: `professional-design`.
+- Original design branch: `professional-design`.
 - Professional styling remains the focus. Shared identity selection and prominent imagery are required now; basic gamer dark styling is implemented, with elaborate gamer presentation deferred.
 
 ## Confirmed direction
@@ -44,7 +46,7 @@ Prototype hero and project section before styling entire page:
 
 ## Status
 
-Base design is deployed. Favicon and compact-header refinements are on `ui-adjustments`, pending approval and merge.
+Base design is deployed. Favicon and compact-header refinements are implemented; the Actions deploy job identifies the currently deployed release.
 
 ### Header — accepted
 
@@ -52,7 +54,7 @@ User selected **avatar bubble inside floating capsule**, permanently in both ide
 
 Temporary picker, variant state/data attribute, unchosen styles and experimental color variables removed. No saved preference is needed: avatar bubble is rendered on every load, including prerender/no-JS. Identity switcher and expanded-section state remain unchanged. Previously generated dark-ink logo derivative was removed; original assets remain untouched.
 
-Header height is shared with landing-stage sizing through a CSS variable. Compact navigation keeps all three numbered links together on the same row as the logo, with 44px-high link targets, consistent 13px labels/10px numbers, a shared text baseline and 6px label-to-number spacing. Only the small header name hides at 420px and below; both main identity selectors remain unchanged. The 64px PNG favicon uses the original logo in its charcoal/lime bubble and a fingerprinted asset URL to replace cached template icons.
+Header height is shared with landing-stage sizing through a CSS variable. Compact navigation keeps all three numbered links together on the same row as the logo, with 44px-high link targets, consistent 13px labels/10px numbers, a shared text baseline and 6px label-to-number spacing. Only the small header name hides at 420px and below; at 460px and below, a 32px logo and tighter capsule gutters accommodate wider system fonts without shrinking the 13px/10px navigation. Both main identity selectors remain unchanged. The 64px PNG favicon uses the original logo in its charcoal/lime bubble and a fingerprinted asset URL to replace cached template icons.
 
 ### Implemented
 
@@ -72,7 +74,7 @@ Header height is shared with landing-stage sizing through a CSS variable. Compac
 
 - Debug solution build: zero warnings/errors. All 98 architecture/module/API/frontend tests pass.
 - Permanent avatar-header revision passes browser smoke against actual Aspire preview and trimmed published Release in Production mode. Cold-start regression reproduced original failure with WASM downloads held, then passed after CSS fix. Selector colors are asserted before WASM, after handoff/in both modes, and without JS; controls stay disabled until interactive. Suite also includes no-JS HTML/disabled selectors, WASM handoff/no refetch, no Server circuits, stacked oversized selectors/opposed icons, loaded portrait/logo swap and full-frame image sizing, below-fold biography/projects at 1920×1080 and 1366×768, keyboard light/dark switching with preserved expanded state, dark dialog palette, three real case-study links without demo entries, scrollable dialogs/focus return, skip/top links, offline interaction and 404/503 Retry.
-- Header regression checks cover both identities at 1366px, 768px, 600px, 480px, 421px, 420px, 390px, 360px and 320px widths, including single-row numbered navigation, compact touch-target height and the small-name visibility breakpoint: no overflow or clipped links, original logo/contain sizing, charcoal circle, contrasting nav/brand text, preserved expanded state/identity, no API refetch, below-fold layout. Regression checks ensure preview controls/state are absent and avatar renders without JS. Current header captures are `header-avatar-*.png` in `/tmp/monatrox-professional-design/`; older comparison sheets are historical.
+- Header regression checks cover both identities at 1366px, 768px, 600px, 480px, 461px, 460px, 421px, 420px, 390px, 360px and 320px widths, including wide-system-font fallback, single-row numbered navigation, compact touch-target height and the small-name visibility breakpoint: no overflow or clipped links, original logo/contain sizing, charcoal circle, contrasting nav/brand text, preserved expanded state/identity, no API refetch, below-fold layout. Regression checks ensure preview controls/state are absent and avatar renders without JS. Current header captures are `header-avatar-*.png` in `/tmp/monatrox-professional-design/`; older comparison sheets are historical.
 - About portrait mapping/loading and equal card bounds checked in both modes. Supporting-card alignment checked at 1920px, 1366px and 1024px widths. Focused About, skills/background alignment and prerender screenshots join full-page captures in `/tmp/monatrox-professional-design/`.
 - 320px, 390px and 768px viewport checks cover horizontal overflow and expanded skills; mobile dialog, contained gamer logo and reduced-motion behavior checked. Desktop/mobile screenshots visually inspected at `/tmp/monatrox-professional-design/`.
 - Checked normal text/control color pairs meet 4.5:1: professional body 13.06:1, secondary text 5.12:1, accent text 5.44:1. Gamer body 15.33:1, card secondary 8.42:1, accent 10.99:1. Bright lime CTA keeps dark text in both modes (8.38:1). Not full accessibility audit.

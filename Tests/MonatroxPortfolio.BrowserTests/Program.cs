@@ -630,7 +630,7 @@ async Task CheckHeaderAsync()
         await Expect(favicon).ToHaveAttributeAsync("href", faviconHref);
         await Expect(page.Locator(".site-nav > a")).ToHaveCountAsync(3);
         await Expect(page.Locator(".site-nav a span")).ToHaveTextAsync(new[] { "01", "02", "03" });
-        foreach (var (width, height) in new[] { (1366, 768), (768, 844), (600, 844), (480, 844), (421, 844), (420, 844), (390, 844), (360, 844), (320, 844) })
+        foreach (var (width, height) in new[] { (1366, 768), (768, 844), (600, 844), (480, 844), (461, 844), (460, 844), (421, 844), (420, 844), (390, 844), (360, 844), (320, 844) })
         {
             await page.SetViewportSizeAsync(width, height);
             await page.EvaluateAsync("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
@@ -683,6 +683,21 @@ async Task CheckHeaderAsync()
             }
         }
     }
+    var wideFont = await page.AddStyleTagAsync(new() { Content = ":root { --font-body: 'DejaVu Sans', sans-serif; }" });
+    try
+    {
+        foreach (var width in new[] { 480, 461, 460, 421, 360, 320 })
+        {
+            await page.SetViewportSizeAsync(width, 844);
+            await CheckPageWidthAsync($"Wide-system-font header at {width}px");
+        }
+        await page.Locator(".site-header").ScreenshotAsync(new()
+        {
+            Path = Path.Combine(screenshots, "header-avatar-wide-font-320.png"),
+            Animations = ScreenshotAnimations.Disabled
+        });
+    }
+    finally { await wideFont.EvaluateAsync("element => element.remove()"); }
     await professionalView.ClickAsync();
     await skills.ClickAsync();
     await page.SetViewportSizeAsync(1920, 1080);
