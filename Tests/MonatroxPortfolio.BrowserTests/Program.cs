@@ -213,12 +213,10 @@ foreach (var width in new[] { 320, 390, 768 })
     await page.SetViewportSizeAsync(width, 844);
     await Expect(project).ToBeVisibleAsync();
     await CheckAboutPortraitAsync();
-    if (await page.EvaluateAsync<bool>("document.documentElement.scrollWidth > window.innerWidth + 1"))
-        throw new InvalidOperationException($"Horizontal overflow at {width}px viewport.");
+    await CheckPageWidthAsync($"Homepage at {width}px");
     await skills.ClickAsync();
     await Expect(page.GetByText("Rider", new() { Exact = true })).ToBeVisibleAsync();
-    if (await page.EvaluateAsync<bool>("document.documentElement.scrollWidth > window.innerWidth + 1"))
-        throw new InvalidOperationException($"Expanded skills overflow at {width}px viewport.");
+    await CheckPageWidthAsync($"Expanded skills at {width}px");
     await skills.ClickAsync();
     if (width == 390)
     {
@@ -245,8 +243,7 @@ foreach (var width in new[] { 320, 390, 768 })
     await CheckAboutPortraitAsync(gamer: true);
     if (!await gamerLogo.EvaluateAsync<bool>("image => Math.abs(image.getBoundingClientRect().height - image.parentElement.getBoundingClientRect().height) < 1"))
         throw new InvalidOperationException($"Gamer logo frame clips or changes size at {width}px viewport.");
-    if (await page.EvaluateAsync<bool>("document.documentElement.scrollWidth > window.innerWidth + 1"))
-        throw new InvalidOperationException($"Gamer view overflows at {width}px viewport.");
+    await CheckPageWidthAsync($"Gamer view at {width}px");
     if (width == 390)
     {
         await page.Locator(".hero-statement").ClickAsync();
@@ -469,18 +466,7 @@ async Task CheckProjectPagesAsync()
             await page.SetViewportSizeAsync(width, 900);
             // Chromium can acknowledge viewport changes before responsive layout has painted.
             await page.EvaluateAsync("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
-            if (await page.EvaluateAsync<bool>("document.documentElement.scrollWidth > window.innerWidth + 1"))
-            {
-                var layout = await page.EvaluateAsync<string>("""
-                    () => JSON.stringify({ viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth,
-                        elements: [...document.querySelectorAll('body *')].map(el => ({ tag: el.tagName, class: el.className,
-                            text: el.textContent.slice(0, 60), right: el.getBoundingClientRect().right,
-                            width: el.getBoundingClientRect().width, overflow: getComputedStyle(el).overflowX }))
-                            .filter(el => el.right > innerWidth + 1).slice(0, 15) })
-                    """);
-                await page.ScreenshotAsync(new() { Path = Path.Combine(directory, $"{id}-{width}-overflow.png"), Animations = ScreenshotAnimations.Disabled });
-                throw new InvalidOperationException($"Project {id} overflows at {width}px. {layout}");
-            }
+            await CheckPageWidthAsync($"Project {id} at {width}px");
             await page.EvaluateAsync("window.scrollTo({top:0, behavior:'instant'})");
             await page.ScreenshotAsync(new() { Path = Path.Combine(directory, $"{id}-{width}.png"), Animations = ScreenshotAnimations.Disabled });
         }
@@ -597,6 +583,31 @@ async Task CheckCaseStudyModalsAsync(string directory)
     await popup.CloseAsync();
 }
 
+async Task CheckPageWidthAsync(string label)
+{
+    try
+    {
+        // Responsive layout and collapse animations can settle after viewport/visibility calls complete.
+        await page.WaitForFunctionAsync("document.documentElement.scrollWidth <= window.innerWidth + 1", options: new() { Timeout = 3000 });
+    }
+    catch (TimeoutException error)
+    {
+        var layout = await page.EvaluateAsync<string>("""
+            () => JSON.stringify({ viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+                bodyPadding: getComputedStyle(document.body).paddingRight,
+                elements: [...document.querySelectorAll('body *')].map(el => ({ tag: el.tagName, class: el.className,
+                    text: el.textContent.slice(0, 60), right: el.getBoundingClientRect().right,
+                    width: el.getBoundingClientRect().width, font: getComputedStyle(el).font,
+                    overflow: getComputedStyle(el).overflowX }))
+                    .filter(el => el.right > innerWidth + 1).slice(0, 15) })
+            """);
+        var directory = Path.Combine("artifacts", "ci-logs");
+        Directory.CreateDirectory(directory);
+        await page.ScreenshotAsync(new() { Path = Path.Combine(directory, $"overflow-{Guid.NewGuid():N}.png"), Animations = ScreenshotAnimations.Disabled });
+        throw new InvalidOperationException($"{label} has persistent horizontal overflow. {layout}", error);
+    }
+}
+
 async Task CheckHeaderAsync()
 {
     var requestsBefore = browserApiRequests.Count;
@@ -626,8 +637,7 @@ async Task CheckHeaderAsync()
             await page.EvaluateAsync("window.scrollTo({ top: 0, behavior: 'instant' })");
             if (width <= 420) await Expect(page.Locator(".brand-wordmark")).ToBeHiddenAsync();
             else await Expect(page.Locator(".brand-wordmark")).ToBeVisibleAsync();
-            if (await page.EvaluateAsync<bool>("document.documentElement.scrollWidth > window.innerWidth + 1"))
-                throw new InvalidOperationException($"Header overflows at {width}px.");
+            await CheckPageWidthAsync($"Header at {width}px");
             if (!await page.Locator(".site-header").EvaluateAsync<bool>("""
                 header => {
                     const bounds = header.getBoundingClientRect();
