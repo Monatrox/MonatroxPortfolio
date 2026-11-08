@@ -446,8 +446,20 @@ async Task CheckProjectPagesAsync()
         foreach (var width in new[] { 1366, 768, 390, 320 })
         {
             await page.SetViewportSizeAsync(width, 900);
+            // Chromium can acknowledge viewport changes before responsive layout has painted.
+            await page.EvaluateAsync("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
             if (await page.EvaluateAsync<bool>("document.documentElement.scrollWidth > window.innerWidth + 1"))
-                throw new InvalidOperationException($"Project {id} overflows at {width}px.");
+            {
+                var layout = await page.EvaluateAsync<string>("""
+                    () => JSON.stringify({ viewport: innerWidth, scrollWidth: document.documentElement.scrollWidth,
+                        elements: [...document.querySelectorAll('body *')].map(el => ({ tag: el.tagName, class: el.className,
+                            text: el.textContent.slice(0, 60), right: el.getBoundingClientRect().right,
+                            width: el.getBoundingClientRect().width, overflow: getComputedStyle(el).overflowX }))
+                            .filter(el => el.right > innerWidth + 1).slice(0, 15) })
+                    """);
+                await page.ScreenshotAsync(new() { Path = Path.Combine(directory, $"{id}-{width}-overflow.png"), Animations = ScreenshotAnimations.Disabled });
+                throw new InvalidOperationException($"Project {id} overflows at {width}px. {layout}");
+            }
             await page.EvaluateAsync("window.scrollTo({top:0, behavior:'instant'})");
             await page.ScreenshotAsync(new() { Path = Path.Combine(directory, $"{id}-{width}.png"), Animations = ScreenshotAnimations.Disabled });
         }

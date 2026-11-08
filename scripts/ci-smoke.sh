@@ -22,6 +22,7 @@ cleanup() {
   "$engine" network rm "$name" >/dev/null 2>&1 || true
   mkdir -p artifacts/ci-logs
   cp "$temporary/"*.log artifacts/ci-logs/ || true
+  cp "${TMPDIR:-/tmp}/monatrox-project-pages/"*overflow.png artifacts/ci-logs/ 2>/dev/null || true
   "$engine" run --rm --user 0 --entrypoint sh -v "$temporary:/cleanup:z" "$prefix-tools:$sha" \
     -c 'rm -rf /cleanup/data /cleanup/keys' >/dev/null 2>&1 || true
   rm -rf -- "$temporary"
