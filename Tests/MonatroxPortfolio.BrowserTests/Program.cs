@@ -51,6 +51,21 @@ await context.UnrouteAsync("**/_framework/**");
 await Expect(page.GetByText("Team Lead at Falkon Technologies", new() { Exact = true })).ToBeVisibleAsync();
 await Expect(page.GetByAltText("MX logo")).ToBeVisibleAsync();
 await Expect(page.Locator("body")).ToHaveCSSAsync("background-color", "rgb(245, 243, 236)");
+var favicon = page.Locator("head link[rel='icon']");
+await Expect(favicon).ToHaveAttributeAsync("type", "image/png");
+await Expect(favicon).ToHaveAttributeAsync("sizes", "64x64");
+var faviconHref = await favicon.GetAttributeAsync("href") ?? throw new InvalidOperationException("Missing favicon.");
+if (!Regex.IsMatch(faviconHref, @"^favicon\.[a-z0-9]+\.png$")) throw new InvalidOperationException("Favicon must use a fingerprinted URL.");
+using (var http = new HttpClient())
+{
+    using var response = await http.GetAsync(new Uri(url, faviconHref));
+    response.EnsureSuccessStatusCode();
+    var png = await response.Content.ReadAsByteArrayAsync();
+    if (response.Content.Headers.ContentType?.MediaType != "image/png" || png.Length < 24 ||
+        System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(16, 4)) != 64 ||
+        System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(png.AsSpan(20, 4)) != 64)
+        throw new InvalidOperationException("Favicon must serve the 64px logo PNG.");
+}
 await Expect(page.GetByRole(AriaRole.Link, new() { Name = "Explore projects" })).ToHaveCSSAsync("background-color", "rgb(168, 212, 56)");
 var skills = page.GetByRole(AriaRole.Button, new() { Name = "Tools, Skills, and Languages" });
 await Expect(page.Locator(".mud-layout")).ToHaveAttributeAsync("data-renderer", "WebAssembly");
@@ -256,6 +271,7 @@ await Expect(staticPage.GetByAltText("Portrait of Zac Taylor", new() { Exact = t
 await CheckSelectorColorsAsync(staticPage);
 await Expect(staticPage.GetByRole(AriaRole.Combobox, new() { Name = "Header design", Exact = true })).ToHaveCountAsync(0);
 await Expect(staticPage.Locator(".brand-mark")).ToHaveCSSAsync("border-radius", "50%");
+await Expect(staticPage.Locator("head link[rel='icon']")).ToHaveAttributeAsync("href", faviconHref);
 await Expect(staticPage.Locator("#about img")).ToHaveAttributeAsync("src", "Content/Images/zac-taylor-about.jpg");
 foreach (var status in new[] { 404, 503 })
 {
@@ -440,6 +456,11 @@ async Task CheckProjectPagesAsync()
             await Expect(page.GetByText("Intentionally overengineered.", new() { Exact = true })).ToBeVisibleAsync();
             await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Three modules. One API.", Exact = true })).ToBeVisibleAsync();
             await Expect(page.GetByText("Where it's overengineered", new() { Exact = true })).ToBeVisibleAsync();
+            await Expect(page.Locator("#development")).ToContainTextAsync("GitHub Actions");
+            foreach (var stepTitle in new[] { "Verify", "Publish", "Deploy" })
+                await Expect(page.Locator("#development").GetByRole(AriaRole.Heading, new() { Name = stepTitle, Exact = true })).ToBeVisibleAsync();
+            await Expect(page.Locator(".case-study")).ToContainTextAsync("Google Workspace");
+            await Expect(page.Locator(".case-study")).Not.ToContainTextAsync("No admin UI, sign-in or production email delivery");
             await page.Locator("#boundaries").ScreenshotAsync(new() { Path = Path.Combine(directory, "portfolio-architecture.png"), Animations = ScreenshotAnimations.Disabled });
             await page.Locator("#local-testing").ScreenshotAsync(new() { Path = Path.Combine(directory, "portfolio-local-testing.png"), Animations = ScreenshotAnimations.Disabled });
         }
@@ -467,7 +488,12 @@ async Task CheckProjectPagesAsync()
         await Expect(staticPage.GetByRole(AriaRole.Heading, new() { Name = title, Exact = true })).ToBeVisibleAsync();
         if (id == "ccf") await Expect(staticPage.GetByRole(AriaRole.Heading, new() { Name = "Prepare for a sibling event" })).ToBeVisibleAsync();
         else if (id == "distill") await Expect(staticPage.GetByRole(AriaRole.Slider, new() { Name = "Producer instances", Exact = true })).ToBeDisabledAsync();
-        else await Expect(staticPage.Locator(".case-diagram")).ToHaveCountAsync(3);
+        else
+        {
+            await Expect(staticPage.Locator(".case-diagram")).ToHaveCountAsync(3);
+            await Expect(staticPage.Locator("#development")).ToContainTextAsync("GitHub Actions");
+            await Expect(staticPage.Locator(".case-study")).ToContainTextAsync("Google Workspace");
+        }
     }
     await page.GotoAsync(new Uri(url, "projects/missing").ToString());
     await Expect(page.GetByRole(AriaRole.Alert)).ToContainTextAsync("This project page is not available.");
@@ -590,24 +616,43 @@ async Task CheckHeaderAsync()
         await Expect(page.Locator(".brand-mark")).ToHaveCSSAsync("border-radius", "50%");
         await Expect(page.Locator(".site-nav a").First).ToHaveCSSAsync("color", gamer ? "rgb(238, 241, 233)" : "rgb(37, 43, 35)");
         await Expect(page.Locator(".brand-wordmark")).ToHaveCSSAsync("color", gamer ? "rgb(238, 241, 233)" : "rgb(37, 43, 35)");
-        foreach (var (width, height) in new[] { (1366, 768), (768, 844), (600, 844), (390, 844), (320, 844) })
+        await Expect(favicon).ToHaveAttributeAsync("href", faviconHref);
+        await Expect(page.Locator(".site-nav > a")).ToHaveCountAsync(3);
+        await Expect(page.Locator(".site-nav a span")).ToHaveTextAsync(new[] { "01", "02", "03" });
+        foreach (var (width, height) in new[] { (1366, 768), (768, 844), (600, 844), (480, 844), (421, 844), (420, 844), (390, 844), (360, 844), (320, 844) })
         {
             await page.SetViewportSizeAsync(width, height);
+            await page.EvaluateAsync("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
             await page.EvaluateAsync("window.scrollTo({ top: 0, behavior: 'instant' })");
+            if (width <= 420) await Expect(page.Locator(".brand-wordmark")).ToBeHiddenAsync();
+            else await Expect(page.Locator(".brand-wordmark")).ToBeVisibleAsync();
             if (await page.EvaluateAsync<bool>("document.documentElement.scrollWidth > window.innerWidth + 1"))
                 throw new InvalidOperationException($"Header overflows at {width}px.");
             if (!await page.Locator(".site-header").EvaluateAsync<bool>("""
                 header => {
                     const bounds = header.getBoundingClientRect();
+                    const brand = header.querySelector('.site-brand').getBoundingClientRect();
                     const links = [...header.querySelectorAll('.site-nav a')];
                     return links.length === 3 && links.every(link => {
                         const box = link.getBoundingClientRect();
-                        return box.width > 0 && box.height > 0 && box.left >= bounds.left - 1 && box.right <= bounds.right + 1 &&
-                            box.top >= bounds.top - 1 && box.bottom <= bounds.bottom + 1;
+                        const index = link.querySelector('span');
+                        const number = index.getBoundingClientRect();
+                        const label = [...link.childNodes].find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+                        const range = document.createRange();
+                        range.selectNodeContents(label);
+                        const spacing = number.left - range.getBoundingClientRect().right;
+                        const textStyle = getComputedStyle(link), numberStyle = getComputedStyle(index);
+                        // Flex items blockify inline-block links; their children still share an inline baseline.
+                        return textStyle.display === 'block' && textStyle.fontSize === '13px' &&
+                            numberStyle.fontSize === '10px' && numberStyle.verticalAlign === 'baseline' &&
+                            Math.abs(spacing - 6) <= 1 && box.width > 0 && box.height > 0 && box.left >= brand.right - 1 && box.right <= bounds.right + 1 &&
+                            box.top >= bounds.top - 1 && box.bottom <= bounds.bottom + 1 && number.width > 0 &&
+                            Math.abs((box.top + box.bottom - brand.top - brand.bottom) / 2) <= 1 &&
+                            box.height >= 44;
                     });
                 }
                 """))
-                throw new InvalidOperationException($"Header clips navigation at {width}px.");
+                throw new InvalidOperationException($"Header must keep logo and numbered navigation on one unclipped row at {width}px.");
             if (width == 1366)
             {
                 if (!await page.EvaluateAsync<bool>("document.querySelector('#about').getBoundingClientRect().top >= window.innerHeight - 1"))
@@ -618,11 +663,11 @@ async Task CheckHeaderAsync()
                     Animations = ScreenshotAnimations.Disabled
                 });
             }
-            else if (width == 390)
+            else if (width is 600 or 480 or 420 or 390 or 320)
             {
                 await page.Locator(".site-header").ScreenshotAsync(new()
                 {
-                    Path = Path.Combine(screenshots, $"header-avatar-{(gamer ? "gamer" : "professional")}-mobile.png"),
+                    Path = Path.Combine(screenshots, $"header-avatar-{(gamer ? "gamer" : "professional")}-{width}.png"),
                     Animations = ScreenshotAnimations.Disabled
                 });
             }

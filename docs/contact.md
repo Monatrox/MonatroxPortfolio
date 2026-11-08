@@ -7,7 +7,9 @@
 - Discord: visible username `monatrox` with Copy; no guessed profile URL. Numeric Discord user ID is separate from username, not an old discriminator suffix. A future profile link can use `https://discord.com/users/<numeric-ID>`.
 - Email button opens **Contact Me**. Name, reply address and message are validated, then posted through the same-origin API gateway. Dialog restores focus, preserves draft on errors and prevents double-submit while sending.
 
-**Local capture only.** Aspire configures smtp4dev, not outbound delivery. The form identifies this before submission and confirms capture—not delivery—afterward. Inspect captured messages at http://127.0.0.1:5430. Recipient is always `zac@monatrox.com`; visitor address is only `Reply-To`. Development From is `portfolio@monatrox.invalid`.
+**Development:** Aspire configures smtp4dev, not outbound delivery. The form identifies local capture before submission and confirms capture—not delivery—afterward. Inspect captured messages at http://127.0.0.1:5430. Development From is `portfolio@monatrox.invalid`.
+
+**Production:** contact mail is delivered through Google Workspace SMTP over required STARTTLS. The site owner confirmed inbox receipt of a live form submission. Recipient is always `zac@monatrox.com`; visitor address is only `Reply-To`. The form confirms SMTP acceptance, not guaranteed inbox placement.
 
 Steam placeholder was removed from authored profile and, after backup, from local SQLite. Import still preserves unlisted data; this was a deliberate one-record cleanup, not a new deletion policy. Backup: `/tmp/monatrox-contact/portfolio-before-contact-links.db`.
 
@@ -36,9 +38,11 @@ Profile owns social-link metadata. Frontend hosts own modal, clipboard feedback 
 
 Rate counters are per API process, and forwarded client IPs are accepted only from framework-default loopback trusted proxies, one hop. Correcting the Nginx → frontend → API forwarding chain is explicitly deferred for initial hosting: visitors may share the same five-attempt bucket. Revisit if shared throttling becomes a problem. Before off-host proxy deployment, explicitly configure that trusted proxy; do not clear trust lists. Multi-instance/public production requires shared edge abuse protection and operational review. Current controls are not a CAPTCHA or distributed spam/DDoS defense.
 
-## Real SMTP later
+## Production SMTP
 
-No real delivery provider was configured or contacted. Standalone API supports these server-only settings:
+Production uses `smtp.gmail.com:587`, `StartTls`, and the Workspace account's dedicated app password. From and username use `zac@monatrox.com`. Settings live in root-owned `/etc/monatrox-portfolio/api.env` (mode `600`), not GitHub, source control or client assets. A Google account password change revokes app passwords; update server configuration and recreate the API container if credentials are rotated.
+
+Defaults remain disabled until an operator configures delivery; `deploy/api.env.example` is intentionally not a working production credential file. Standalone API supports these server-only settings:
 
 | Setting | Local Aspire | Real SMTP |
 | --- | --- | --- |
@@ -57,6 +61,6 @@ Aspire intentionally overrides SMTP settings for local capture. Use approved dep
 
 Browser smoke verifies external URLs, Discord clipboard, disabled prerender/no-JS actions, light/dark/mobile form, client validation, actual local SMTP capture, focus return, and draft preservation for 503/429 responses. It refuses to send a synthetic form message unless UI explicitly reports local capture. Existing case-study/identity checks remain.
 
-Latest local verification: **96 tests pass**, EF models unchanged, Debug/Aspire and trimmed published Release browser smoke pass. Actual smtp4dev messages were inspected: To `zac@monatrox.com`, visitor Reply-To, fixed development From and `text/plain` body. Info/error/success feedback colors were tuned and rendered text contrast checked at ≥4.5:1 in light/dark modes. Gitleaks scans the working-tree source snapshot; no SMTP secrets are configured.
+Latest local verification: **98 .NET tests pass**, EF models unchanged, Debug/Aspire and trimmed published Release browser smoke pass. Actual smtp4dev messages were inspected: To `zac@monatrox.com`, visitor Reply-To, fixed development From and `text/plain` body. Info/error/success feedback colors were tuned and rendered text contrast checked at ≥4.5:1 in light/dark modes. Gitleaks scans source snapshots; no SMTP secrets are committed or included in published images.
 
-Transport test checks actual SMTP DATA, fixed envelope/From/To/Reply-To and plain-text body. Application tests cover forged recipient fields, injection, disabled cross-origin preflight, oversize/chunked bodies, malformed requests, honeypot and limits. No claim of production delivery, full accessibility/device audit or comprehensive abuse/security review.
+Transport test checks actual SMTP DATA, fixed envelope/From/To/Reply-To and plain-text body. Application tests cover forged recipient fields, injection, disabled cross-origin preflight, oversize/chunked bodies, malformed requests, honeypot and limits. Production inbox receipt was confirmed by the site owner; no full accessibility/device audit or comprehensive abuse/security review is claimed.

@@ -1,5 +1,7 @@
 # MonatroxPortfolio v1 — working plan
 
+Historical baseline: scope and limits below describe the initial milestone, not today's site. See [README](../README.md), [contact](contact.md) and [deployment](deployment.md) for current behavior.
+
 ## Agreed scope
 
 - Rebuild BoringPortfolio as a strict modular monolith. Start from the new repository, not the old solution.

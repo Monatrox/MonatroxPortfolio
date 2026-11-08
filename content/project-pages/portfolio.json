@@ -12,7 +12,7 @@
       "title": "Portfolio",
       "subtitle": "Intentionally overengineered.",
       "introMarkdown": "This portfolio is intentionally overengineered: a working demonstration of Aspire and a modular monolith. Clear ownership, repeatable startup and visible request flow are the point.",
-      "tags": ["Aspire / Podman", "Modular monolith", "Blazor WASM", "EF Core / SQLite"],
+      "tags": ["Aspire / Podman", "Modular monolith", "Blazor WASM", "EF Core / SQLite", "GitHub Actions / Docker"],
       "visual": [
         {
           "type": "panel",
@@ -49,7 +49,7 @@
             "cards": [
               { "title": "One place to wire the stack", "markdown": "AppHost centralizes endpoints, configuration and startup dependencies. One command starts the preview." },
               { "title": "Ownership you can check", "markdown": "Three modules share an API, with implementation references checked by architecture tests." },
-              { "title": "A visible side effect", "markdown": "Contact mail lands in smtp4dev, ready to inspect without a real email account." }
+              { "title": "A visible side effect", "markdown": "Local contact tests land in smtp4dev. Production sends real mail through Google Workspace, with credentials kept on the server." }
             ]
           }
         ]
@@ -93,7 +93,7 @@
       {
         "id": "local-testing",
         "title": "Aspire: run it, then inspect it",
-        "introMarkdown": "AppHost supplies API addresses and SMTP settings, then waits for dependencies. That replaces separate launch commands and manually synchronized configuration.",
+        "introMarkdown": "In development, AppHost supplies API addresses and SMTP settings, then waits for dependencies. That replaces separate launch commands and manually synchronized configuration.",
         "blocks": [
           {
             "type": "diagram",
@@ -104,7 +104,7 @@
               { "title": "API", "eyebrow": "localhost:5410", "markdown": "Module endpoints; waits for mail capture.", "tone": "accent" },
               { "title": "smtp4dev", "eyebrow": "localhost:5430", "markdown": "Capture mail without a live email account.", "tone": "accent" }
             ],
-            "captionMarkdown": "The dashboard groups logs, HTTP traces and health by resource. SQLite uses a file; smtp4dev holds test mail."
+            "captionMarkdown": "The local dashboard groups logs, HTTP traces and health by resource. SQLite uses a file; smtp4dev holds test mail. Production uses Docker and real SMTP, not the development stack."
           },
           {
             "type": "cards",
@@ -135,8 +135,8 @@
       },
       {
         "id": "development",
-        "title": "Change, check, preview",
-        "introMarkdown": "Business changes stay in their module; UI stays in the frontend. Tests isolate SQLite and SMTP.",
+        "title": "Change, check, ship",
+        "introMarkdown": "Business changes stay in their module; UI stays in the frontend. GitHub Actions checks pull requests and main pushes; successful current-main builds deploy automatically.",
         "blocks": [
           { "type": "markdown", "markdown": "Case studies are JSON documents with Markdown and typed blocks. Validation runs before import; stable IDs update records, while unlisted content is preserved." },
           {
@@ -158,12 +158,22 @@
                 "captionMarkdown": "Requires the pinned SDK and rootless Podman. Verify runs architecture/module/API tests, EF model checks and browser smoke. Use the same suite to check trimmed Release output."
               }
             ]
+          },
+          {
+            "type": "steps",
+            "tone": "dark",
+            "steps": [
+              { "title": "Verify", "markdown": "Build and test the solution, validate content and check EF models against migrations. Browser smoke runs the published containers with fresh SQLite and disposable SMTP capture—not the live mailbox." },
+              { "title": "Publish", "markdown": "Reuse the tested publish outputs for three commit-tagged Docker images: frontend host, API and migration/import tool. Push them to GitHub Container Registry without rebuilding the application." },
+              { "title": "Deploy", "markdown": "A restricted SSH command serializes releases, snapshots SQLite, applies migrations and imports content. It starts the new containers, verifies populated HTTPS content and restores previous images/data if checks fail." }
+            ],
+            "captionMarkdown": "Nginx handles HTTPS. The non-root containers run the frontend and API; persistent data and secrets stay outside their images. Deployments briefly stop the site—they aren't zero-downtime switches."
           }
         ]
       }
     ],
     "notes": [
-      "Current scope: public reads and contact submission. No admin UI, sign-in or production email delivery."
+      "Current scope: public reads and live contact email. No admin UI, sign-in or message database. SMTP acceptance is not a guarantee of inbox delivery; deployment snapshots are local backups, not off-host disaster recovery."
     ]
   }
 }

@@ -1,5 +1,7 @@
 # WASM migration — working plan
 
+Historical migration milestone. Contact delivery, visual design and CI/CD were added afterward; current behavior is documented in [README](../README.md), [contact](contact.md) and [deployment](deployment.md).
+
 ## Checkpoint
 
 - Baseline: `d880b16` on `main`, pushed after secret review.

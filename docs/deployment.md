@@ -1,7 +1,6 @@
 # GitHub Actions → existing Docker host
 
-Status: repository-side setup only. No live files, containers, services, Nginx or certificates changed.
-Automatic deployment is opt-in until an administrator completes bootstrap and approves first cutover.
+Status: production is running on Docker behind Nginx, live Google Workspace contact delivery is configured, and `DEPLOY_ENABLED=true`. Initial cutover, browser interactions and inbox delivery were verified on 8 November 2026. Automatic deployment is configured; that initial verification does not claim a completed automatic release. Check the Actions deploy job after each main merge.
 
 ## What runs
 
@@ -21,9 +20,9 @@ No SDK, builds, Aspire dashboard or smtp4dev on the production server. CI artifa
 
 - `agent@72.14.185.106`, Ubuntu 20.04.4, x64, Docker 28.0.4 and Compose 2.34.0.
 - 2 GiB RAM, approximately 1.1 GiB available at inspection; approximately 32 GiB free disk.
-- Existing Nginx portfolio upstream: `localhost:44350`. Other sites/certificates stay untouched.
-- Old frontend: `/var/www/MonatroxPortfolio`, `MonatroxPortfolio.service`; old API: `/var/www/MonatroxAPI`, `MonatroxAPI.service`, port 44351. Both currently run as root; this task does not modify the old API.
-- `agent` can SSH, but cannot access Docker or use passwordless sudo. Admin access is needed for bootstrap.
+- Nginx portfolio upstream remains `localhost:44350`. A portfolio-only `/_framework/` exception permits WASM startup downloads; other sites/certificates remain unchanged.
+- Old frontend: `/var/www/MonatroxPortfolio`, stopped/disabled `MonatroxPortfolio.service`; original unit source is `/etc/systemd/sites/MonatroxPortfolio.service`. Old API remains active at `/var/www/MonatroxAPI`, `MonatroxAPI.service`, port 44351. Legacy definitions use root; new containers use UID 1654.
+- `agent` has no general Docker/sudo access. Passwordless sudo permits only the fixed root deployment wrapper; the CI key is forced to its validating dispatcher. Bootstrap/config changes still require an administrator.
 - Host .NET 6/8/9 are installed, not .NET 10. Ubuntu 20.04 is not a [supported native .NET 10 target](https://github.com/dotnet/core/blob/main/release-notes/10.0/supported-os.md). Containers use Ubuntu 24.04 userland; this does **not** upgrade or secure the host. Host/Docker maintenance remains separate work.
 
 ## Production layout
@@ -43,9 +42,27 @@ Frontend publishes **both** `127.0.0.1:44350` and `[::1]:44350` to preserve Ngin
 
 Client-IP/proxy-header correction remains explicitly deferred. Contact may share one API-observed visitor bucket: five attempts per ten minutes, plus global twenty per minute. No proxy fix is bundled here.
 
+## Nginx framework downloads
+
+The existing portfolio `location /` limits requests to 5/second with burst 10. A cold WASM startup requests many assemblies in parallel; applying that limit to framework downloads returned 503s and prevented interactivity despite valid prerendered HTML. The production portfolio server block now has this sibling location, copying its existing proxy settings but not its page/API limiter:
+
+```nginx
+location ^~ /_framework/ {
+    proxy_pass http://MonatroxPortfolio;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Host $host;
+    proxy_set_header Connection "upgrade";
+    proxy_cache_bypass $http_upgrade;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+Keep it inside the `monatrox.com www.monatrox.com` server block. Page/API throttling and other domains remain unchanged. Back up configuration, run `nginx -t`, then reload rather than restart. This routing fix does not implement the deferred client-IP forwarding correction. A tab with failed WASM startup may need a hard refresh after repair. Live browser checks must confirm interactive startup/assets, not just HTTP 200 HTML.
+
 ## One-time manual/admin setup
 
-Do not run these against production until bootstrap/cutover is separately approved. Commands assume reviewed `deploy/` files have been copied to an admin's working directory; do **not** overwrite old `/var/www` applications.
+The current host is already bootstrapped. These instructions describe a fresh installation; do not overwrite an existing `api.env` or rerun first cutover on an active installation. Bootstrap/cutover on another host requires separate approval. Commands assume reviewed `deploy/` files have been copied to an admin's working directory; do **not** overwrite old `/var/www` applications.
 
 ### 1. Publish first, without deploying
 
@@ -68,11 +85,11 @@ sudo install -o root -g root -m 755 deploy/deploy.sh /usr/local/sbin/monatrox-po
 sudo install -o root -g root -m 755 deploy/dispatch.sh /usr/local/bin/monatrox-portfolio-dispatch
 ```
 
-Check deployment.env contains the correct registry prefix/public host. API defaults to **SMTP disabled**. Production cannot reuse Aspire's local Capture settings; real SMTP requires separately approved TLS/authorized From/credentials in root-owned `api.env`. Its raw env-file format keeps `$` in credentials literal; values should not be shell-quoted. Credentials never enter CI, image layers or source control.
+Check deployment.env contains the correct registry prefix/public host. Fresh API configuration defaults to **SMTP disabled**; the current production `api.env` instead uses Google Workspace Send mode over STARTTLS (see [contact](contact.md)). Production cannot reuse Aspire's local Capture settings; real SMTP requires separately approved TLS/authorized From/credentials in root-owned `api.env`. Its raw env-file format keeps `$` in credentials literal; values should not be shell-quoted. Credentials never enter CI, image layers or source control.
 
 ### 3. Restrict CI's SSH key
 
-Generate a **dedicated** Ed25519 deployment key on a trusted machine (`ssh-keygen -t ed25519` with a new filename; never overwrite an existing key). Keep its private half out of the repository and chat. Add only its public half to `agent`'s authorized_keys with this prefix:
+Generate a **dedicated** Ed25519 deployment key on a trusted machine (`ssh-keygen -t ed25519` with a new filename; never overwrite an existing key). Current unattended workflow requires a key without a passphrase; protect its private file and store it only in the GitHub secret. Keep its private half out of the repository and chat. Add only its public half to `agent`'s authorized_keys with this prefix:
 
 ```text
 restrict,command="/usr/local/bin/monatrox-portfolio-dispatch" ssh-ed25519 <PUBLIC-KEY> github-actions-portfolio
@@ -104,12 +121,14 @@ Proceed only after all preflight commands succeed. Keep old binaries, unit and d
 sudo systemctl stop MonatroxPortfolio.service
 if sudo /usr/local/sbin/monatrox-portfolio-deploy "$SHA"; then
   sudo systemctl disable MonatroxPortfolio.service
+  # On this host disable removes the registration link; retain rollback without enabling/starting it.
+  sudo systemctl link /etc/systemd/sites/MonatroxPortfolio.service
 else
   sudo systemctl start MonatroxPortfolio.service
 fi
 ```
 
-Old API stays running on 44351. Docker restart policies handle subsequent container startup; ensure Docker is enabled on boot. Deployment refuses to stop the old frontend implicitly. Check both IPv4/IPv6 frontend bindings, HTTPS homepage, `/projects/{ccf,distill,portfolio}`, assets, mobile/modal behavior, SMTP-disabled notice and container memory before enabling automatic updates. Do not rely on process `/health` alone.
+Old API stays running on 44351. Docker restart policies handle subsequent container startup; ensure Docker is enabled on boot. Deployment refuses to stop the old frontend implicitly. Check both IPv4/IPv6 frontend bindings, HTTPS homepage, `/projects/{ccf,distill,portfolio}`, assets, mobile/modal behavior, configured SMTP mode and container memory before enabling automatic updates. If Send mode is configured, perform one approved form submission and confirm actual inbox receipt; CI capture tests must never send live mail. Do not rely on process `/health` alone.
 
 ### 5. Configure GitHub repository Actions settings
 
@@ -131,7 +150,7 @@ An import/startup/probe failure or SSH hangup stops new writers, restores the pr
 
 No automated rollback can unsend mail. Backups are local to this server, not disaster recovery. Arrange off-host backups separately. Do not prune images/backups until a retention policy is agreed.
 
-For immediate return to the old application: disable `DEPLOY_ENABLED`, acquire the deployment lock/wait for active work to finish, stop the two new Compose services using the recorded SHA/config, then `sudo systemctl enable --now MonatroxPortfolio.service`. Old application/database were never changed. Do not downgrade new application images blindly after a successful schema change: a deliberate rollback may require its matching database snapshot and must consider any writes made since that snapshot.
+For immediate return to the old application: disable `DEPLOY_ENABLED`, acquire the deployment lock/wait for active work to finish, stop the two new Compose services using the recorded SHA/config, relink the preserved unit with `sudo systemctl link /etc/systemd/sites/MonatroxPortfolio.service` if needed, then `sudo systemctl enable --now MonatroxPortfolio.service`. Never start/enable the old frontend while the new one still owns port 44350. Old application/database were never changed. Do not downgrade new application images blindly after a successful schema change: a deliberate rollback may require its matching database snapshot and must consider any writes made since that snapshot.
 
 ## Local checks
 

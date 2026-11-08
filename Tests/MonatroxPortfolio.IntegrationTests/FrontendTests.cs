@@ -126,7 +126,10 @@ public sealed class FrontendTests
             Assert.Contains("demonstration of Aspire and a modular monolith", html);
             Assert.Contains("Aspire: run it, then inspect it", html);
             Assert.Contains("Where it&#x27;s overengineered", html);
-            Assert.DoesNotContain("migration", html, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("GitHub Actions", html);
+            Assert.Contains("Google Workspace", html);
+            Assert.Contains("applies migrations and imports content", html);
+            Assert.DoesNotContain("BoringPortfolio", html, StringComparison.OrdinalIgnoreCase);
         }
     }
 
