@@ -137,7 +137,7 @@ await Expect(page.GetByAltText("Monatrox identity logo", new() { Exact = true })
 await Expect(portrait).ToHaveCountAsync(0);
 await CheckAboutPortraitAsync(gamer: true);
 await page.Locator("#about").ScreenshotAsync(new() { Path = Path.Combine(screenshots, "about-gamer.png"), Animations = ScreenshotAnimations.Disabled });
-await CheckDetailAlignmentAsync("skills-content");
+await CheckSkillGroupsAsync();
 await skills.ClickAsync();
 await Expect(page.Locator("#skills-content")).ToHaveCSSAsync("height", "0px");
 await page.Locator(".hero-statement").ClickAsync();
@@ -157,12 +157,12 @@ await Expect(page.Locator("#main-content")).ToBeFocusedAsync();
 await Expect(skills).ToHaveAttributeAsync("aria-expanded", "false");
 await skills.ClickAsync();
 await Expect(skills).ToHaveAttributeAsync("aria-expanded", "true");
-await Expect(page.GetByText("Tools/Frameworks", new() { Exact = true })).ToBeVisibleAsync();
+await Expect(page.GetByRole(AriaRole.Heading, new() { Name = ".NET & APIs", Exact = true })).ToBeVisibleAsync();
 await Expect(page.GetByText("Rider", new() { Exact = true })).ToBeVisibleAsync();
 foreach (var width in new[] { 1920, 1366, 1024 })
 {
     await page.SetViewportSizeAsync(width, 1080);
-    await CheckDetailAlignmentAsync("skills-content");
+    await CheckSkillGroupsAsync();
     await CheckAboutPortraitAsync();
 }
 await page.SetViewportSizeAsync(1920, 1080);
@@ -736,6 +736,26 @@ async Task CheckAboutPortraitAsync(bool gamer = false)
         if (story is null || photo is null || Math.Abs(story.Y - photo.Y) > 1 || Math.Abs(story.Y + story.Height - photo.Y - photo.Height) > 1 || Math.Abs(story.Width - photo.Width) > 1)
             throw new InvalidOperationException("About story and portrait cards must align.");
     }
+}
+
+async Task CheckSkillGroupsAsync()
+{
+    await Expect(page.Locator(".skill-group h3")).ToHaveTextAsync(new[]
+    {
+        ".NET & APIs", "Languages", "Architecture & leadership", "Data & messaging", "Containers & delivery",
+        "Developer workflow & quality", "Business platforms", "AI-assisted development", "Game development"
+    });
+    await Expect(page.Locator(".skill-group-heading svg[aria-hidden='true']")).ToHaveCountAsync(9);
+    await Expect(page.Locator(".skill-list li")).ToHaveCountAsync(44);
+    await Expect(page.Locator(".skill-list svg")).ToHaveCountAsync(0);
+    await Expect(page.GetByRole(AriaRole.Group, new() { Name = "Data & messaging", Exact = true }).GetByText("SQL Server", new() { Exact = true })).ToBeVisibleAsync();
+    await Expect(page.GetByRole(AriaRole.Group, new() { Name = "Languages", Exact = true }).GetByText("SQL Server", new() { Exact = true })).ToHaveCountAsync(0);
+    if (!await page.Locator(".skill-groups").EvaluateAsync<bool>("""
+        grid => [...grid.children].every(card => {
+            const box = card.getBoundingClientRect(), parent = grid.getBoundingClientRect();
+            return box.left >= parent.left - 1 && box.right <= parent.right + 1 && card.scrollWidth <= card.clientWidth + 1;
+        })
+        """)) throw new InvalidOperationException("Grouped skills must fit their responsive grid.");
 }
 
 async Task CheckDetailAlignmentAsync(string sectionId)

@@ -127,27 +127,23 @@ else
             </MudButton>
         </h2>
         <MudCollapse Expanded="_skillsExpanded" id="skills-content">
-            <MudGrid Spacing="4" Class="detail-grid">
-                <MudItem xs="12" md="6">
-                    <MudPaper Elevation="0" Class="detail-panel">
-                        <MudText Typo="Typo.h3">Tools/Frameworks</MudText>
-                        @foreach (var skill in Profile.Skills.Where(x => x.Category == "Tools"))
-                        { <MudText Typo="Typo.body1">@skill.Name</MudText> }
+            <p class="skills-intro">Primarily .NET, with project work in source generation, structured logging, Rust services and distributed application orchestration.</p>
+            <div class="skill-groups">
+                @foreach (var group in Profile.Skills.GroupBy(skill => skill.Category).OrderBy(group => SkillPresentation(group.Key).Order).ThenBy(group => group.Key))
+                {
+                    var presentation = SkillPresentation(group.Key);
+                    <MudPaper Elevation="0" Class="detail-panel skill-group" role="group" aria-labelledby="@($"skill-title-{group.Key}")">
+                        <div class="skill-group-heading">
+                            <MudIcon Icon="@presentation.Icon" aria-hidden="true" />
+                            <MudText Typo="Typo.h3" id="@($"skill-title-{group.Key}")">@presentation.Title</MudText>
+                        </div>
+                        <ul class="skill-list">
+                            @foreach (var skill in group)
+                            { <li>@skill.Name</li> }
+                        </ul>
                     </MudPaper>
-                </MudItem>
-                <MudItem xs="12" md="6">
-                    <MudPaper Elevation="0" Class="detail-panel">
-                        <MudText Typo="Typo.h3">Skills</MudText>
-                        @foreach (var skill in Profile.Skills.Where(x => x.Category == "Skills"))
-                        { <MudText Typo="Typo.body1">@skill.Name</MudText> }
-                    </MudPaper>
-                    <MudPaper Elevation="0" Class="detail-panel">
-                        <MudText Typo="Typo.h3">Main Languages</MudText>
-                        @foreach (var skill in Profile.Skills.Where(x => x.Category == "Languages"))
-                        { <MudText Typo="Typo.body1">@skill.Name</MudText> }
-                    </MudPaper>
-                </MudItem>
-            </MudGrid>
+                }
+            </div>
         </MudCollapse>
         <h2 class="section-toggle-heading" id="background">
             <MudButton OnClick="() => _backgroundExpanded = !_backgroundExpanded" Disabled="@(!RendererInfo.IsInteractive)" Class="support-toggle"
@@ -204,6 +200,22 @@ else
     }
     private Task OpenContactAsync() => Dialogs.ShowAsync<ContactModal>("Contact Me",
         new DialogOptions { CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, BackdropClick = false });
+
+    private static (string Title, string Icon, int Order) SkillPresentation(string category) => category switch
+    {
+        "DotNet" => (".NET & APIs", Icons.Material.Filled.DataObject, 0),
+        "Languages" => ("Languages", Icons.Material.Filled.Code, 1),
+        "Architecture" => ("Architecture & leadership", Icons.Material.Filled.AccountTree, 2),
+        "Data" => ("Data & messaging", Icons.Material.Filled.Storage, 3),
+        "Platforms" => ("Containers & delivery", Icons.Material.Filled.Hub, 4),
+        "Workflow" => ("Developer workflow & quality", Icons.Material.Filled.Terminal, 5),
+        "Business" => ("Business platforms", Icons.Material.Filled.BusinessCenter, 6),
+        "AI" => ("AI-assisted development", Icons.Material.Filled.SmartToy, 7),
+        "Games" => ("Game development", Icons.Material.Filled.SportsEsports, 8),
+        "Tools" => ("Other tools", Icons.Material.Filled.Build, 9),
+        "Skills" => ("Other skills", Icons.Material.Filled.Category, 10),
+        _ => (category, Icons.Material.Filled.Category, 11)
+    };
 
     private bool _skillsExpanded;
     private bool _backgroundExpanded;

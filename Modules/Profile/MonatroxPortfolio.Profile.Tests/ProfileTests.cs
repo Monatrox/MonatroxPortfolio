@@ -28,6 +28,9 @@ public sealed class ProfileTests
         Assert.True((await importer.ImportAsync(Json)).IsSuccess);
         var initial = (await queries.GetAsync()).Value!;
         Assert.Equal(44, initial.Skills.Length);
+        Assert.Equal(9, initial.Skills.Select(skill => skill.Category).Distinct().Count());
+        Assert.Equal("DotNet", initial.Skills.Single(skill => skill.Id == "aspnet").Category);
+        Assert.Equal("Data", initial.Skills.Single(skill => skill.Id == "sql-server").Category);
         Assert.Equal(3, initial.SocialLinks.Length);
         Assert.Equal(3, initial.Career.Length);
         Assert.Equal(2, initial.Education.Length);
@@ -61,6 +64,23 @@ public sealed class ProfileTests
         Assert.Equal(45, expanded.Skills.Length);
         Assert.Equal(4, expanded.Career.Length);
         Assert.Equal(3, expanded.Education.Length);
+    }
+
+    [Theory]
+    [InlineData("DotNet")]
+    [InlineData("Languages")]
+    [InlineData("Architecture")]
+    [InlineData("Data")]
+    [InlineData("Platforms")]
+    [InlineData("Workflow")]
+    [InlineData("Business")]
+    [InlineData("AI")]
+    [InlineData("Games")]
+    [InlineData("Tools")]
+    [InlineData("Skills")]
+    public void Skill_categories_accept_grouped_and_legacy_content(string category)
+    {
+        Assert.Equal(category, new Skill("id", "Name", category, 0).Category);
     }
 
     [Fact]

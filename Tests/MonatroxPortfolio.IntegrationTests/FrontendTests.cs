@@ -84,6 +84,12 @@ public sealed class FrontendTests
         Assert.Contains("CCF", html);
         Assert.Contains("Distill", html);
         Assert.Contains("Read Portfolio case study", html);
+        Assert.Contains("id=\"skill-title-DotNet\"", html);
+        Assert.Contains("id=\"skill-title-Architecture\"", html);
+        Assert.Contains("id=\"skill-title-AI\"", html);
+        Assert.Contains("class=\"skill-list\"", html);
+        Assert.Contains("Rider", html);
+        Assert.Contains("Rust services", html);
         Assert.DoesNotContain("Open Project 1 details", html);
         Assert.Contains("\"type\":\"webassembly\"", html);
         Assert.Contains("Blazor-WebAssembly-Component-State:", html);
