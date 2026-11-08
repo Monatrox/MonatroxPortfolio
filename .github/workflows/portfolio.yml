@@ -1,0 +1,123 @@
+name: Portfolio
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+        with:
+          global-json-file: global.json
+      - name: Build, test, validate content and check migrations
+        run: |
+          for script in deploy/*.sh scripts/*.sh; do bash -n "$script"; done
+          bash scripts/verify.sh
+          dotnet run --project Hosts/MonatroxPortfolio.Migrations --no-build -- --validate "$PWD/content"
+          python3 -m unittest discover -s Tests/Deployment -v
+      - name: Publish and build production images
+        run: |
+          bash scripts/publish-containers.sh
+          bash deploy/build-images.sh portfolio-ci "$GITHUB_SHA"
+      - name: Install browser and its OS dependencies
+        run: pwsh Tests/MonatroxPortfolio.BrowserTests/bin/Debug/net10.0/playwright.ps1 install --with-deps chromium
+      - name: Browser smoke against published containers and disposable SMTP capture
+        run: bash scripts/ci-smoke.sh portfolio-ci "$GITHUB_SHA"
+      - name: Package tested publish outputs
+        run: |
+          tar -C artifacts/containers -czf artifacts/publish.tgz .
+          sha256sum artifacts/publish.tgz > artifacts/publish.tgz.sha256
+      - name: Retain tested outputs and diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: published-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            artifacts/publish.tgz
+            artifacts/publish.tgz.sha256
+            artifacts/ci-logs/
+          retention-days: 3
+          compression-level: 0
+          if-no-files-found: warn
+
+  publish:
+    needs: verify
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: published-${{ github.sha }}-${{ github.run_attempt }}
+          path: artifacts
+      - name: Build and publish the tested outputs, without rebuilding application code
+        env:
+          REGISTRY_TOKEN: ${{ github.token }}
+        run: |
+          sha256sum --check artifacts/publish.tgz.sha256
+          mkdir -p artifacts/containers
+          tar -xzf artifacts/publish.tgz -C artifacts/containers
+          prefix="ghcr.io/${GITHUB_REPOSITORY,,}"
+          bash deploy/build-images.sh "$prefix" "$GITHUB_SHA"
+          printf '%s' "$REGISTRY_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          for target in web api tools; do docker push "$prefix-$target:$GITHUB_SHA"; done
+
+  deploy:
+    needs: publish
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_ENABLED == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    concurrency:
+      group: portfolio-production
+      cancel-in-progress: false
+    steps:
+      - name: Deploy current main through restricted SSH command
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ vars.DEPLOY_USER }}
+          DEPLOY_KNOWN_HOSTS: ${{ vars.DEPLOY_KNOWN_HOSTS }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          set -euo pipefail
+          current="$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/git/ref/heads/main" \
+            | python3 -c 'import json,sys; print(json.load(sys.stdin)["object"]["sha"])')"
+          if [[ "$current" != "$GITHUB_SHA" ]]; then
+            echo 'Superseded by a newer main commit; skipping stale deployment.'
+            exit 0
+          fi
+          : "${DEPLOY_HOST:?Set repository DEPLOY_HOST variable}"
+          : "${DEPLOY_USER:?Set repository DEPLOY_USER variable}"
+          : "${DEPLOY_KNOWN_HOSTS:?Set verified repository DEPLOY_KNOWN_HOSTS variable}"
+          : "${DEPLOY_SSH_KEY:?Set repository DEPLOY_SSH_KEY secret}"
+          install -d -m 700 "$HOME/.ssh"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/portfolio-deploy-key"
+          chmod 600 "$HOME/.ssh/known_hosts" "$RUNNER_TEMP/portfolio-deploy-key"
+          trap 'rm -f "$RUNNER_TEMP/portfolio-deploy-key"' EXIT
+          ssh -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes \
+            -o UpdateHostKeys=no -o ConnectTimeout=15 -o ServerAliveInterval=15 -o ServerAliveCountMax=3 \
+            -i "$RUNNER_TEMP/portfolio-deploy-key" "$DEPLOY_USER@$DEPLOY_HOST" "deploy $GITHUB_SHA"

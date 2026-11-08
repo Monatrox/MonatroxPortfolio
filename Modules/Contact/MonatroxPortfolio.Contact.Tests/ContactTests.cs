@@ -126,7 +126,7 @@ public sealed class ContactTests
         var sender = new Sender();
         await using var app = await StartAsync(sender);
         using var client = app.GetTestClient();
-        for (var i = 0; i < 3; i++) Assert.Equal(HttpStatusCode.BadRequest, (await client.SendAsync(Request("{}"))).StatusCode);
+        for (var i = 0; i < 5; i++) Assert.Equal(HttpStatusCode.BadRequest, (await client.SendAsync(Request("{}"))).StatusCode);
         var limited = await client.SendAsync(Request(Valid));
         Assert.Equal(HttpStatusCode.TooManyRequests, limited.StatusCode);
         Assert.NotNull(limited.Headers.RetryAfter);

@@ -2,6 +2,7 @@
 [Bb]in/
 [Oo]bj/
 TestResults/
+__pycache__/
 artifacts/
 
 # Local project-page source references

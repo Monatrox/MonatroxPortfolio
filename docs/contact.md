@@ -29,12 +29,12 @@ Profile owns social-link metadata. Frontend hosts own modal, clipboard feedback 
 - `POST /api/contact`: name ≤100 characters, email ≤254, message ≤5000; JSON body ≤32 KiB, including unknown-length requests. Unknown fields, header/control-character injection and malformed requests fail.
 - Recipient and subject are fixed server-side. Submitted addresses cannot become From/To/CC/BCC. Body is plain text, not visitor-authored HTML.
 - JSON and `X-Portfolio-Contact: 1` are required. No CORS is enabled, so unrelated browser origins cannot preflight that custom header. There is no session/auth cookie authority on this anonymous endpoint; this is a browser cross-site submission guard, not authentication or a bot-proof token.
-- Hidden honeypot rejects filled submissions. Rate limits: **3 attempts per IP per 10 minutes**, plus **20 contact POST attempts globally per minute**. Invalid attempts count. No request queue; `429` includes Retry-After.
+- Hidden honeypot rejects filled submissions. Rate limits: **5 attempts per API-observed IP per 10 minutes**, plus **20 contact POST attempts globally per minute**. Invalid attempts count. No request queue; `429` includes Retry-After.
 - SMTP connect/auth/send has a 10-second deadline. Explicit failures return 503; form keeps draft. SMTP acceptance is not proof of final inbox delivery. A lost acknowledgement can make retry outcomes uncertain; no durable queue, automatic retry or idempotency store is claimed.
 - No application message database or message-body/SMTP credential logging. Names, addresses and bodies still travel to SMTP service and are retained according to inbox/provider policy. smtp4dev inbox is disposable and resets with its container.
 - Credentials belong in API user secrets or deployment secret environment, never client config/source/chat. No protocol logging or certificate-validation bypass.
 
-Rate counters are per API process, and forwarded client IPs are accepted only from framework-default loopback trusted proxies, one hop. Before off-host proxy deployment, explicitly configure that trusted proxy; do not clear trust lists. Multi-instance/public production requires shared edge abuse protection and operational review. Current controls are not a CAPTCHA or distributed spam/DDoS defense.
+Rate counters are per API process, and forwarded client IPs are accepted only from framework-default loopback trusted proxies, one hop. Correcting the Nginx → frontend → API forwarding chain is explicitly deferred for initial hosting: visitors may share the same five-attempt bucket. Revisit if shared throttling becomes a problem. Before off-host proxy deployment, explicitly configure that trusted proxy; do not clear trust lists. Multi-instance/public production requires shared edge abuse protection and operational review. Current controls are not a CAPTCHA or distributed spam/DDoS defense.
 
 ## Real SMTP later
 

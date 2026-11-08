@@ -30,9 +30,10 @@ public static class ContactEndpoints
                 context.Request.Method == "POST" && context.Request.Path == "/api/contact"
                     ? RateLimitPartition.GetFixedWindowLimiter("contact-global", _ => new() { PermitLimit = 20, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 })
                     : RateLimitPartition.GetNoLimiter("other"));
+            // shortcut: proxy hops may share this bucket, fix client-IP forwarding if shared throttling becomes a problem.
             options.AddPolicy("contact", context => RateLimitPartition.GetFixedWindowLimiter(
                 context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-                _ => new() { PermitLimit = 3, Window = TimeSpan.FromMinutes(10), QueueLimit = 0 }));
+                _ => new() { PermitLimit = 5, Window = TimeSpan.FromMinutes(10), QueueLimit = 0 }));
         });
         return services;
     }

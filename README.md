@@ -1,6 +1,6 @@
 # MonatroxPortfolio
 
-.NET 10 modular monolith API, prerendered Blazor WebAssembly/MudBlazor frontend, EF Core/SQLite, Aspire + Podman and smtp4dev. Project-page authoring: [docs/project-pages.md](docs/project-pages.md). Contact/email behavior: [docs/contact.md](docs/contact.md). Current design: [docs/professional-design.md](docs/professional-design.md); accepted header uses original white/lime logo in avatar bubble inside floating capsule. Hosting milestone: [docs/wasm-migration.md](docs/wasm-migration.md). Original baseline: [docs/v1-plan.md](docs/v1-plan.md).
+.NET 10 modular monolith API, prerendered Blazor WebAssembly/MudBlazor frontend, EF Core/SQLite, Aspire + Podman and smtp4dev. Project-page authoring: [docs/project-pages.md](docs/project-pages.md). Contact/email behavior: [docs/contact.md](docs/contact.md). Current design: [docs/professional-design.md](docs/professional-design.md); accepted header uses original white/lime logo in avatar bubble inside floating capsule. CI/CD and production bootstrap: [docs/deployment.md](docs/deployment.md). Hosting milestone: [docs/wasm-migration.md](docs/wasm-migration.md). Original baseline: [docs/v1-plan.md](docs/v1-plan.md).
 
 ## Run locally
 

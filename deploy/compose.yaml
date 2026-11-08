@@ -1,0 +1,61 @@
+# Install root-owned at /etc/monatrox-portfolio/compose.yaml. CI must never replace this file.
+name: monatrox-portfolio
+services:
+  api:
+    image: ${IMAGE_PREFIX:?Set IMAGE_PREFIX}-api:${RELEASE_SHA:?Set RELEASE_SHA}
+    user: "1654:1654"
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    env_file:
+      - path: /etc/monatrox-portfolio/api.env
+        format: raw
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      DOTNET_ENVIRONMENT: Production
+      ConnectionStrings__Portfolio: Data Source=/data/portfolio.db;Foreign Keys=True
+    ports:
+      - "127.0.0.1:44352:8080"
+    volumes:
+      - /var/lib/monatrox-portfolio/data:/data
+    tmpfs: [/tmp]
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+  web:
+    image: ${IMAGE_PREFIX:?Set IMAGE_PREFIX}-web:${RELEASE_SHA:?Set RELEASE_SHA}
+    user: "1654:1654"
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      DOTNET_ENVIRONMENT: Production
+      Api__BaseUrl: http://api:8080
+    ports:
+      - "127.0.0.1:44350:8080"
+      - "[::1]:44350:8080"
+    volumes:
+      - /var/lib/monatrox-portfolio/keys:/home/app/.aspnet/DataProtection-Keys
+    tmpfs: [/tmp]
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+  tools:
+    profiles: [maintenance]
+    image: ${IMAGE_PREFIX:?Set IMAGE_PREFIX}-tools:${RELEASE_SHA:?Set RELEASE_SHA}
+    user: "1654:1654"
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+    environment:
+      ConnectionStrings__Portfolio: Data Source=/data/portfolio.db;Foreign Keys=True
+    volumes:
+      - /var/lib/monatrox-portfolio/data:/data
+    tmpfs: [/tmp]
+    network_mode: none
