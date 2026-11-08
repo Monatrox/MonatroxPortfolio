@@ -630,7 +630,7 @@ async Task CheckHeaderAsync()
         await Expect(favicon).ToHaveAttributeAsync("href", faviconHref);
         await Expect(page.Locator(".site-nav > a")).ToHaveCountAsync(3);
         await Expect(page.Locator(".site-nav a span")).ToHaveTextAsync(new[] { "01", "02", "03" });
-        foreach (var (width, height) in new[] { (1366, 768), (768, 844), (600, 844), (480, 844), (461, 844), (460, 844), (421, 844), (420, 844), (390, 844), (360, 844), (320, 844) })
+        foreach (var (width, height) in new[] { (1366, 768), (768, 844), (681, 844), (680, 844), (600, 844), (480, 844), (461, 844), (460, 844), (421, 844), (420, 844), (390, 844), (360, 844), (320, 844) })
         {
             await page.SetViewportSizeAsync(width, height);
             await page.EvaluateAsync("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
@@ -638,12 +638,21 @@ async Task CheckHeaderAsync()
             if (width <= 420) await Expect(page.Locator(".brand-wordmark")).ToBeHiddenAsync();
             else await Expect(page.Locator(".brand-wordmark")).ToBeVisibleAsync();
             await CheckPageWidthAsync($"Header at {width}px");
+            await Expect(page.Locator(".site-header-inner")).ToHaveCSSAsync("border-radius", width <= 680 ? "20px" : "999px");
+            if (!await page.Locator(".site-nav").EvaluateAsync<bool>("""
+                nav => {
+                    const links = [...nav.children].map(link => link.getBoundingClientRect());
+                    const gap = innerWidth <= 680 ? 12 : 28;
+                    return links.every((box, index) => index === 0 || Math.abs(box.left - links[index - 1].right - gap) <= 1);
+                }
+                """))
+                throw new InvalidOperationException($"Header link spacing must stay fixed, not stretch across the row, at {width}px.");
             if (!await page.Locator(".site-header").EvaluateAsync<bool>("""
                 header => {
                     const bounds = header.getBoundingClientRect();
                     const brand = header.querySelector('.site-brand').getBoundingClientRect();
                     const links = [...header.querySelectorAll('.site-nav a')];
-                    return links.length === 3 && links.every(link => {
+                    return brand.width >= 24 && brand.height >= 44 && links.length === 3 && links.every(link => {
                         const box = link.getBoundingClientRect();
                         const index = link.querySelector('span');
                         const number = index.getBoundingClientRect();
@@ -686,10 +695,17 @@ async Task CheckHeaderAsync()
     var wideFont = await page.AddStyleTagAsync(new() { Content = ":root { --font-body: 'DejaVu Sans', sans-serif; }" });
     try
     {
-        foreach (var width in new[] { 480, 461, 460, 421, 360, 320 })
+        foreach (var gamer in new[] { false, true })
         {
-            await page.SetViewportSizeAsync(width, 844);
-            await CheckPageWidthAsync($"Wide-system-font header at {width}px");
+            await (gamer ? gamerView : professionalView).ClickAsync();
+            await Expect(page.Locator(".portfolio-shell")).ToHaveAttributeAsync("data-view", gamer ? "gamer" : "professional");
+            foreach (var width in new[] { 480, 461, 460, 421, 360, 320 })
+            {
+                await page.SetViewportSizeAsync(width, 844);
+                await CheckPageWidthAsync($"Wide-system-font header at {width}px");
+                if (!await page.Locator(".site-header-inner").EvaluateAsync<bool>("el => el.querySelector('.site-nav').getBoundingClientRect().right <= el.getBoundingClientRect().right + 1"))
+                    throw new InvalidOperationException($"Wide-system-font navigation escapes its container at {width}px.");
+            }
         }
         await page.Locator(".site-header").ScreenshotAsync(new()
         {
