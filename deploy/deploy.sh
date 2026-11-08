@@ -44,7 +44,7 @@ compose() {
 }
 wait_for() {
   for _ in {1..30}; do
-    if curl --fail --silent --noproxy '*' --max-time 3 "$1" >/dev/null; then return; fi
+    if curl --fail --silent --noproxy '*' --max-time 3 "$1" >/dev/null; then return 0; fi
     sleep 1
   done
   return 1
@@ -66,6 +66,8 @@ restore_database() {
 }
 failed() {
   local status="$1" recovered=true
+  # Command substitutions report failure to the parent; only the parent may roll back.
+  if (( BASH_SUBSHELL > 0 )); then exit "$status"; fi
   trap - ERR INT TERM HUP
   set +e
   if [[ $changing == true ]]; then

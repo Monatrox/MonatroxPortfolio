@@ -113,6 +113,9 @@ elif command == 'curl':
         self.assertNotEqual(result.returncode, 0)
         self.assertEqual(self.value(), 1)
         self.assertEqual((self.state / 'current').read_text().strip(), OLD)
+        self.assertIn('previous images and pre-deployment database restored', result.stderr)
+        stops = [args for command, args, _ in self.events() if command == 'docker' and 'stop' in args]
+        self.assertEqual(len(stops), 2, 'Only initial shutdown and one parent rollback may stop services')
 
     def test_failed_first_import_leaves_no_partial_database(self):
         self.database.unlink()
