@@ -90,6 +90,8 @@ public sealed class FrontendTests
         Assert.Contains("class=\"skill-list\"", html);
         Assert.Contains("Rider", html);
         Assert.Contains("Rust services", html);
+        Assert.DoesNotContain("Gamer layout previews", html);
+        Assert.DoesNotContain("data-gamer-preview=", html);
         Assert.DoesNotContain("Open Project 1 details", html);
         Assert.Contains("\"type\":\"webassembly\"", html);
         Assert.Contains("Blazor-WebAssembly-Component-State:", html);
