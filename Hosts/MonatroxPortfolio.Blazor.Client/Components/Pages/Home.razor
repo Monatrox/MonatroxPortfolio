@@ -14,7 +14,7 @@
 {
     <div class="page-message">
         <MudAlert Severity="Severity.Error" role="alert">@Error</MudAlert>
-        <MudButton Ripple="@UseRipples" OnClick="LoadAsync" Color="Color.Primary" Disabled="@(!RendererInfo.IsInteractive)">Retry</MudButton>
+        <MudButton OnClick="LoadAsync" Color="Color.Primary" Disabled="@(!RendererInfo.IsInteractive)">Retry</MudButton>
     </div>
 }
 else if (Profile is null)
@@ -28,11 +28,11 @@ else
     <section class="identity-stage" aria-labelledby="hero-name">
         <div class="hero-identity" role="group" aria-label="Choose identity">
             <h1 id="hero-name" class="identity-selector" aria-label="@(IsGamer ? Profile.Alias : Profile.Name)">
-                <MudButton Ripple="@UseRipples" Class="identity-option" OnClick="() => SelectView.InvokeAsync(true)" Disabled="@(!RendererInfo.IsInteractive)"
+                <MudButton Class="identity-option" OnClick="() => SelectView.InvokeAsync(true)" Disabled="@(!RendererInfo.IsInteractive)"
                            aria-label="@($"Show {Profile.Alias}")" aria-pressed="@IsGamer.ToString().ToLowerInvariant()">
                     <span class="identity-name">@Profile.Alias<MudIcon Icon="@Icons.Material.Filled.Games" aria-hidden="true" /></span>
                 </MudButton>
-                <MudButton Ripple="@UseRipples" Class="identity-option" OnClick="() => SelectView.InvokeAsync(false)" Disabled="@(!RendererInfo.IsInteractive)"
+                <MudButton Class="identity-option" OnClick="() => SelectView.InvokeAsync(false)" Disabled="@(!RendererInfo.IsInteractive)"
                            aria-label="@($"Show {Profile.Name}")" aria-pressed="@((!IsGamer).ToString().ToLowerInvariant())">
                     <span class="identity-name"><MudIcon Icon="@Icons.Material.Filled.Computer" aria-hidden="true" />@Profile.Name</span>
                 </MudButton>
@@ -41,7 +41,7 @@ else
         <figure class="identity-visual">
             <div class="identity-image">
                 <MudImage Fluid="true" ObjectFit="@(IsGamer ? ObjectFit.Contain : ObjectFit.Cover)"
-                          Src="@(IsGamer ? PreviewImage("Content/Images/MX Abstract Logo Cleaned.png", "Content/Images/neon-hero.webp") : "Content/Images/zac-taylor-portrait.jpg")"
+                          Src="@(IsGamer ? "Content/Images/MX Abstract Logo Cleaned.png" : "Content/Images/zac-taylor-portrait.jpg")"
                           Alt="@(IsGamer ? "Monatrox identity logo" : "Portrait of Zac Taylor")" />
             </div>
             <figcaption>@(IsGamer ? Profile.Alias : Profile.Name)</figcaption>
@@ -57,7 +57,7 @@ else
                 {
                     @if (link.Id == "discord" && link.Url == "#")
                     {
-                        <MudButton Ripple="@UseRipples" Class="social-contact" OnClick="CopyDiscordAsync" Disabled="@(!RendererInfo.IsInteractive)" aria-label="Copy Discord username monatrox">Discord · monatrox <span aria-hidden="true">⧉</span></MudButton>
+                        <MudButton Class="social-contact" OnClick="CopyDiscordAsync" Disabled="@(!RendererInfo.IsInteractive)" aria-label="Copy Discord username monatrox">Discord · monatrox <span aria-hidden="true">⧉</span></MudButton>
                     }
                     else if (link.Url == "#")
                     {
@@ -68,11 +68,11 @@ else
                         <MudLink Href="@link.Url" Underline="Underline.None">@link.Name <span aria-hidden="true">↗</span></MudLink>
                     }
                 }
-                <MudButton Ripple="@UseRipples" Class="social-contact" OnClick="OpenContactAsync" Disabled="@(!RendererInfo.IsInteractive)" aria-label="Email — Contact Me" aria-haspopup="dialog">Email <MudIcon Icon="@Icons.Material.Filled.MailOutline" Size="Size.Small" /></MudButton>
+                <MudButton Class="social-contact" OnClick="OpenContactAsync" Disabled="@(!RendererInfo.IsInteractive)" aria-label="Email — Contact Me" aria-haspopup="dialog">Email <MudIcon Icon="@Icons.Material.Filled.MailOutline" Size="Size.Small" /></MudButton>
                 <span class="contact-copy-status" role="status" aria-live="polite">@_discordCopyStatus</span>
             </div>
             <div class="hero-actions">
-                <MudButton Ripple="@UseRipples" Href="#projects" Variant="Variant.Filled" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ArrowForward" Class="primary-action">Explore projects</MudButton>
+                <MudButton Href="#projects" Variant="Variant.Filled" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ArrowForward" Class="primary-action">Explore projects</MudButton>
                 <MudLink Href="#background" Underline="Underline.None" Class="secondary-action">My background <span aria-hidden="true">↗</span></MudLink>
             </div>
         </div>
@@ -86,7 +86,7 @@ else
         </MudPaper>
         <MudPaper Elevation="0" Class="about-visual detail-panel">
             <MudImage ObjectFit="ObjectFit.Cover" loading="lazy" decoding="async"
-                      Src="@(IsGamer ? PreviewImage("Content/Images/monatrox-about.jpg", "Content/Images/neon-portrait.webp") : "Content/Images/zac-taylor-about.jpg")"
+                      Src="@(IsGamer ? "Content/Images/monatrox-about.jpg" : "Content/Images/zac-taylor-about.jpg")"
                       Alt="@(IsGamer ? "Monatrox portrait" : "Zac Taylor portrait")" />
         </MudPaper>
     </section>
@@ -105,7 +105,7 @@ else
             <div class="project-grid" data-testid="project-grid">
                 @foreach (var (project, index) in Projects.Select((item, index) => (item, index)))
                 {
-                    <MudButton Ripple="@UseRipples" Class="project-card" Href="@project.Link" Disabled="@(string.IsNullOrWhiteSpace(project.Link))"
+                    <MudButton Class="project-card" Href="@project.Link" Disabled="@(string.IsNullOrWhiteSpace(project.Link))"
                                aria-label="@(IsCaseStudy(project) ? $"Read {project.Name} case study" : $"Open {project.Name} details")" aria-haspopup="dialog">
                         <span class="project-card-top"><span class="project-reference">@project.Id</span><span class="project-number" aria-hidden="true">@((index + 1).ToString("00"))</span></span>
                         <span class="project-preview" aria-hidden="true"><span class="preview-node"></span><span class="preview-wire"></span><span class="preview-node preview-node-end"></span></span>
@@ -120,7 +120,7 @@ else
 
     <section class="supporting-content" aria-label="Expertise and background">
         <h2 class="section-toggle-heading" id="skills">
-            <MudButton Ripple="@UseRipples" OnClick="() => _skillsExpanded = !_skillsExpanded" Disabled="@(!RendererInfo.IsInteractive)" Class="support-toggle"
+            <MudButton OnClick="() => _skillsExpanded = !_skillsExpanded" Disabled="@(!RendererInfo.IsInteractive)" Class="support-toggle"
                        aria-label="Tools, Skills, and Languages" aria-expanded="@_skillsExpanded.ToString().ToLowerInvariant()" aria-controls="skills-content">
                 <span class="section-index" aria-hidden="true">02</span><span class="support-title">Tools, Skills, and Languages</span>
                 <MudIcon Icon="@(_skillsExpanded ? Icons.Material.Filled.Remove : Icons.Material.Filled.Add)" />
@@ -146,7 +146,7 @@ else
             </div>
         </MudCollapse>
         <h2 class="section-toggle-heading" id="background">
-            <MudButton Ripple="@UseRipples" OnClick="() => _backgroundExpanded = !_backgroundExpanded" Disabled="@(!RendererInfo.IsInteractive)" Class="support-toggle"
+            <MudButton OnClick="() => _backgroundExpanded = !_backgroundExpanded" Disabled="@(!RendererInfo.IsInteractive)" Class="support-toggle"
                        aria-label="Background and Education" aria-expanded="@_backgroundExpanded.ToString().ToLowerInvariant()" aria-controls="background-content">
                 <span class="section-index" aria-hidden="true">03</span><span class="support-title">Background and Education</span>
                 <MudIcon Icon="@(_backgroundExpanded ? Icons.Material.Filled.Remove : Icons.Material.Filled.Add)" />
@@ -188,9 +188,6 @@ else
 
 @code {
     [CascadingParameter(Name = "GamerView")] public bool IsGamer { get; set; }
-    [CascadingParameter(Name = "GamerPreview")] public string GamerPreview { get; set; } = "neon";
-    private bool UseRipples => !IsGamer || GamerPreview != "neon-still";
-    private string PreviewImage(string original, string compact) => IsGamer && GamerPreview == "neon-compact" ? compact : original;
     [CascadingParameter(Name = "SelectView")] public EventCallback<bool> SelectView { get; set; }
     [PersistentState] public ProfileDto? Profile { get; set; }
     [PersistentState] public ProjectDto[]? Projects { get; set; }

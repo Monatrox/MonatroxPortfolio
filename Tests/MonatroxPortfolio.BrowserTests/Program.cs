@@ -122,6 +122,17 @@ await skills.ClickAsync();
 await gamerView.FocusAsync();
 await page.Keyboard.PressAsync("Enter");
 await Expect(page.Locator(".portfolio-shell")).ToHaveAttributeAsync("data-view", "gamer");
+await Expect(page.Locator(".gamer-preview-picker, [data-gamer-preview]")).ToHaveCountAsync(0);
+await Expect(page.Locator(".portfolio-shell")).ToHaveCSSAsync("padding-bottom", "0px");
+if (!await page.Locator(".portfolio-shell").EvaluateAsync<bool>("""
+    shell => {
+        const art = getComputedStyle(shell, '::before');
+        return art.backgroundImage.includes('neon-flatline.svg') && art.position === 'absolute' &&
+            art.top === '0px' && art.height === '1100px' && art.animationName === 'none' && art.filter === 'none' &&
+            getComputedStyle(shell.querySelector('.identity-visual')).boxShadow === 'none';
+    }
+    """))
+    throw new InvalidOperationException("Gamer screen must use static, page-anchored Neon Flatline without the gallery.");
 await Expect(page.Locator("body")).ToHaveCSSAsync("background-color", await ResolveThemeColorAsync(page, "--page-bg"));
 await CheckPersonalLabelsAsync();
 await CheckSelectorColorsAsync(page, gamer: true);
