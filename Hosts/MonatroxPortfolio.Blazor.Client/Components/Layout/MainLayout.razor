@@ -1,4 +1,5 @@
 @inherits LayoutComponentBase
+@inject IJSRuntime JS
 
 <MudThemeProvider Theme="Theme" IsDarkMode="_gamerView" />
 <MudPopoverProvider />
@@ -6,6 +7,10 @@
 <MudSnackbarProvider />
 
 <MudLayout Class="portfolio-shell" data-renderer="@RendererInfo.Name" data-view="@(_gamerView ? "gamer" : "professional")" data-gamer-preview="@(_gamerView ? _gamerPreview : null)">
+    @if (_gamerView && _gamerPreview == "neon-element")
+    {
+        <img class="neon-background-element" src="Content/Images/neon-mirror.webp" alt="" aria-hidden="true" decoding="async" draggable="false" />
+    }
     <a class="skip-link" href="#main-content" @onclick="FocusMainAsync" @onclick:preventDefault>Skip to content</a>
     <MudAppBar Fixed="false" Elevation="0" Class="site-header">
         <div class="site-header-inner">
@@ -25,7 +30,9 @@
     <main class="portfolio-main" id="main-content" tabindex="-1" @ref="_main">
         <CascadingValue Name="GamerView" Value="_gamerView">
             <CascadingValue Name="SelectView" Value="EventCallback.Factory.Create<bool>(this, SelectView)">
-                @Body
+                <CascadingValue Name="GamerPreview" Value="@_gamerPreview">
+                    @Body
+                </CascadingValue>
             </CascadingValue>
         </CascadingValue>
     </main>
@@ -38,13 +45,14 @@
 @if (_gamerView)
 {
     <aside class="gamer-preview-picker" aria-label="Gamer layout previews">
-        <div class="gamer-preview-caption"><span>Gamer layouts · preview</span><span aria-live="polite">@GamerPreviews.First(preview => preview.Id == _gamerPreview).Name</span></div>
+        <div class="gamer-preview-caption"><span>Gamer themes · scroll to explore</span><span aria-live="polite">@GamerPreviews.First(preview => preview.Id == _gamerPreview).Name</span></div>
         <div class="gamer-preview-options" role="group" aria-label="Choose gamer layout">
             @foreach (var preview in GamerPreviews)
             {
                 <MudButton Variant="Variant.Text" Color="Color.Inherit" Class="gamer-preview-option"
                            aria-pressed="@((_gamerPreview == preview.Id).ToString().ToLowerInvariant())"
-                           aria-label="@($"Preview {preview.Name} gamer layout")" OnClick="() => _gamerPreview = preview.Id">@preview.Name</MudButton>
+                           data-neon-preview="@preview.Id" title="@preview.Description" aria-description="@preview.Description" Ripple="@(_gamerPreview != "neon-still")"
+                           aria-label="@($"Preview {preview.Name} gamer layout")" OnClick="() => SetPreviewAsync(preview.Id)">@preview.Name</MudButton>
             }
         </div>
     </aside>
@@ -56,12 +64,29 @@
 
 @code {
     private bool _gamerView;
-    private string _gamerPreview = "clawmark";
-    private static readonly (string Id, string Name)[] GamerPreviews =
+    private string _gamerPreview = "neon";
+    private static readonly (string Id, string Name, string Description)[] GamerPreviews =
     [
-        ("clawmark", "Clawmark"), ("neon", "Neon"), ("arcade", "Arcade"),
-        ("manuscript", "Manuscript"), ("tactical", "Tactical"), ("crt", "CRT")
+        ("neon", "Neon", "Original Neon, unchanged: comparison baseline."),
+        ("neon-flat", "Neon Flat", "Remove surface/text shadows and panel gradients; simpler angled light."),
+        ("neon-flatgrid", "Neon Flatgrid", "Neon Flat with a small repeating grid image instead of two full-page gradients."),
+        ("neon-flatline", "Neon Flatline", "Neon Flat with a static EKG line: one left-side peak/dip and trailing lines."),
+        ("neon-lowres", "Neon LowRes", "Smaller glow bitmap and wider grid spacing: texture/download cost."),
+        ("neon-direct", "Neon Direct", "Paint the background directly on the page, without isolated pseudo-layers."),
+        ("neon-contained", "Neon Contain", "Bound card painting; test a vector ring backdrop."),
+        ("neon-lazy", "Neon Lazy", "Skip off-screen grid rendering while preserving measured grid sizes."),
+        ("neon-still", "Neon Still", "Disable height tweens, hover motion, surface transitions and button ripples; no grid."),
+        ("neon-element", "Neon Element", "Decode a mirrored glow as a decorative image element, not a CSS background."),
+        ("neon-vector", "Neon Vector", "Small filter-free SVG gradients and curves instead of a large bitmap."),
+        ("neon-vector-wide", "Neon Vector Wide", "Original Vector artwork stretched edge-to-edge, including 1440p and 4K screens."),
+        ("neon-lines", "Neon Lines", "CSS-only light bands: no glow image download."),
+        ("neon-compact", "Neon Compact", "Smaller foreground images and glow texture: reduce decoded image memory.")
     ];
+    private async Task SetPreviewAsync(string id)
+    {
+        if (id == "neon-lazy") await JS.InvokeVoidAsync("prepareNeonLazy");
+        _gamerPreview = id;
+    }
     private ElementReference _main;
     private void SelectView(bool gamer) => _gamerView = gamer;
     private async Task FocusMainAsync() => await _main.FocusAsync();

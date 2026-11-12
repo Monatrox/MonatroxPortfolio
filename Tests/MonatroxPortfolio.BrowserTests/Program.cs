@@ -638,8 +638,7 @@ async Task CheckHeaderAsync()
             if (width <= 420) await Expect(page.Locator(".brand-wordmark")).ToBeHiddenAsync();
             else await Expect(page.Locator(".brand-wordmark")).ToBeVisibleAsync();
             await CheckPageWidthAsync($"Header at {width}px");
-            if (!gamer || width <= 680)
-                await Expect(page.Locator(".site-header-inner")).ToHaveCSSAsync("border-radius", width <= 680 ? "20px" : "999px");
+            await Expect(page.Locator(".site-header-inner")).ToHaveCSSAsync("border-radius", width <= 680 ? "20px" : "999px");
             if (!await page.Locator(".site-nav").EvaluateAsync<bool>("""
                 nav => {
                     const links = [...nav.children].map(link => link.getBoundingClientRect());
@@ -734,7 +733,7 @@ async Task CheckAboutPortraitAsync(bool gamer = false)
     {
         var story = await page.Locator(".about-copy").BoundingBoxAsync();
         var photo = await page.Locator(".about-visual").BoundingBoxAsync();
-        if (story is null || photo is null || Math.Abs(story.Y - photo.Y) > 1 || Math.Abs(story.Y + story.Height - photo.Y - photo.Height) > 1 || (!gamer && Math.Abs(story.Width - photo.Width) > 1))
+        if (story is null || photo is null || Math.Abs(story.Y - photo.Y) > 1 || Math.Abs(story.Y + story.Height - photo.Y - photo.Height) > 1 || Math.Abs(story.Width - photo.Width) > 1)
             throw new InvalidOperationException("About story and portrait cards must align.");
     }
 }

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1280" viewBox="0 0 1600 1280">
+  <defs>
+    <radialGradient id="glow"><stop stop-color="#a8d438" stop-opacity=".15"/><stop offset="1" stop-color="#a8d438" stop-opacity="0"/></radialGradient>
+    <linearGradient id="fade" x2="0" y2="1"><stop offset=".65" stop-color="#181a18" stop-opacity="0"/><stop offset=".98" stop-color="#181a18"/></linearGradient>
+  </defs>
+  <rect width="1600" height="1280" fill="#181a18"/>
+  <ellipse cx="400" cy="360" rx="650" ry="650" fill="url(#glow)"/>
+  <g fill="none" stroke="#a8d438" stroke-opacity=".15">
+    <ellipse cx="400" cy="360" rx="390" ry="390"/>
+    <ellipse cx="400" cy="360" rx="430" ry="430" stroke-opacity=".08"/>
+    <path d="M0 960L1600 120" stroke-width="2" stroke-opacity=".3"/>
+    <path d="M900 0L1600 700" stroke="#8ac7f0"/>
+  </g>
+  <rect width="1600" height="1280" fill="url(#fade)"/>
+</svg>
