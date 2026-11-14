@@ -5,8 +5,8 @@ TestResults/
 __pycache__/
 artifacts/
 
-# Local project-page source references
-/docs/projects/
+# Private working notes and local project-page source references
+/docs/
 
 # IDE-local settings
 .idea/
