@@ -525,6 +525,7 @@ async Task CheckProjectPagesAsync()
         await Expect(page.Locator("head meta[name='description']")).ToHaveCountAsync(1);
         await Expect(page.Locator(".case-section")).ToHaveCountAsync(5);
         if (browserApiRequests.Count != before) throw new InvalidOperationException("Project page refetched on prerender handoff.");
+        await CheckRepositoryLinksAsync(page.Locator(".case-study"), id);
         if (id == "ccf")
         {
             var tab = page.GetByRole(AriaRole.Tab, new() { Name = "Prepare an event", Exact = true });
@@ -538,8 +539,6 @@ async Task CheckProjectPagesAsync()
         }
         else if (id == "distill")
         {
-            await Expect(page.Locator(".case-study a")).ToHaveCountAsync(1);
-            await Expect(page.Locator(".case-study a")).ToHaveAttributeAsync("href", "https://github.com/Monatrox/distill");
             await Expect(page.Locator(".case-study")).ToContainTextAsync("Domain contracts");
             await Expect(page.GetByText("99.90%", new() { Exact = true })).ToBeVisibleAsync();
             var slider = page.GetByRole(AriaRole.Slider, new() { Name = "Producer instances", Exact = true });
@@ -576,10 +575,12 @@ async Task CheckProjectPagesAsync()
             await page.EvaluateAsync("new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))");
             await CheckPageWidthAsync($"Project {id} at {width}px");
             await page.EvaluateAsync("window.scrollTo({top:0, behavior:'instant'})");
+            await CheckRepositoryLinksAsync(page.Locator(".case-study"), id);
             await page.ScreenshotAsync(new() { Path = Path.Combine(directory, $"{id}-{width}.png"), Animations = ScreenshotAnimations.Disabled });
         }
         await staticPage.GotoAsync(new Uri(url, "projects/" + id).ToString());
         await Expect(staticPage.GetByRole(AriaRole.Heading, new() { Name = title, Exact = true })).ToBeVisibleAsync();
+        await CheckRepositoryLinksAsync(staticPage.Locator(".case-study"), id);
         if (id == "ccf") await Expect(staticPage.GetByRole(AriaRole.Heading, new() { Name = "Prepare for a sibling event" })).ToBeVisibleAsync();
         else if (id == "distill") await Expect(staticPage.GetByRole(AriaRole.Slider, new() { Name = "Producer instances", Exact = true })).ToBeDisabledAsync();
         else
@@ -605,6 +606,18 @@ async Task CheckProjectPagesAsync()
     if (new Uri(failedPage.Url).AbsolutePath != "/") throw new InvalidOperationException("Dialog retry navigated away from portfolio.");
 }
 
+async Task CheckRepositoryLinksAsync(ILocator study, string id)
+{
+    if (id == "ccf") return;
+    var repository = id == "distill" ? "https://github.com/Monatrox/distill" : "https://github.com/Monatrox/MonatroxPortfolio";
+    var top = study.Locator(".case-hero").GetByRole(AriaRole.Link, new() { Name = "View on GitHub ↗", Exact = true });
+    var bottom = study.Locator(".case-notes").GetByRole(AriaRole.Link, new() { Name = "View on GitHub ↗", Exact = true });
+    await Expect(study.Locator("a")).ToHaveCountAsync(2);
+    await Expect(top).ToHaveAttributeAsync("href", repository);
+    await Expect(top).ToBeInViewportAsync();
+    await Expect(bottom).ToHaveAttributeAsync("href", repository);
+}
+
 async Task CheckCaseStudyModalsAsync(string directory)
 {
     foreach (var name in new[] { "CCF", "Distill", "Portfolio" })
@@ -626,6 +639,7 @@ async Task CheckCaseStudyModalsAsync(string directory)
         await Expect(dialog.Locator(".site-header, .site-footer")).ToHaveCountAsync(0);
         await Expect(dialog.GetByRole(AriaRole.Link, new() { Name = "Open full page" })).ToHaveAttributeAsync("target", "_blank");
         var scroll = dialog.Locator(".case-dialog-scroll");
+        await CheckRepositoryLinksAsync(dialog.Locator(".case-study"), name.ToLowerInvariant());
         if (!await scroll.EvaluateAsync<bool>("el => el.scrollHeight > el.clientHeight")) throw new InvalidOperationException("Case-study dialog has no bounded scroll region.");
         if (name == "CCF")
         {
@@ -667,6 +681,7 @@ async Task CheckCaseStudyModalsAsync(string directory)
         {
             await page.SetViewportSizeAsync(width, 900);
             await scroll.EvaluateAsync("el => el.scrollTop = 0");
+            await CheckRepositoryLinksAsync(dialog.Locator(".case-study"), name.ToLowerInvariant());
             if (!await dialog.Locator(".case-dialog-heading h6").EvaluateAsync<bool>("el => el.getBoundingClientRect().height <= parseFloat(getComputedStyle(el).lineHeight) + 1"))
                 throw new InvalidOperationException($"{name} dialog title splits across lines at {width}px.");
             if (!await scroll.EvaluateAsync<bool>("el => el.scrollWidth <= el.clientWidth + 1"))

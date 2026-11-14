@@ -11,7 +11,7 @@
       "eyebrow": "Aspire + modular monolith · .NET 10",
       "title": "Portfolio",
       "subtitle": "Intentionally overengineered.",
-      "introMarkdown": "This portfolio is intentionally overengineered: a working demonstration of Aspire and a modular monolith. Clear ownership, repeatable startup and visible request flow are the point.",
+      "introMarkdown": "**[View on GitHub ↗](https://github.com/Monatrox/MonatroxPortfolio)**\n\nThis portfolio is intentionally overengineered: a working demonstration of Aspire and a modular monolith. Clear ownership, repeatable startup and visible request flow are the point.",
       "tags": ["Aspire / Podman", "Modular monolith", "Blazor WASM", "EF Core / SQLite", "GitHub Actions / Docker"],
       "visual": [
         {
@@ -173,7 +173,8 @@
       }
     ],
     "notes": [
-      "Current scope: public reads and live contact email. No admin UI, sign-in or message database. SMTP acceptance is not a guarantee of inbox delivery; deployment snapshots are local backups, not off-host disaster recovery."
+      "Current scope: public reads and live contact email. No admin UI, sign-in or message database. SMTP acceptance is not a guarantee of inbox delivery; deployment snapshots are local backups, not off-host disaster recovery.",
+      "[View on GitHub ↗](https://github.com/Monatrox/MonatroxPortfolio)"
     ]
   }
 }
