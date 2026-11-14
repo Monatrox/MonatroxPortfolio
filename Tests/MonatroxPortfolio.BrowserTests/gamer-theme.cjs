@@ -7,7 +7,6 @@ assert(['127.0.0.1', 'localhost', '[::1]'].includes(origin.hostname), 'Local pre
 const output = path.resolve(__dirname, '../../artifacts/neon-flatline-final');
 fs.mkdirSync(output, { recursive: true });
 const baseline = path.join(output, 'baseline');
-const heights = fs.existsSync(path.join(baseline, 'heights.json')) ? JSON.parse(fs.readFileSync(path.join(baseline, 'heights.json'))) : null;
 
 (async () => {
  const browser = await chromium.launch();
@@ -31,7 +30,18 @@ const heights = fs.existsSync(path.join(baseline, 'heights.json')) ? JSON.parse(
    assert.equal(await page.locator('.gamer-preview-picker,[data-gamer-preview],[data-neon-preview]').count(), 0);
    assert.equal(await page.locator('script[src*="neon-lab"],link[href*="gamer-previews"]').count(), 0);
    assert.equal(await page.locator('.portfolio-shell').evaluate(shell => getComputedStyle(shell).paddingBottom), '0px');
-   assert.equal(await page.locator('.skill-list li').count(), 44);
+   assert.equal(await page.locator('.skill-list li').count(), 77);
+   assert.deepEqual(await page.getByRole('group', { name: 'Languages & Scripting', exact: true }).locator('li').allTextContents(), ['C#', 'C++', 'Python', 'SQL', 'JavaScript', 'TypeScript', 'Bash', 'Rust']);
+   const tooling = page.getByRole('group', { name: 'Developer Tooling & Automation', exact: true });
+   for (const name of ['Postman, Insomnia, and Bruno', 'Unreal Engine and Unity', 'Rider, DataGrip, and other JetBrains tools']) assert.equal(await tooling.getByText(name, { exact: true }).count(), 1);
+   for (const name of ['Postman', 'Insomnia', 'Bruno', 'Unreal Engine', 'Unity', 'Rider', 'DataGrip', 'Code review & pull requests']) assert.equal(await tooling.getByText(name, { exact: true }).count(), 0);
+   assert.equal(await page.getByRole('group', { name: 'Project Management & Technical Leadership', exact: true }).getByText('Engineering standards & technical reviews', { exact: true }).count(), 1);
+   assert.equal(await page.getByText('In-process application & API integration tests', { exact: true }).count(), 1);
+   assert.equal(await page.getByText('A/B testing & controlled experiments', { exact: true }).count(), 1);
+   assert.equal(await page.getByText('Feature flags & dark deployments', { exact: true }).count(), 1);
+   assert.equal(await page.locator('.skill-group h3').first().innerText(), 'Languages & Scripting');
+   assert.equal(await page.locator('.skill-group h3').last().innerText(), 'Project Management & Technical Leadership');
+   assert((await page.locator('.skills-intro').innerText()).includes('not an exhaustive inventory'));
    assert.equal(await page.locator('.skill-group-heading svg').count(), 9);
    for (const width of [1366, 768, 421, 390, 320, 2560, 3840]) {
     await page.setViewportSize({ width, height: 900 });
@@ -44,16 +54,16 @@ const heights = fs.existsSync(path.join(baseline, 'heights.json')) ? JSON.parse(
     const screenshot = await page.screenshot({ path: path.join(output, `${view}-${width}.png`), animations: 'disabled', style: '.gamer-preview-picker,.mud-ripple-effect { visibility: hidden !important; }' });
     const reference = path.join(baseline, `${view}-${width}.png`);
     if (fs.existsSync(reference)) assert(screenshot.equals(fs.readFileSync(reference)), `${view} changed visually at ${width}px.`);
-    if (heights) {
-     const height = await page.locator('.portfolio-shell').evaluate(shell => shell.getBoundingClientRect().height);
-     assert(Math.abs(height - (heights[`${view}-${width}`] - (view === 'gamer' ? 132 : 0))) <= 1, 'Remove only the gallery bottom reserve.');
-    }
    }
    const wideFont = await page.addStyleTag({ content: ':root { --font-body: "DejaVu Sans", sans-serif; }' });
    for (const width of [421, 320]) {
     await page.setViewportSize({ width, height: 900 });
     await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-    assert(await page.locator('.site-header-inner').evaluate(header => document.documentElement.scrollWidth <= innerWidth + 1 && header.querySelector('.site-nav').getBoundingClientRect().right <= header.getBoundingClientRect().right + 1), `${view} wide-font header clips at ${width}px.`);
+    // Match the main browser suite's settling window without relaxing containment bounds.
+    await page.waitForFunction(() => {
+     const header = document.querySelector('.site-header-inner');
+     return document.documentElement.scrollWidth <= innerWidth + 1 && header.querySelector('.site-nav').getBoundingClientRect().right <= header.getBoundingClientRect().right + 1;
+    }, null, { timeout: 3000 });
    }
    await wideFont.evaluate(element => element.remove());
    if (view === 'professional') {

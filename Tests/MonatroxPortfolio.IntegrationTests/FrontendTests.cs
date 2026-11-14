@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Logging;
 using MonatroxPortfolio.Blazor;
+using MonatroxPortfolio.Profile.Public;
 using MonatroxPortfolio.Projects.Public;
 using MonatroxPortfolio.Shared.Contracts;
 
@@ -26,6 +27,7 @@ public sealed class FrontendTests
         private int projectRequests;
         private int pageRequests;
         public bool UnsafeMarkdown { get; set; }
+        public string? ProfileJson { get; set; }
         public int PageRequests => Volatile.Read(ref pageRequests);
         public HttpStatusCode ProfileStatus { get; set; } = HttpStatusCode.OK;
         public int ProfileRequests => Volatile.Read(ref profileRequests);
@@ -42,7 +44,7 @@ public sealed class FrontendTests
             {
                 Interlocked.Increment(ref profileRequests);
                 return ProfileStatus == HttpStatusCode.OK
-                    ? Results.Text(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "content/profile.json")), "application/json")
+                    ? Results.Text(ProfileJson ?? File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "content/profile.json")), "application/json")
                     : Results.Problem(statusCode: (int)ProfileStatus, title: "upstream.profile_error");
             });
             app.MapGet("/api/projects", () =>
@@ -84,12 +86,30 @@ public sealed class FrontendTests
         Assert.Contains("CCF", html);
         Assert.Contains("Distill", html);
         Assert.Contains("Read Portfolio case study", html);
-        Assert.Contains("id=\"skill-title-DotNet\"", html);
+        Assert.Contains("id=\"skill-title-Web\"", html);
         Assert.Contains("id=\"skill-title-Architecture\"", html);
         Assert.Contains("id=\"skill-title-AI\"", html);
         Assert.Contains("class=\"skill-list\"", html);
-        Assert.Contains("Rider", html);
-        Assert.Contains("Rust services", html);
+        Assert.Contains("Rider, DataGrip, and other JetBrains tools", html);
+        Assert.Contains("Postman, Insomnia, and Bruno", html);
+        Assert.Contains("Unreal Engine and Unity", html);
+        Assert.Contains("Engineering standards &amp; technical reviews", html);
+        Assert.Contains("Mocking, stubs &amp; test doubles", html);
+        Assert.Contains("In-process application &amp; API integration tests", html);
+        Assert.Contains("Testcontainers", html);
+        Assert.Contains("Architecture fitness", html);
+        Assert.Contains("A/B testing", html);
+        Assert.Contains("Canary testing", html);
+        Assert.Contains("Feature flags &amp; dark deployments", html);
+        Assert.DoesNotContain("Code review &amp; pull requests", html);
+        Assert.Contains("not an exhaustive inventory", html);
+        Assert.Contains("IIS server administration", html);
+        Assert.Contains("Azure deployments", html);
+        Assert.Contains("Custom AI skill files", html);
+        Assert.Contains("MCP integrations", html);
+        Assert.Contains("Valkey / Redis", html);
+        Assert.Contains("legacy maintenance", html);
+        Assert.DoesNotContain("skill-title-DotNet", html);
         Assert.DoesNotContain("Gamer layout previews", html);
         Assert.DoesNotContain("data-gamer-preview=", html);
         Assert.Contains("gamer-theme.", html);
@@ -102,6 +122,30 @@ public sealed class FrontendTests
         Assert.DoesNotContain(upstream.Address, html);
         Assert.Equal(1, upstream.ProfileRequests);
         Assert.Equal(1, upstream.ProjectRequests);
+    }
+
+    [Fact]
+    public async Task Tool_presentation_keeps_partial_groups_and_unlisted_tools_visible()
+    {
+        var profile = JsonSerializer.Deserialize<ProfileDto>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "content/profile.json")), ContentJson.Options)!;
+        profile = profile with { Skills = [
+            new("insomnia", "Insomnia", "Workflow", 1),
+            new("unity", "Unity", "Workflow", 2),
+            new("datagrip", "DataGrip", "Workflow", 3),
+            new("custom-tool", "Preserved custom tool", "Workflow", 4)
+        ] };
+        await using var upstream = new UpstreamApi { ProfileJson = JsonSerializer.Serialize(profile, ContentJson.Options) };
+        await upstream.StartAsync();
+        await using var factory = new FrontendFactory(upstream.Address);
+        using var client = factory.CreateClient();
+        var html = await client.GetStringAsync("/");
+        Assert.Contains(">Insomnia</li>", html);
+        Assert.Contains(">Unity</li>", html);
+        Assert.Contains("DataGrip and other JetBrains tools", html);
+        Assert.Contains("Preserved custom tool", html);
+        Assert.DoesNotContain("Postman", html);
+        Assert.DoesNotContain("Unreal Engine", html);
+        Assert.DoesNotContain("Rider", html);
     }
 
     [Theory]

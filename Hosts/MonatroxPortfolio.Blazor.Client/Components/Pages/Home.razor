@@ -127,7 +127,7 @@ else
             </MudButton>
         </h2>
         <MudCollapse Expanded="_skillsExpanded" id="skills-content">
-            <p class="skills-intro">Primarily .NET, with project work in source generation, structured logging, Rust services and distributed application orchestration.</p>
+            <p class="skills-intro">A selection of technologies and practices from my experience—not an exhaustive inventory.</p>
             <div class="skill-groups">
                 @foreach (var group in Profile.Skills.GroupBy(skill => skill.Category).OrderBy(group => SkillPresentation(group.Key).Order).ThenBy(group => group.Key))
                 {
@@ -138,8 +138,8 @@ else
                             <MudText Typo="Typo.h3" id="@($"skill-title-{group.Key}")">@presentation.Title</MudText>
                         </div>
                         <ul class="skill-list">
-                            @foreach (var skill in group)
-                            { <li>@skill.Name</li> }
+                            @foreach (var label in SkillLabels(group))
+                            { <li>@label</li> }
                         </ul>
                     </MudPaper>
                 }
@@ -203,19 +203,43 @@ else
 
     private static (string Title, string Icon, int Order) SkillPresentation(string category) => category switch
     {
-        "DotNet" => (".NET & APIs", Icons.Material.Filled.DataObject, 0),
-        "Languages" => ("Languages", Icons.Material.Filled.Code, 1),
-        "Architecture" => ("Architecture & leadership", Icons.Material.Filled.AccountTree, 2),
-        "Data" => ("Data & messaging", Icons.Material.Filled.Storage, 3),
-        "Platforms" => ("Containers & delivery", Icons.Material.Filled.Hub, 4),
-        "Workflow" => ("Developer workflow & quality", Icons.Material.Filled.Terminal, 5),
-        "Business" => ("Business platforms", Icons.Material.Filled.BusinessCenter, 6),
-        "AI" => ("AI-assisted development", Icons.Material.Filled.SmartToy, 7),
-        "Games" => ("Game development", Icons.Material.Filled.SportsEsports, 8),
-        "Tools" => ("Other tools", Icons.Material.Filled.Build, 9),
-        "Skills" => ("Other skills", Icons.Material.Filled.Category, 10),
-        _ => (category, Icons.Material.Filled.Category, 11)
+        "Languages" => ("Languages & Scripting", Icons.Material.Filled.Code, 0),
+        "Web" => ("Web Development & APIs", Icons.Material.Filled.DataObject, 1),
+        "Architecture" => ("Architecture & System Design", Icons.Material.Filled.AccountTree, 2),
+        "Data" => ("Data & Messaging", Icons.Material.Filled.Storage, 3),
+        "Diagnostics" => ("Testing & Diagnostics", Icons.Material.Filled.BugReport, 4),
+        "Workflow" => ("Developer Tooling & Automation", Icons.Material.Filled.Terminal, 5),
+        "AI" => ("AI Tooling & Agent Workflows", Icons.Material.Filled.SmartToy, 6),
+        "Platforms" => ("Hosting, Deployment & Orchestration", Icons.Material.Filled.Hub, 7),
+        "Leadership" => ("Project Management & Technical Leadership", Icons.Material.Filled.SupervisorAccount, 8),
+        "DotNet" => ("Other application frameworks", Icons.Material.Filled.DataObject, 9),
+        "Business" => ("Other business platforms", Icons.Material.Filled.BusinessCenter, 10),
+        "Games" => ("Other game tools", Icons.Material.Filled.SportsEsports, 11),
+        "Tools" => ("Other tools", Icons.Material.Filled.Build, 12),
+        "Skills" => ("Other skills", Icons.Material.Filled.Category, 13),
+        _ => (category, Icons.Material.Filled.Category, 14)
     };
+
+    // Combine labels without retiring stable IDs or hiding unlisted skills.
+    private static IEnumerable<string> SkillLabels(IGrouping<string, SkillDto> skills) => skills.Key != "Workflow"
+        ? skills.Select(skill => skill.Name)
+        : skills.GroupBy(skill => skill.Id switch
+        {
+            "postman" or "insomnia" or "bruno" => "postman",
+            "rider" or "datagrip" => "rider",
+            "unreal" or "unity" => "unreal",
+            _ => skill.Id
+        }).Select(group =>
+        {
+            var names = group.Select(skill => skill.Name).ToList();
+            if (group.Key == "rider") names.Add("other JetBrains tools");
+            return names.Count switch
+            {
+                1 => names[0],
+                2 => $"{names[0]} and {names[1]}",
+                _ => $"{string.Join(", ", names.Take(names.Count - 1))}, and {names[^1]}"
+            };
+        });
 
     private bool _skillsExpanded;
     private bool _backgroundExpanded;
