@@ -27,7 +27,15 @@ public sealed class ProfileTests
         Assert.True((await importer.ImportAsync(Json)).IsSuccess);
         Assert.True((await importer.ImportAsync(Json)).IsSuccess);
         var initial = (await queries.GetAsync()).Value!;
-        Assert.Equal(44, initial.Skills.Length);
+        Assert.Equal(81, initial.Skills.Length);
+        Assert.Equal(new[] { "C#", "C++", "Python", "SQL", "JavaScript", "TypeScript", "Bash", "Rust" }, initial.Skills.Where(skill => skill.Category == "Languages").Select(skill => skill.Name));
+        Assert.Equal("Leadership", initial.Skills.Single(skill => skill.Id == "code-review").Category);
+        Assert.Contains(initial.Skills, skill => skill.Id == "bruno" && skill.Name == "Bruno");
+        Assert.Equal(9, initial.Skills.Select(skill => skill.Category).Distinct().Count());
+        Assert.Equal("Web", initial.Skills.Single(skill => skill.Id == "aspnet").Category);
+        Assert.Equal("Leadership", initial.Skills.Single(skill => skill.Id == "project-management").Category);
+        Assert.Equal("Valkey / Redis", initial.Skills.Single(skill => skill.Id == "redis").Name);
+        Assert.Equal("Data", initial.Skills.Single(skill => skill.Id == "sql-server").Category);
         Assert.Equal(3, initial.SocialLinks.Length);
         Assert.Equal(3, initial.Career.Length);
         Assert.Equal(2, initial.Education.Length);
@@ -40,7 +48,7 @@ public sealed class ProfileTests
         Assert.True((await importer.ImportAsync(JsonSerializer.Serialize(changed, ContentJson.Options))).IsSuccess);
         var updated = (await queries.GetAsync()).Value!;
         Assert.Equal("Updated headline", updated.Headline);
-        Assert.Equal(44, updated.Skills.Length);
+        Assert.Equal(81, updated.Skills.Length);
         Assert.Contains(updated.Skills, x => x.Id == initial.Skills[0].Id && x.Name == "Updated tool");
         Assert.Equal(3, updated.SocialLinks.Length);
         Assert.Equal(3, updated.Career.Length);
@@ -58,9 +66,55 @@ public sealed class ProfileTests
         Assert.True((await importer.ImportAsync(additionsJson)).IsSuccess);
         var expanded = (await queries.GetAsync()).Value!;
         Assert.Equal(4, expanded.SocialLinks.Length);
-        Assert.Equal(45, expanded.Skills.Length);
+        Assert.Equal(82, expanded.Skills.Length);
         Assert.Equal(4, expanded.Career.Length);
         Assert.Equal(3, expanded.Education.Length);
+    }
+
+    [Theory]
+    [InlineData("Web")]
+    [InlineData("Diagnostics")]
+    [InlineData("Leadership")]
+    [InlineData("DotNet")]
+    [InlineData("Languages")]
+    [InlineData("Architecture")]
+    [InlineData("Data")]
+    [InlineData("Platforms")]
+    [InlineData("Workflow")]
+    [InlineData("Business")]
+    [InlineData("AI")]
+    [InlineData("Games")]
+    [InlineData("Tools")]
+    [InlineData("Skills")]
+    public void Skill_categories_accept_grouped_and_legacy_content(string category)
+    {
+        Assert.Equal(category, new Skill("id", "Name", category, 0).Category);
+    }
+
+    [Fact]
+    public async Task Skills_refresh_updates_legacy_categories_without_retiring_unlisted_records()
+    {
+        using var temp = new TemporaryDirectory();
+        await using var services = new ServiceCollection().AddProfile(temp.ConnectionString).BuildServiceProvider();
+        await using var scope = services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<IModuleMigration>().MigrateAsync();
+        var importer = scope.ServiceProvider.GetRequiredService<IContentImporter>();
+        var content = JsonSerializer.Deserialize<ProfileDto>(Json, ContentJson.Options)!;
+        var legacy = content with { Skills = [
+            new("aspnet", "ASP.NET", "DotNet", 9),
+            new("redis", "Redis", "Data", 18),
+            new("project-management", "Project Management", "Architecture", 3),
+            new("unlisted", "Preserved custom skill", "Tools", 99)
+        ] };
+        Assert.True((await importer.ImportAsync(JsonSerializer.Serialize(legacy, ContentJson.Options))).IsSuccess);
+        Assert.True((await importer.ImportAsync(Json)).IsSuccess);
+        Assert.True((await importer.ImportAsync(Json)).IsSuccess);
+        var updated = (await scope.ServiceProvider.GetRequiredService<IProfileQueries>().GetAsync()).Value!;
+        Assert.Equal(content.Skills.Length + 1, updated.Skills.Length);
+        Assert.Equal("Web", updated.Skills.Single(skill => skill.Id == "aspnet").Category);
+        Assert.Equal("Valkey / Redis", updated.Skills.Single(skill => skill.Id == "redis").Name);
+        Assert.Equal("Leadership", updated.Skills.Single(skill => skill.Id == "project-management").Category);
+        Assert.Contains(updated.Skills, skill => skill.Id == "unlisted" && skill.Name == "Preserved custom skill");
     }
 
     [Fact]

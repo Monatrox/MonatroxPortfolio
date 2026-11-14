@@ -2,11 +2,19 @@
 
 Status: production is running on Docker behind Nginx, live Google Workspace contact delivery is configured, and `DEPLOY_ENABLED=true`. Initial cutover, browser interactions and inbox delivery were verified on 8 November 2026. Automatic deployment is configured; that initial verification does not claim a completed automatic release. Check the Actions deploy job after each main merge.
 
+## Branch and trigger policy
+
+- `develop` is the integration branch, created from main and including the completed skills grouping and Neon Flatline work. Start future feature branches from develop and merge completed work back into develop.
+- `main` remains the production/release branch. Do not merge or push to main without explicit release approval: successful main pushes can publish images and automatically deploy the live site.
+- `.github/workflows/portfolio.yml` is retained on develop, but its sole trigger is `push` with `branches: [main]`. Develop pushes and PRs do not start this workflow; manual dispatch is not declared. Existing main-only publication/deployment job guards remain.
+- Keeping the workflow file preserves production CI/CD across approved release merges. The first release from develop also carries the main-push-only trigger policy into main; future release merges must retain that definition.
+- No repository-wide Actions disable, production variable/secret change, default-branch change or production deployment accompanies this branch setup.
+
 ## What runs
 
-`.github/workflows/portfolio.yml`:
+The workflow definition in this branch, `.github/workflows/portfolio.yml`:
 
-- PR/main/manual CI: pinned SDK, build/tests, EF model checks, no-write content validation, deployment regression tests.
+- Main-push CI: pinned SDK, build/tests, EF model checks, no-write content validation, deployment regression tests.
 - Publish frontend **host**, API and migration/import tool. Build non-root Linux x64 images from those outputs.
 - Check Production defaults, bridge DNS, IPv4/IPv6 bindings and disabled mail; then browser-test the published images against a fresh SQLite database and disposable smtp4dev. Capture requires a non-Production test API and loopback SMTP; no live email is sent.
 - Successful main pushes: reuse the tested publish artifact, build with the same digest-pinned runtime, push three commit-SHA tags to GHCR. Registry write permission exists only in this trusted-main job.

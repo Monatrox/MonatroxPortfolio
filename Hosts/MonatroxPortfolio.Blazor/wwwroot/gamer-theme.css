@@ -1,0 +1,30 @@
+/* Neon Flatline paints the shared business layout; no alternate layouts or theme picker. */
+.portfolio-shell[data-view="gamer"] {
+    position: relative;
+    isolation: isolate;
+}
+.portfolio-shell[data-view="gamer"]::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1100px;
+    pointer-events: none;
+    z-index: -1;
+    background: linear-gradient(0deg, #181a18, transparent 30%), url("Content/Images/neon-flatline.svg"), radial-gradient(ellipse at 25% 20%, #a8d43815, transparent 55%);
+    background-size: 100% 100%;
+    background-repeat: no-repeat;
+}
+.portfolio-shell[data-view="gamer"] :is(.identity-name, .section-heading h2, .project-title) {
+    font-family: "Trebuchet MS", Arial, sans-serif;
+}
+.portfolio-shell[data-view="gamer"] :is(.detail-panel, .project-card, .identity-visual, .site-header-inner) {
+    background-color: var(--surface);
+    background-image: none;
+    border-color: #607b44;
+    box-shadow: none;
+}
+.portfolio-shell[data-view="gamer"] :is(.detail-panel, .project-card, .identity-visual) {
+    border-radius: 10px;
+}

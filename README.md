@@ -1,6 +1,12 @@
 # MonatroxPortfolio
 
-.NET 10 modular monolith API, prerendered Blazor WebAssembly/MudBlazor frontend, EF Core/SQLite, Aspire + Podman and smtp4dev. Project-page authoring: [docs/project-pages.md](docs/project-pages.md). Contact/email behavior: [docs/contact.md](docs/contact.md). Current design: [docs/professional-design.md](docs/professional-design.md); accepted header uses original white/lime logo in avatar bubble inside floating capsule. CI/CD and production bootstrap: [docs/deployment.md](docs/deployment.md). Hosting milestone: [docs/wasm-migration.md](docs/wasm-migration.md). Original baseline: [docs/v1-plan.md](docs/v1-plan.md).
+.NET 10 modular monolith API, prerendered Blazor WebAssembly/MudBlazor frontend, EF Core/SQLite, Aspire + Podman and smtp4dev. Project-page authoring: [docs/project-pages.md](docs/project-pages.md). Contact/email behavior: [docs/contact.md](docs/contact.md). Current design: [docs/professional-design.md](docs/professional-design.md); accepted header uses original white/lime logo in avatar bubble inside floating capsule. CI/CD and production bootstrap: [docs/deployment.md](docs/deployment.md). Books/games gallery and artwork sources: [docs/influences.md](docs/influences.md). Hosting milestone: [docs/wasm-migration.md](docs/wasm-migration.md). Original baseline: [docs/v1-plan.md](docs/v1-plan.md).
+
+## Branch policy
+
+Use **`develop`** for integration and branch new features from it. It contains the skills grouping and final [Neon Flatline gamer theme](docs/gamer-theme.md). Completed features merge into `develop`; do not merge or push to **`main`** without explicit release approval—main pushes can deploy the live site.
+
+The workflow definition on `develop` permits **main pushes only**, with no PR/manual triggers. Keeping the definition preserves CI/CD across approved release merges, without running pipelines on develop; see [deployment details](docs/deployment.md#branch-and-trigger-policy).
 
 ## Run locally
 
@@ -51,7 +57,7 @@ Imports validate every module document and discovered project file before writes
 
 Project link/thumbnail references accept HTTP(S), relative paths, and root-relative web paths such as `/images/project.png`. Network-path URLs (`//host`), backslashes, control characters, and file/script schemes are rejected.
 
-Provided content preserves the old source's biography, 44 skills, career/education. LinkedIn/GitHub use supplied real URLs; Discord shows `monatrox` with Copy rather than a guessed profile link. Email opens validated Contact Me modal. Five dummy projects and their placeholder dialog were removed; CCF, Distill and this portfolio's architecture demo are published. Importer regression fixtures remain test-only. Distill is self-contained, with in-document setup examples and one repository-root link rather than file links. CCF and Distill have reference-derived draft case studies in scrollable homepage dialogs, with the same shared content available at dedicated URLs for direct/new-tab access; claims/evidence are author-supplied, not independently verified. No old databases or Identity data were imported.
+Provided content preserves the old source's biography and career/education, retaining all 44 original skill IDs within 81 skill records, presented as 77 list entries across nine groups. The skills section is explicitly non-exhaustive; confirmed IIS/Azure/MCP/AI-tooling experience and project-backed engineering practices are included. LinkedIn/GitHub use supplied real URLs; Discord shows `monatrox` with Copy rather than a guessed profile link. Email opens validated Contact Me modal. Five dummy projects and their placeholder dialog were removed; CCF, Distill and this portfolio's architecture demo are published. Importer regression fixtures remain test-only. Distill is self-contained, with in-document setup examples and one repository-root link rather than file links. CCF and Distill have reference-derived draft case studies in scrollable homepage dialogs, with the same shared content available at dedicated URLs for direct/new-tab access; claims/evidence are author-supplied, not independently verified. No old databases or Identity data were imported.
 
 ### Run without containers
 
@@ -86,7 +92,7 @@ Then run browser smoke against `http://127.0.0.1:5422`. Release retains managed 
 bash scripts/verify.sh
 ```
 
-Restores/builds solution, runs architecture/module/API/gateway/CLI tests against isolated test services and temporary SQLite files, and checks both EF models match migrations. It does not mutate development content. GitHub Actions runs these checks plus published-container browser smoke on pull requests and main pushes. Successful current-main builds publish commit-tagged images and deploy through restricted SSH; see [deployment setup](docs/deployment.md).
+Restores/builds solution, runs architecture/module/API/gateway/CLI tests against isolated test services and temporary SQLite files, and checks both EF models match migrations. It does not mutate development content. The workflow definition in this branch runs these checks plus published-container browser smoke only on main pushes; develop is checked locally. Successful current-main builds publish commit-tagged images and deploy through restricted SSH; see [deployment setup](docs/deployment.md).
 
 For browser smoke, start imported app, install Chromium once if needed, then:
 

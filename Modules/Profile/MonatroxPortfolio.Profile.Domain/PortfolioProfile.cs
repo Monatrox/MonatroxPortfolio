@@ -35,7 +35,8 @@ public sealed class Skill(string id, string name, string category, int sortOrder
 {
     public string Id { get; private set; } = Content.Required(id);
     public string Name { get; private set; } = Content.Required(name);
-    public string Category { get; private set; } = category is "Tools" or "Skills" or "Languages"
+    public string Category { get; private set; } = category is "DotNet" or "Languages" or "Architecture" or "Data" or "Platforms"
+        or "Web" or "Diagnostics" or "Leadership" or "Workflow" or "Business" or "AI" or "Games" or "Tools" or "Skills"
         ? category : throw new ArgumentException("Unknown skill category.");
     public int SortOrder { get; private set; } = Content.Order(sortOrder);
 }

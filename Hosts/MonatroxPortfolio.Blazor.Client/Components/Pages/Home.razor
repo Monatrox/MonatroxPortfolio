@@ -118,7 +118,7 @@ else
         }
     </section>
 
-    <section class="supporting-content" aria-label="Expertise and background">
+    <section class="supporting-content" aria-label="Expertise, background and influences">
         <h2 class="section-toggle-heading" id="skills">
             <MudButton OnClick="() => _skillsExpanded = !_skillsExpanded" Disabled="@(!RendererInfo.IsInteractive)" Class="support-toggle"
                        aria-label="Tools, Skills, and Languages" aria-expanded="@_skillsExpanded.ToString().ToLowerInvariant()" aria-controls="skills-content">
@@ -127,27 +127,23 @@ else
             </MudButton>
         </h2>
         <MudCollapse Expanded="_skillsExpanded" id="skills-content">
-            <MudGrid Spacing="4" Class="detail-grid">
-                <MudItem xs="12" md="6">
-                    <MudPaper Elevation="0" Class="detail-panel">
-                        <MudText Typo="Typo.h3">Tools/Frameworks</MudText>
-                        @foreach (var skill in Profile.Skills.Where(x => x.Category == "Tools"))
-                        { <MudText Typo="Typo.body1">@skill.Name</MudText> }
+            <p class="skills-intro">A selection of technologies and practices from my experience, not an exhaustive inventory.</p>
+            <div class="skill-groups">
+                @foreach (var group in Profile.Skills.GroupBy(skill => skill.Category).OrderBy(group => SkillPresentation(group.Key).Order).ThenBy(group => group.Key))
+                {
+                    var presentation = SkillPresentation(group.Key);
+                    <MudPaper Elevation="0" Class="detail-panel skill-group" role="group" aria-labelledby="@($"skill-title-{group.Key}")">
+                        <div class="skill-group-heading">
+                            <MudIcon Icon="@presentation.Icon" aria-hidden="true" />
+                            <MudText Typo="Typo.h3" id="@($"skill-title-{group.Key}")">@presentation.Title</MudText>
+                        </div>
+                        <ul class="skill-list">
+                            @foreach (var label in SkillLabels(group))
+                            { <li>@label</li> }
+                        </ul>
                     </MudPaper>
-                </MudItem>
-                <MudItem xs="12" md="6">
-                    <MudPaper Elevation="0" Class="detail-panel">
-                        <MudText Typo="Typo.h3">Skills</MudText>
-                        @foreach (var skill in Profile.Skills.Where(x => x.Category == "Skills"))
-                        { <MudText Typo="Typo.body1">@skill.Name</MudText> }
-                    </MudPaper>
-                    <MudPaper Elevation="0" Class="detail-panel">
-                        <MudText Typo="Typo.h3">Main Languages</MudText>
-                        @foreach (var skill in Profile.Skills.Where(x => x.Category == "Languages"))
-                        { <MudText Typo="Typo.body1">@skill.Name</MudText> }
-                    </MudPaper>
-                </MudItem>
-            </MudGrid>
+                }
+            </div>
         </MudCollapse>
         <h2 class="section-toggle-heading" id="background">
             <MudButton OnClick="() => _backgroundExpanded = !_backgroundExpanded" Disabled="@(!RendererInfo.IsInteractive)" Class="support-toggle"
@@ -186,7 +182,16 @@ else
                 </MudItem>
             </MudGrid>
         </MudCollapse>
-        @* Hobbies and Interests remains an unfinished portfolio section. *@
+        <h2 class="section-toggle-heading" id="influences">
+            <MudButton OnClick="() => _influencesExpanded = !_influencesExpanded" Disabled="@(!RendererInfo.IsInteractive)" Class="support-toggle"
+                       aria-label="Influences" aria-expanded="@_influencesExpanded.ToString().ToLowerInvariant()" aria-controls="influences-content">
+                <span class="section-index" aria-hidden="true">04</span><span class="support-title">Influences</span>
+                <MudIcon Icon="@(_influencesExpanded ? Icons.Material.Filled.Remove : Icons.Material.Filled.Add)" />
+            </MudButton>
+        </h2>
+        <MudCollapse Expanded="_influencesExpanded" id="influences-content">
+            <Influences IsGamer="@IsGamer" Expanded="@_influencesExpanded" />
+        </MudCollapse>
     </section>
 }
 
@@ -205,8 +210,49 @@ else
     private Task OpenContactAsync() => Dialogs.ShowAsync<ContactModal>("Contact Me",
         new DialogOptions { CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.Small, FullWidth = true, BackdropClick = false });
 
+    private static (string Title, string Icon, int Order) SkillPresentation(string category) => category switch
+    {
+        "Languages" => ("Languages & Scripting", Icons.Material.Filled.Code, 0),
+        "Web" => ("Web Development & APIs", Icons.Material.Filled.DataObject, 1),
+        "Architecture" => ("Architecture & System Design", Icons.Material.Filled.AccountTree, 2),
+        "Data" => ("Data & Messaging", Icons.Material.Filled.Storage, 3),
+        "Diagnostics" => ("Testing & Diagnostics", Icons.Material.Filled.BugReport, 4),
+        "Workflow" => ("Developer Tooling & Automation", Icons.Material.Filled.Terminal, 5),
+        "AI" => ("AI Tooling & Agent Workflows", Icons.Material.Filled.SmartToy, 6),
+        "Platforms" => ("Hosting, Deployment & Orchestration", Icons.Material.Filled.Hub, 7),
+        "Leadership" => ("Project Management & Technical Leadership", Icons.Material.Filled.SupervisorAccount, 8),
+        "DotNet" => ("Other application frameworks", Icons.Material.Filled.DataObject, 9),
+        "Business" => ("Other business platforms", Icons.Material.Filled.BusinessCenter, 10),
+        "Games" => ("Other game tools", Icons.Material.Filled.SportsEsports, 11),
+        "Tools" => ("Other tools", Icons.Material.Filled.Build, 12),
+        "Skills" => ("Other skills", Icons.Material.Filled.Category, 13),
+        _ => (category, Icons.Material.Filled.Category, 14)
+    };
+
+    // Combine labels without retiring stable IDs or hiding unlisted skills.
+    private static IEnumerable<string> SkillLabels(IGrouping<string, SkillDto> skills) => skills.Key != "Workflow"
+        ? skills.Select(skill => skill.Name)
+        : skills.GroupBy(skill => skill.Id switch
+        {
+            "postman" or "insomnia" or "bruno" => "postman",
+            "rider" or "datagrip" => "rider",
+            "unreal" or "unity" => "unreal",
+            _ => skill.Id
+        }).Select(group =>
+        {
+            var names = group.Select(skill => skill.Name).ToList();
+            if (group.Key == "rider") names.Add("other JetBrains tools");
+            return names.Count switch
+            {
+                1 => names[0],
+                2 => $"{names[0]} and {names[1]}",
+                _ => $"{string.Join(", ", names.Take(names.Count - 1))}, and {names[^1]}"
+            };
+        });
+
     private bool _skillsExpanded;
     private bool _backgroundExpanded;
+    private bool _influencesExpanded;
     private IDisposable? _projectNavigation;
 
     protected override void OnAfterRender(bool firstRender)
