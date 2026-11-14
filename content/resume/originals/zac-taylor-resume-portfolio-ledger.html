@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Zac Taylor | Résumé</title>
+<style>
+@page { size: Letter; margin: 0; }
+* { box-sizing: border-box; }
+body { margin: 0; color: #202326; font: 10.75pt/1.38 Arial, "Liberation Sans", sans-serif; }
+.paper { width: 8.5in; min-height: 11in; padding: .55in .6in; margin: 0 auto; background: white; }
+header { margin-bottom: 17pt; }
+h1 { margin: 0; font-size: 29pt; line-height: 1.08; letter-spacing: -.025em; }
+.tagline { margin: 5pt 0 8pt; font-size: 11.5pt; font-weight: 600; }
+.contact { display: flex; flex-wrap: wrap; gap: 2pt 12pt; font-size: 9.5pt; }
+a { color: inherit; text-decoration: none; }
+.contact a { white-space: nowrap; }
+section { margin-top: 15pt; break-inside: avoid; }
+section:first-child { margin-top: 0; }
+h2 { margin: 0 0 7pt; padding-bottom: 4pt; border-bottom: 1pt solid #303438; font-size: 10pt; line-height: 1.3; letter-spacing: 0; text-transform: uppercase; }
+p { margin: 0; }
+.job + .job { margin-top: 12pt; }
+.job-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 10pt; }
+h3 { margin: 0; font-size: 10.75pt; line-height: 1.38; }
+time { font-size: 10pt; white-space: nowrap; }
+.role { margin-top: 1pt; font-weight: 600; }
+.progression { margin-top: 5pt; color: #474d53; font-size: 9.75pt; line-height: 1.4; }
+ul { margin: 6pt 0 0; padding-left: 14pt; }
+li + li { margin-top: 3pt; }
+dl { margin: 0; }
+.skill { margin-top: 4pt; }
+.skill:first-child { margin-top: 0; }
+dt, dd { display: inline; margin: 0; }
+dt { font-weight: 700; }
+dt::after { content: ": "; }
+.education p + p { margin-top: 5pt; }
+
+/* Original Portfolio: keep these base rules unchanged while comparing variations. */
+[data-layout="portfolio"] { border-top: 6pt solid #a8d438; padding-top: .48in; }
+[data-layout="portfolio"] h1 { font-size: 32pt; }
+[data-layout="portfolio"] .tagline { color: #526b17; }
+[data-layout="portfolio"] header { padding-bottom: 12pt; border-bottom: 1pt solid #d5d8cb; }
+[data-layout="portfolio"] h2 { font-family: "Liberation Mono", monospace; color: #526b17; border-color: #d5d8cb; font-size: 9.5pt; letter-spacing: 0; }
+[data-layout="portfolio"] time { font-family: "Liberation Mono", monospace; font-size: 9pt; }
+[data-layout="portfolio"] .skills dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8pt 15pt; }
+[data-layout="portfolio"] .skill { margin: 0; padding-left: 8pt; border-left: 2pt solid #a8d438; }
+[data-layout="portfolio"] .skill:last-child { grid-column: 1 / -1; }
+[data-layout="portfolio"] dt, [data-layout="portfolio"] dd { display: block; }
+[data-layout="portfolio"] dt::after { content: ""; }
+@media screen { body { padding: 24px; background: #e9e9e6; } .paper { box-shadow: 0 4px 24px #0002; } }
+@media print { a { text-decoration: none; } }
+/* Each study overrides only the Portfolio base. Original has no matching rules. */
+:is([data-variation="editorial-contacts"], [data-variation="rail"], [data-variation="quiet"], [data-variation="split"], [data-variation="offset"], [data-variation="masthead"]) header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    column-gap: 16pt;
+}
+:is([data-variation="editorial-contacts"], [data-variation="rail"], [data-variation="quiet"], [data-variation="split"], [data-variation="offset"], [data-variation="masthead"]) h1 { grid-column: 1; }
+:is([data-variation="editorial-contacts"], [data-variation="rail"], [data-variation="quiet"], [data-variation="split"], [data-variation="offset"], [data-variation="masthead"]) .tagline { grid-column: 1; margin-bottom: 0; }
+:is([data-variation="editorial-contacts"], [data-variation="rail"], [data-variation="quiet"], [data-variation="split"], [data-variation="offset"], [data-variation="masthead"]) .contact {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    display: grid;
+    align-content: center;
+    gap: 3pt;
+    text-align: right;
+    font-size: 9pt;
+}
+
+/* 1. Deliberately change only the contact arrangement. */
+
+/* 2. A full-height charcoal rail, with small lime section anchors. */
+[data-variation="rail"] { border-left: 8pt solid #232720; padding-left: .5in; }
+[data-variation="rail"] h2 { border-left: 3pt solid #a8d438; padding-left: 8pt; }
+[data-variation="rail"] .job { border-left: 1pt solid #d5d8cb; padding-left: 9pt; }
+[data-variation="rail"] .role { color: #526b17; }
+
+/* 3. A quieter interpretation, without a full-width color band. */
+[data-variation="quiet"] { border-top: 0; padding-top: .55in; }
+[data-variation="quiet"] header { border-top: 2pt solid #a8d438; padding-top: 12pt; }
+[data-variation="quiet"] h1 { font-size: 30pt; font-weight: 500; }
+[data-variation="quiet"] h2 { color: #343a30; border: 0; padding-bottom: 0; }
+[data-variation="quiet"] .skills dl { display: block; }
+[data-variation="quiet"] .skill { margin-top: 4pt; padding: 0; border: 0; }
+[data-variation="quiet"] dt, [data-variation="quiet"] dd { display: inline; }
+[data-variation="quiet"] dt::after { content: ": "; }
+
+/* 4. Horizontal ledger rows and tab-like section headings. */
+[data-variation="ledger"] header { border-bottom: 2pt solid #232720; }
+[data-variation="ledger"] h2 { padding: 5pt 8pt; border: 0; background: #eef0e5; }
+[data-variation="ledger"] .job + .job { border-top: .5pt solid #d5d8cb; padding-top: 8pt; margin-top: 8pt; }
+[data-variation="ledger"] .skills dl { display: block; }
+[data-variation="ledger"] .skill { display: grid; grid-template-columns: .85in 1fr; gap: 10pt; padding: 4pt 0; border: 0; border-bottom: .5pt solid #e5e8dd; }
+[data-variation="ledger"] dt { color: #526b17; }
+
+/* 5. A restrained olive sidebar rather than the previous blue treatment. */
+[data-variation="split"] main { display: grid; grid-template-columns: minmax(0, 1fr) 2.18in; grid-template-areas: "summary skills" "experience skills" "experience education"; gap: 13pt 20pt; align-items: start; }
+[data-variation="split"] section { margin: 0; }
+[data-variation="split"] .summary { grid-area: summary; }
+[data-variation="split"] .experience { grid-area: experience; }
+[data-variation="split"] .skills { grid-area: skills; }
+[data-variation="split"] .education { grid-area: education; }
+[data-variation="split"] :is(.skills, .education) { padding: 11pt; background: #f1f3eb; border-right: 3pt solid #a8d438; }
+[data-variation="split"] h2 { border: 0; padding: 0; }
+[data-variation="split"] .job-heading { display: block; }
+[data-variation="split"] time { display: block; margin-top: 2pt; }
+[data-variation="split"] .skills dl { display: block; }
+[data-variation="split"] .skill { border: 0; padding: 0; margin-top: 9pt; }
+[data-variation="split"] .skill:first-child { margin-top: 0; }
+[data-variation="split"] .education strong { display: block; }
+
+/* 6. Larger body type and softer, more open section spacing. */
+[data-variation="air"] { font-size: 11.25pt; }
+[data-variation="air"] h1 { font-size: 36pt; }
+[data-variation="air"] .summary p { line-height: 1.5; }
+[data-variation="air"] section { margin-top: 14pt; }
+[data-variation="air"] section:first-child { margin-top: 0; }
+[data-variation="air"] .skills dl { gap: 10pt 18pt; }
+[data-variation="air"] .skill { border-left-width: 1pt; padding-left: 10pt; }
+
+/* 7. Experimental: offset name and charcoal contact card, with angled lime geometry. */
+[data-variation="offset"] { border-top: 0; padding-top: .45in; }
+[data-variation="offset"] header { position: relative; isolation: isolate; padding-bottom: 16pt; margin-bottom: 18pt; }
+[data-variation="offset"] header::before { content: ""; position: absolute; z-index: -1; top: -12pt; left: -10pt; width: 3.7in; height: 17pt; background: #a8d438; clip-path: polygon(0 0, 100% 0, 93% 100%, 0 100%); }
+[data-variation="offset"] h1 { font-size: 40pt; line-height: .98; padding-top: 12pt; }
+[data-variation="offset"] .tagline { font-size: 10.5pt; margin-top: 9pt; }
+[data-variation="offset"] .contact { padding: 13pt; border-left: 4pt solid #a8d438; background: #232720; color: #fff; align-self: center; gap: 6pt; }
+[data-variation="offset"] h2 { border-color: #a8d438; }
+[data-variation="offset"] .skill { background: #f2f4ec; border: 0; padding: 4pt; }
+
+/* 8. Experimental: full-bleed charcoal masthead with a lime angled edge. */
+[data-variation="masthead"] header { position: relative; margin: -.48in -.6in 18pt; padding: 25pt .6in 23pt; border: 0; background: #232720; color: #fff; }
+[data-variation="masthead"] header::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 8pt; background: #a8d438; clip-path: polygon(0 0, 94% 0, 100% 100%, 0 100%); }
+[data-variation="masthead"] h1 { font-size: 36pt; }
+[data-variation="masthead"] .tagline { color: #b0dc4a; font-size: 10.75pt; }
+[data-variation="masthead"] .contact { color: #fff; }
+[data-variation="masthead"] h2 { border-left: 4pt solid #a8d438; padding-left: 8pt; }
+[data-variation="masthead"] .skill { border: 0; padding: 0; }
+
+</style>
+</head>
+<body>
+<article class="paper" data-layout="portfolio" data-variation="ledger" aria-label="Zac Taylor résumé">
+  <header>
+    <h1>Zac Taylor</h1>
+    <p class="tagline">Backend Engineering &amp; Technical Leadership</p>
+    <nav class="contact" aria-label="Contact details">
+      <a href="mailto:zac@monatrox.com">zac@monatrox.com</a>
+      <a href="https://monatrox.com">monatrox.com</a>
+      <a href="https://github.com/Monatrox">github.com/Monatrox</a>
+      <a href="https://www.linkedin.com/in/zactaylor-dev">linkedin.com/in/zactaylor-dev</a>
+    </nav>
+  </header>
+  <main>
+    <section class="summary" aria-labelledby="summary-title">
+      <h2 id="summary-title">Summary</h2>
+      <p>Backend .NET developer with experience in web and game development. Team Lead and Infrastructure Lead combining hands-on engineering, architectural decision-making, mentoring, and client-facing project delivery.</p>
+    </section>
+    <section class="experience" aria-labelledby="experience-title">
+      <h2 id="experience-title">Experience</h2>
+      <div class="job">
+        <div class="job-heading"><h3>Falkon Technologies</h3><time>2020–Present</time></div>
+        <p class="role">Team Lead &amp; Infrastructure Lead</p>
+        <p class="progression">Developer (2020) → Senior Developer (2021) → Team Lead (2022); Infrastructure Lead responsibilities added in 2026.</p>
+        <ul>
+          <li>Lead a development team and support developer growth, technical reviews, and engineering standards.</li>
+          <li>Make architectural decisions, work with clients, and help plan and deliver software projects.</li>
+          <li>Balance hands-on development and infrastructure work with application maintenance and technical-debt prioritization.</li>
+        </ul>
+      </div>
+      <div class="job">
+        <div class="job-heading"><h3>Digital Empire Development, LLC</h3><time>2014–2020</time></div>
+        <p class="role">Co-Founder &amp; Co-Owner, Game Developer</p>
+      </div>
+      <div class="job">
+        <div class="job-heading"><h3>The Mitas Group, Inc.</h3><time>2014–2015</time></div>
+        <p class="role">Junior Developer</p>
+      </div>
+    </section>
+    <section class="skills" aria-labelledby="skills-title">
+      <h2 id="skills-title">Selected Skills</h2>
+      <dl>
+        <div class="skill"><dt>Backend</dt><dd>C#, .NET, ASP.NET Core, HTTP APIs, Rust, C++, Python</dd></div>
+        <div class="skill"><dt>Data</dt><dd>EF Core, Dapper, SQL Server, PostgreSQL, MySQL, SQLite, RabbitMQ, Redis/Valkey</dd></div>
+        <div class="skill"><dt>Delivery</dt><dd>Docker/Podman, Aspire, Azure, IIS, GitHub Actions</dd></div>
+        <div class="skill"><dt>Testing</dt><dd>xUnit, Playwright, Testcontainers, integration and architecture testing</dd></div>
+        <div class="skill"><dt>AI workflows</dt><dd>AI-assisted development, MCP integrations, custom agent instructions and tooling</dd></div>
+      </dl>
+    </section>
+    <section class="education" aria-labelledby="education-title">
+      <h2 id="education-title">Education</h2>
+      <p><strong>University of North Texas</strong> · B.S., Computer Science</p>
+      <p><strong>Collin College</strong> · A.S., Applied Science; Software Development Certificate (C++)</p>
+    </section>
+  </main>
+</article>
+</body>
+</html>

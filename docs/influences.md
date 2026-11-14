@@ -4,7 +4,7 @@ Developed on `dynamic-books-games`, based on develop. Integrate through develop;
 
 ## Presentation
 
-A fourth collapsible section, **Influences**, follows **Background and Education**. Its name, anchor (`#influences`) and expanded state stay the same across identity switches. There is no inner heading. A smaller, muted description reads **Books that shape the way I think about my work** in professional mode and **Some of the most influential games of my life, nowhere near all-inclusive** in gamer mode.
+A fourth collapsible section, **Influences**, follows **Background and Education**. Its name, anchor (`#influences`) and expanded state stay the same across identity switches. A book/controller button pair beside the description shows both choices, highlights the active one and invokes the same site-wide professional/gamer switch as the hero. Controls are keyboard accessible, disabled before interactivity, and wrap below the description on narrow screens without adding API reads. There is no inner heading. A smaller, muted description reads **Books that shape the way I think about my work** in professional mode and **Some of the most influential games of my life, nowhere near all-inclusive** in gamer mode.
 
 The professional collection follows Zac's supplied order:
 
@@ -23,7 +23,7 @@ Cards share 2:3 portrait frames and display in four/three/two columns as availab
 
 Gamer mode displays sixteen games in Zac's supplied order, with Garry's Mod replacing Satisfactory. Titles are normalized to conventional punctuation/capitalization (Counter-Strike: Source, Empire Earth II, Supreme Commander: Forged Alliance, StarCraft II, Diablo III). The same card markup and portrait frames serve both collections; expanded state survives identity switches.
 
-Original Nintendo 64 box art is landscape, so it is letterboxed within the matching portrait frame, not cropped or stretched. Minecraft uses the publisher's square Creeper icon. Mass Effect uses original Trilogy promotional artwork rather than Legendary Edition; Halo and Overwatch use original-game artwork, not sequels/remastered collections. StarCraft II uses Wings of Liberty launch artwork as a representative image, without adding a subtitle to the requested title. Artwork/edition choices do not claim a particular platform, expansion, purchase or play history.
+Original Nintendo 64 box art is landscape, so it is letterboxed within the matching portrait frame, not cropped or stretched. Minecraft uses the publisher's square Creeper icon. Path of Exile uses the publisher's base-game logo/sharing artwork, not a league/expansion image or Path of Exile 2. Mass Effect uses original Trilogy promotional artwork rather than Legendary Edition; Halo and Overwatch use original-game artwork, not sequels/remastered collections. StarCraft II uses Wings of Liberty launch artwork as a representative image, without adding a subtitle to the requested title. Artwork/edition choices do not claim a particular platform, expansion, purchase or play history.
 
 ## Scope
 
@@ -36,7 +36,7 @@ This is a display-only collection. If editing/persistence requirements change, r
 The live Nginx page/static-asset limiter is 5 requests/second with burst 10. A read-only 16-request static burst confirmed five HTTP 503s; individual lazy images do not guarantee a safe request rate. User selected shared atlases rather than a proxy exemption or timed client-side queue.
 
 - `books-atlas.webp`: 1280×960, eight tiles, 268,012 bytes.
-- `games-atlas.webp`: 1280×1920, sixteen tiles, 471,876 bytes.
+- `games-atlas.webp`: 1280×1920, sixteen tiles, 455,998 bytes.
 - Both use four columns of 320×480 transparent tiles. Each source is aspect-fit within a four-pixel gutter; original input WebPs remain unchanged alongside them.
 - Each card points at the same versioned atlas URL and clips its indexed tile. CSS scales the whole atlas proportionally to its grid dimensions; `ObjectFit.Fill` does not stretch the artwork already contained inside each tile.
 - The parent passes expanded state. Closed/prerendered sections keep their readable titles but render no images, so no artwork is fetched until expansion. Switching modes retains expanded state and requests the other atlas.
@@ -80,7 +80,7 @@ The following rows also define the requested display order. Steam images are pla
 | Rocket League | https://cdn.akamai.steamstatic.com/steam/apps/252950/library_600x900.jpg |
 | Overwatch | https://upload.wikimedia.org/wikipedia/en/5/51/Overwatch_cover_art.jpg |
 | Diablo III | https://upload.wikimedia.org/wikipedia/en/8/80/Diablo_III_cover.png |
-| Path of Exile | https://cdn.akamai.steamstatic.com/steam/apps/238960/library_600x900.jpg |
+| Path of Exile | [Publisher's base-game sharing image](https://www.pathofexile.com/game), downloaded from that page's `og:image` on `web.poecdn.com` |
 
 Title/edition identification references include the corresponding Wikipedia game pages, Steam store pages, the [original Trilogy announcement](https://blog.bioware.com/2012/09/26/mass-effect-trilogy-coming-this-holiday/) and [Minecraft publisher artwork page](https://www.minecraft.net/en-us/article/key-art-update). Downloads/size/hash records live under ignored `artifacts/influences-lab/games/`. Wikimedia rate limiting during authoring was respected by waiting before retrying; no runtime requests use those services.
 

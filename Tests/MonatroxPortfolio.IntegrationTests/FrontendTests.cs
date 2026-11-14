@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Logging;
 using MonatroxPortfolio.Blazor;
+using MonatroxPortfolio.Contact.Public;
 using MonatroxPortfolio.Profile.Public;
 using MonatroxPortfolio.Projects.Public;
 using MonatroxPortfolio.Shared.Contracts;
@@ -27,6 +28,9 @@ public sealed class FrontendTests
         private int profileRequests;
         private int projectRequests;
         private int pageRequests;
+        private int contactRequests;
+        public HttpStatusCode ContactStatus { get; set; } = HttpStatusCode.OK;
+        public int ContactRequests => Volatile.Read(ref contactRequests);
         public bool UnsafeMarkdown { get; set; }
         public string? ProfileJson { get; set; }
         public int PageRequests => Volatile.Read(ref pageRequests);
@@ -65,6 +69,12 @@ public sealed class FrontendTests
                 var document = UnsafeMarkdown ? input.Page! with { Notes = ["<script id='unsafe'>alert(1)</script>", "[bad](javascript:alert%281%29)"] } : input.Page!;
                 return Results.Json(new ProjectPageDto(id, document));
             });
+            app.MapGet("/api/contact", () =>
+            {
+                Interlocked.Increment(ref contactRequests);
+                return ContactStatus == HttpStatusCode.OK ? Results.Json(new ContactDeliveryInfoDto(true, true))
+                    : Results.Problem(statusCode: (int)ContactStatus);
+            });
             app.MapGet("/api/echo", (HttpRequest request) => Results.Json(new { Path = request.Path.Value, Query = request.QueryString.Value }));
             app.MapGet("/api/refused", () => Results.Problem(statusCode: 409, title: "upstream.conflict", detail: "Preserve this response."));
             app.MapGet("/api/redirect", () => Results.Redirect("/api/profile"));
@@ -84,9 +94,15 @@ public sealed class FrontendTests
         using var client = factory.CreateClient();
         var html = await client.GetStringAsync("/");
         Assert.Contains("Team Lead at Falkon Technologies", html);
+        AssertMetadata(html, "Zac Taylor — Engineering & Technical Leadership", "Zac Taylor's portfolio: backend engineering, technical leadership, and independently built software. Explore projects, experience, and ways to get in contact.", "/");
         Assert.Contains("CCF", html);
         Assert.Contains("Distill", html);
         Assert.Contains("Read Portfolio case study", html);
+        Assert.Contains("href=\"/Content/Resume/zac-taylor-resume.pdf\"", html);
+        Assert.Contains("download=\"zac-taylor-resume.pdf\"", html);
+        Assert.Contains("data-enhance-nav=\"false\"", html);
+        Assert.Contains("Download résumé", WebUtility.HtmlDecode(html));
+        Assert.DoesNotContain("Resume/Previews", html);
         Assert.Contains("id=\"skill-title-Web\"", html);
         Assert.Contains("id=\"skill-title-Architecture\"", html);
         Assert.Contains("id=\"skill-title-AI\"", html);
@@ -125,6 +141,86 @@ public sealed class FrontendTests
         Assert.Equal(1, upstream.ProjectRequests);
     }
 
+    private static void AssertMetadata(string html, string title, string description, string path)
+    {
+        var decoded = WebUtility.HtmlDecode(html);
+        Assert.Contains($"<title>{title}</title>", decoded);
+        Assert.Contains($"name=\"description\" content=\"{description}\"", decoded);
+        Assert.Contains($"rel=\"canonical\" href=\"https://monatrox.com{path}\"", decoded);
+        Assert.Contains($"property=\"og:title\" content=\"{title}\"", decoded);
+        Assert.Contains($"property=\"og:description\" content=\"{description}\"", decoded);
+        Assert.Contains($"property=\"og:url\" content=\"https://monatrox.com{path}\"", decoded);
+        Assert.Contains("property=\"og:image\" content=\"https://monatrox.com/Content/Images/portfolio-share.png\"", decoded);
+        Assert.Contains("name=\"twitter:card\" content=\"summary_large_image\"", decoded);
+        Assert.Single(Regex.Matches(html, "name=\"description\""));
+        Assert.Single(Regex.Matches(html, "rel=\"canonical\""));
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.OK)]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    public async Task Inline_contact_prerenders_status_once_with_disabled_controls_and_retained_failure(HttpStatusCode status)
+    {
+        await using var upstream = new UpstreamApi { ContactStatus = status };
+        await upstream.StartAsync();
+        await using var factory = new FrontendFactory(upstream.Address);
+        using var client = factory.CreateClient();
+        var html = await client.GetStringAsync("/");
+        var contact = html[html.IndexOf("id=\"contact\"", StringComparison.Ordinal)..];
+        Assert.Contains("Get in Contact", contact);
+        Assert.Contains("Your name", contact);
+        Assert.Contains("Your email", contact);
+        Assert.Contains("Message", contact);
+        Assert.Contains("contact-inline", contact);
+        Assert.Contains("No message database is kept by this site.", contact);
+        Assert.Matches("<input[^>]*disabled", contact);
+        Assert.Matches("<textarea[^>]*disabled", contact);
+        Assert.Matches("<button[^>]*disabled[^>]*>.*?Send message", contact);
+        Assert.DoesNotContain("support-toggle", contact);
+        if (status == HttpStatusCode.OK) Assert.Contains("Local preview: messages are captured", contact);
+        else Assert.Contains("Email service is unavailable. Please try again later or use LinkedIn.", contact);
+        Assert.Equal(1, upstream.ContactRequests);
+    }
+
+    [Fact]
+    public async Task Resume_is_a_public_pdf_without_exposing_archived_originals_or_comparisons()
+    {
+        await using var upstream = new UpstreamApi();
+        await upstream.StartAsync();
+        await using var factory = new FrontendFactory(upstream.Address);
+        using var client = factory.CreateClient();
+        using var response = await client.GetAsync("/Content/Resume/zac-taylor-resume.pdf");
+        response.EnsureSuccessStatusCode();
+        Assert.Equal("application/pdf", response.Content.Headers.ContentType!.MediaType);
+        var pdf = await response.Content.ReadAsByteArrayAsync();
+        Assert.True(pdf.AsSpan().StartsWith("%PDF-"u8));
+        Assert.True(pdf.Length > 10_000);
+        foreach (var path in new[] { "/Content/Resume/Previews/index.html", "/Content/Resume/Previews/zac-taylor-resume-portfolio.pdf", "/content/resume/originals/zac-taylor-resume-portfolio.pdf" })
+        {
+            using var archived = await client.GetAsync(path);
+            Assert.Equal(HttpStatusCode.NotFound, archived.StatusCode);
+        }
+        Assert.Equal(0, upstream.ProfileRequests);
+        Assert.Equal(0, upstream.ProjectRequests);
+    }
+
+    [Fact]
+    public async Task Share_preview_is_a_local_1200_by_630_png()
+    {
+        await using var upstream = new UpstreamApi();
+        await upstream.StartAsync();
+        await using var factory = new FrontendFactory(upstream.Address);
+        using var client = factory.CreateClient();
+        using var response = await client.GetAsync("/Content/Images/portfolio-share.png");
+        response.EnsureSuccessStatusCode();
+        Assert.Equal("image/png", response.Content.Headers.ContentType!.MediaType);
+        var image = await response.Content.ReadAsByteArrayAsync();
+        Assert.True(image.Length >= 24);
+        Assert.Equal(1200, System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(image.AsSpan(16, 4)));
+        Assert.Equal(630, System.Buffers.Binary.BinaryPrimitives.ReadInt32BigEndian(image.AsSpan(20, 4)));
+        Assert.Equal(0, upstream.ProjectRequests);
+    }
+
     [Fact]
     public async Task Influences_prerenders_ordered_books_without_fetching_artwork_or_extra_API_reads()
     {
@@ -138,6 +234,12 @@ public sealed class FrontendTests
         Assert.Contains("aria-controls=\"influences-content\"", influences);
         Assert.Matches("<p[^>]*id=\"influences-description\"[^>]*>Books that shape the way I think about my work</p>", influences);
         Assert.Contains("aria-describedby=\"influences-description\"", influences);
+        Assert.Contains("aria-label=\"Influences and profile view\"", influences);
+        var switches = Regex.Matches(influences, "<button[^>]*aria-label=\"Show (?:books and professional|games and gamer) profile\"[^>]*>");
+        Assert.Equal(2, switches.Count);
+        foreach (Match button in switches) Assert.Contains("disabled", button.Value);
+        Assert.Contains("aria-pressed=\"true\"", switches[0].Value);
+        Assert.Contains("aria-pressed=\"false\"", switches[1].Value);
         Assert.DoesNotContain(">Books</h3>", influences);
         Assert.Equal(8, Regex.Matches(influences, "class=\"influence-item\"").Count);
         Assert.DoesNotContain("src=\"Content/Images/Influences/", influences);
@@ -180,6 +282,24 @@ public sealed class FrontendTests
         Assert.DoesNotContain("Rider", html);
     }
 
+    [Fact]
+    public async Task Social_controls_are_paired_without_hiding_additional_profile_links()
+    {
+        var profile = JsonSerializer.Deserialize<ProfileDto>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "content/profile.json")), ContentJson.Options)!;
+        profile = profile with { SocialLinks = [.. profile.SocialLinks, new("extra", "Additional profile", "https://example.com/profile", 4)] };
+        await using var upstream = new UpstreamApi { ProfileJson = JsonSerializer.Serialize(profile, ContentJson.Options) };
+        await upstream.StartAsync();
+        await using var factory = new FrontendFactory(upstream.Address);
+        using var client = factory.CreateClient();
+        var html = await client.GetStringAsync("/");
+        var pairs = Regex.Matches(html, "<div class=\"social-pair\">(.*?)</div>", RegexOptions.Singleline);
+        Assert.Equal(3, pairs.Count);
+        Assert.Equal(new[] { 2, 2, 1 }, pairs.Select(pair => Regex.Matches(pair.Value, "<(?:a|button)\\b").Count));
+        Assert.Contains("https://example.com/profile", html);
+        Assert.Contains("Copy Discord username monatrox", html);
+        Assert.Contains("Email — Contact Me", WebUtility.HtmlDecode(html));
+    }
+
     [Theory]
     [InlineData("ccf", "CCF")]
     [InlineData("distill", "Distill")]
@@ -190,8 +310,10 @@ public sealed class FrontendTests
         await upstream.StartAsync();
         await using var factory = new FrontendFactory(upstream.Address);
         using var client = factory.CreateClient();
-        var html = await client.GetStringAsync("/projects/" + id);
+        var html = await client.GetStringAsync("/projects/" + id + "?utm_source=check");
         Assert.Contains(">" + title + "</h1>", html);
+        var document = JsonSerializer.Deserialize<ProjectImportDto>(File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "content/project-pages", id + ".json")), ContentJson.Options)!;
+        AssertMetadata(html, title + " — Zac Taylor", document.Page!.Hero.Subtitle, "/projects/" + id);
         Assert.Contains("Blazor-WebAssembly-Component-State:", html);
         Assert.DoesNotContain("\"type\":\"server\"", html);
         Assert.Equal(1, upstream.PageRequests);
@@ -218,6 +340,19 @@ public sealed class FrontendTests
             Assert.Contains("applies migrations and imports content", html);
             Assert.DoesNotContain("BoringPortfolio", html, StringComparison.OrdinalIgnoreCase);
         }
+    }
+
+    [Fact]
+    public async Task Missing_project_has_no_share_metadata_and_is_not_indexed()
+    {
+        await using var upstream = new UpstreamApi();
+        await upstream.StartAsync();
+        await using var factory = new FrontendFactory(upstream.Address);
+        using var client = factory.CreateClient();
+        var html = await client.GetStringAsync("/projects/missing");
+        Assert.Contains("name=\"robots\" content=\"noindex\"", html);
+        Assert.DoesNotContain("rel=\"canonical\"", html);
+        Assert.DoesNotContain("property=\"og:url\"", html);
     }
 
     [Fact]

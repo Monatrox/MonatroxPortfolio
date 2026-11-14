@@ -2,7 +2,7 @@
   "alias": "Monatrox",
   "name": "Zac Taylor",
   "headline": "Team Lead at Falkon Technologies",
-  "biography": "I'm a backend .NET developer currently working at Falkon Technologies with experience in both Web and Game development.\n\nMy current role at Falkon consists of leading and managing a team of devs to ensure smooth delivery of various features and apps to several of Falkon's clients. This includes standard senior development and project planning duties, maintaining communication with the client, and managing the growth and performance of an incredibly flexible team of developers.",
+  "biography": "I'm a backend .NET developer with experience in web and game development. My work ranges from building new applications to maintaining and improving existing systems.\n\nI'm currently a Team Lead and Infrastructure Lead at Falkon Technologies. Alongside hands-on development and infrastructure work, I lead a team of developers, work with clients, settle architectural decisions, and help plan and deliver projects. I also support the team's growth and balance new feature work with maintenance and technical debt.",
   "socialLinks": [
     { "id": "linkedin", "name": "LinkedIn", "url": "https://www.linkedin.com/in/zactaylor-dev", "sortOrder": 1 },
     { "id": "github", "name": "GitHub", "url": "https://github.com/Monatrox", "sortOrder": 2 },
