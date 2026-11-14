@@ -13,6 +13,16 @@ OLD = 'a' * 40
 NEW = 'b' * 40
 
 
+class WorkflowPolicyTests(unittest.TestCase):
+    def test_workflow_runs_only_for_main_pushes(self):
+        workflow = (ROOT / '.github/workflows/portfolio.yml').read_text()
+        self.assertEqual(workflow.count('\non:\n'), 1)
+        triggers = workflow.partition('\non:\n')[2].partition('\npermissions:')[0].strip()
+        self.assertEqual(triggers, 'push:\n    branches: [main]')
+        self.assertIn("if: github.event_name == 'push' && github.ref == 'refs/heads/main'", workflow)
+        self.assertIn("&& vars.DEPLOY_ENABLED == 'true'", workflow)
+
+
 class DeploymentTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
