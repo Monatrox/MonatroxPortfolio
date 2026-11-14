@@ -1,12 +1,12 @@
 # MonatroxPortfolio
 
-.NET 10 modular monolith API, prerendered Blazor WebAssembly/MudBlazor frontend, EF Core/SQLite, Aspire + Podman and smtp4dev. Project-page authoring: [docs/project-pages.md](docs/project-pages.md). Contact/email behavior: [docs/contact.md](docs/contact.md). Current design: [docs/professional-design.md](docs/professional-design.md); accepted header uses original white/lime logo in avatar bubble inside floating capsule. CI/CD and production bootstrap: [docs/deployment.md](docs/deployment.md). Hosting milestone: [docs/wasm-migration.md](docs/wasm-migration.md). Original baseline: [docs/v1-plan.md](docs/v1-plan.md).
+.NET 10 modular monolith API, prerendered Blazor WebAssembly/MudBlazor frontend, EF Core/SQLite, Aspire + Podman and smtp4dev. Project-page authoring: [docs/project-pages.md](docs/project-pages.md). Contact/email behavior: [docs/contact.md](docs/contact.md). Current design: [docs/professional-design.md](docs/professional-design.md); accepted header uses original white/lime logo in avatar bubble inside floating capsule. CI/CD and production bootstrap: [docs/deployment.md](docs/deployment.md). Books/games gallery and artwork sources: [docs/influences.md](docs/influences.md). Hosting milestone: [docs/wasm-migration.md](docs/wasm-migration.md). Original baseline: [docs/v1-plan.md](docs/v1-plan.md).
 
 ## Branch policy
 
 Use **`develop`** for integration and branch new features from it. It contains the skills grouping and final [Neon Flatline gamer theme](docs/gamer-theme.md). Completed features merge into `develop`; do not merge or push to **`main`** without explicit release approval—main pushes can deploy the live site.
 
-The workflow definition on `develop` permits **main pushes only**, with no PR/manual triggers. Keeping the definition preserves CI/CD during an eventual approved release merge, without running pipelines on develop. Main's existing workflow is unchanged until that merge; see [deployment details](docs/deployment.md#branch-and-trigger-policy).
+The workflow definition on `develop` permits **main pushes only**, with no PR/manual triggers. Keeping the definition preserves CI/CD across approved release merges, without running pipelines on develop; see [deployment details](docs/deployment.md#branch-and-trigger-policy).
 
 ## Run locally
 

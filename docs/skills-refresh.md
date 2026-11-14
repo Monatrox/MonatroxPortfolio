@@ -1,6 +1,6 @@
 # Skills refresh
 
-Working branch: `skill-group-updates`, based on `develop`. Local review only; no production changes or main merge.
+Developed on `skill-group-updates` and integrated through `develop`. Production releases require explicit approval to merge/push main.
 
 ## Approved structure and wording
 
@@ -18,7 +18,7 @@ Nine groups, with .NET tools first in their relevant categories rather than a de
 
 The section introduction reads:
 
-> A selection of technologies and practices from my experience—not an exhaustive inventory.
+> A selection of technologies and practices from my experience, not an exhaustive inventory.
 
 People/project leadership stays in the final group. Technical legacy-system analysis and incremental modernization remain under Architecture. Delivery prioritization is expressed as **Balancing feature delivery, legacy maintenance & technical debt**.
 

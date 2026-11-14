@@ -147,6 +147,14 @@ html, body { background: var(--page-bg); color: var(--ink); font-family: var(--f
 .skill-group-heading .mud-typography-h3 { min-width: 0; margin: 0; font-size: 18px; line-height: 1.35; }
 .skill-list { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
 .skill-list li::marker { color: var(--muted); }
+.influences-description.mud-typography { margin: 12px 0 20px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+.influence-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin: 0 0 24px; padding: 0; list-style: none; }
+.influence-item { min-width: 0; }
+.influence-card.detail-panel { height: 100%; padding: 12px; }
+.influence-card figure { margin: 0; }
+.influence-cover { position: relative; overflow: hidden; aspect-ratio: 2 / 3; background: var(--panel-bg); }
+.influence-cover .mud-image { position: absolute; display: block; max-width: none; object-fit: fill; }
+.influence-card figcaption { margin-top: 12px; min-height: 2.8em; color: var(--ink); font-size: 15px; font-weight: 600; line-height: 1.4; overflow-wrap: anywhere; }
 .site-footer { max-width: 1320px; width: 100%; margin: auto; padding: 24px var(--gutter) 32px; border-top: 1px solid var(--rule); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; font: 10px/1.6 var(--font-mono); color: var(--muted); }
 .site-footer a { color: var(--accent); font: inherit; }
 .page-message { padding: 64px 0; min-height: 50vh; }
@@ -158,6 +166,7 @@ html, body { background: var(--page-bg); color: var(--ink); font-family: var(--f
     .identity-visual { width: min(100%, 350px); justify-self: center; }
 }
 @media (max-width: 1050px) {
+    .influence-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
     .skill-groups { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .identity-stage { column-gap: 32px; }
     .identity-name { font-size: clamp(48px, 7.3vw, 76px); }
@@ -179,6 +188,7 @@ html, body { background: var(--page-bg); color: var(--ink); font-family: var(--f
     .project-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 680px) {
+    .influence-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
     .skill-groups { grid-template-columns: minmax(0, 1fr); }
     .portfolio-shell { --header-height: 88px; }
     .site-header .mud-toolbar { padding: 12px clamp(8px, 2.5vw, 20px); }

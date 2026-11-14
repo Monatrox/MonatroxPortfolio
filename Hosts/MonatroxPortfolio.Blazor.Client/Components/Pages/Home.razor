@@ -118,7 +118,7 @@ else
         }
     </section>
 
-    <section class="supporting-content" aria-label="Expertise and background">
+    <section class="supporting-content" aria-label="Expertise, background and influences">
         <h2 class="section-toggle-heading" id="skills">
             <MudButton OnClick="() => _skillsExpanded = !_skillsExpanded" Disabled="@(!RendererInfo.IsInteractive)" Class="support-toggle"
                        aria-label="Tools, Skills, and Languages" aria-expanded="@_skillsExpanded.ToString().ToLowerInvariant()" aria-controls="skills-content">
@@ -127,7 +127,7 @@ else
             </MudButton>
         </h2>
         <MudCollapse Expanded="_skillsExpanded" id="skills-content">
-            <p class="skills-intro">A selection of technologies and practices from my experience—not an exhaustive inventory.</p>
+            <p class="skills-intro">A selection of technologies and practices from my experience, not an exhaustive inventory.</p>
             <div class="skill-groups">
                 @foreach (var group in Profile.Skills.GroupBy(skill => skill.Category).OrderBy(group => SkillPresentation(group.Key).Order).ThenBy(group => group.Key))
                 {
@@ -182,7 +182,16 @@ else
                 </MudItem>
             </MudGrid>
         </MudCollapse>
-        @* Hobbies and Interests remains an unfinished portfolio section. *@
+        <h2 class="section-toggle-heading" id="influences">
+            <MudButton OnClick="() => _influencesExpanded = !_influencesExpanded" Disabled="@(!RendererInfo.IsInteractive)" Class="support-toggle"
+                       aria-label="Influences" aria-expanded="@_influencesExpanded.ToString().ToLowerInvariant()" aria-controls="influences-content">
+                <span class="section-index" aria-hidden="true">04</span><span class="support-title">Influences</span>
+                <MudIcon Icon="@(_influencesExpanded ? Icons.Material.Filled.Remove : Icons.Material.Filled.Add)" />
+            </MudButton>
+        </h2>
+        <MudCollapse Expanded="_influencesExpanded" id="influences-content">
+            <Influences IsGamer="@IsGamer" Expanded="@_influencesExpanded" />
+        </MudCollapse>
     </section>
 }
 
@@ -243,6 +252,7 @@ else
 
     private bool _skillsExpanded;
     private bool _backgroundExpanded;
+    private bool _influencesExpanded;
     private IDisposable? _projectNavigation;
 
     protected override void OnAfterRender(bool firstRender)
