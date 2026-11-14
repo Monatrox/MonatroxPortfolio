@@ -92,7 +92,7 @@ await Expect(portrait).ToHaveAttributeAsync("src", "Content/Images/zac-taylor-po
 await Expect(portrait).ToHaveJSPropertyAsync("complete", true);
 if (!await portrait.EvaluateAsync<bool>("image => image.naturalWidth > 0 && image.getBoundingClientRect().height >= 240"))
     throw new InvalidOperationException("Prominent portrait missing or too small.");
-if (!await portrait.EvaluateAsync<bool>("image => Math.abs(image.getBoundingClientRect().height - image.parentElement.getBoundingClientRect().height) < 1"))
+if (!await portrait.EvaluateAsync<bool>("image => Math.abs(image.getBoundingClientRect().height - image.parentElement.clientHeight) < 1"))
     throw new InvalidOperationException("Portrait must fill reserved image frame.");
 var gamerBounds = await gamerView.BoundingBoxAsync();
 var professionalBounds = await professionalView.BoundingBoxAsync();
@@ -122,7 +122,18 @@ await skills.ClickAsync();
 await gamerView.FocusAsync();
 await page.Keyboard.PressAsync("Enter");
 await Expect(page.Locator(".portfolio-shell")).ToHaveAttributeAsync("data-view", "gamer");
-await Expect(page.Locator("body")).ToHaveCSSAsync("background-color", "rgb(24, 26, 24)");
+await Expect(page.Locator(".gamer-preview-picker, [data-gamer-preview]")).ToHaveCountAsync(0);
+await Expect(page.Locator(".portfolio-shell")).ToHaveCSSAsync("padding-bottom", "0px");
+if (!await page.Locator(".portfolio-shell").EvaluateAsync<bool>("""
+    shell => {
+        const art = getComputedStyle(shell, '::before');
+        return art.backgroundImage.includes('neon-flatline.svg') && art.position === 'absolute' &&
+            art.top === '0px' && art.height === '1100px' && art.animationName === 'none' && art.filter === 'none' &&
+            getComputedStyle(shell.querySelector('.identity-visual')).boxShadow === 'none';
+    }
+    """))
+    throw new InvalidOperationException("Gamer screen must use static, page-anchored Neon Flatline without the gallery.");
+await Expect(page.Locator("body")).ToHaveCSSAsync("background-color", await ResolveThemeColorAsync(page, "--page-bg"));
 await CheckPersonalLabelsAsync();
 await CheckSelectorColorsAsync(page, gamer: true);
 await Expect(page.Locator(".identity-visual figcaption")).ToHaveTextAsync("Monatrox");
@@ -137,7 +148,7 @@ await Expect(page.GetByAltText("Monatrox identity logo", new() { Exact = true })
 await Expect(portrait).ToHaveCountAsync(0);
 await CheckAboutPortraitAsync(gamer: true);
 await page.Locator("#about").ScreenshotAsync(new() { Path = Path.Combine(screenshots, "about-gamer.png"), Animations = ScreenshotAnimations.Disabled });
-await CheckDetailAlignmentAsync("skills-content");
+await CheckSkillGroupsAsync();
 await skills.ClickAsync();
 await Expect(page.Locator("#skills-content")).ToHaveCSSAsync("height", "0px");
 await page.Locator(".hero-statement").ClickAsync();
@@ -157,12 +168,12 @@ await Expect(page.Locator("#main-content")).ToBeFocusedAsync();
 await Expect(skills).ToHaveAttributeAsync("aria-expanded", "false");
 await skills.ClickAsync();
 await Expect(skills).ToHaveAttributeAsync("aria-expanded", "true");
-await Expect(page.GetByText("Tools/Frameworks", new() { Exact = true })).ToBeVisibleAsync();
+await Expect(page.GetByRole(AriaRole.Heading, new() { Name = ".NET & APIs", Exact = true })).ToBeVisibleAsync();
 await Expect(page.GetByText("Rider", new() { Exact = true })).ToBeVisibleAsync();
 foreach (var width in new[] { 1920, 1366, 1024 })
 {
     await page.SetViewportSizeAsync(width, 1080);
-    await CheckDetailAlignmentAsync("skills-content");
+    await CheckSkillGroupsAsync();
     await CheckAboutPortraitAsync();
 }
 await page.SetViewportSizeAsync(1920, 1080);
@@ -241,7 +252,7 @@ foreach (var width in new[] { 320, 390, 768 })
     await Expect(gamerLogo).ToBeVisibleAsync();
     await Expect(gamerLogo).ToHaveCSSAsync("object-fit", "contain");
     await CheckAboutPortraitAsync(gamer: true);
-    if (!await gamerLogo.EvaluateAsync<bool>("image => Math.abs(image.getBoundingClientRect().height - image.parentElement.getBoundingClientRect().height) < 1"))
+    if (!await gamerLogo.EvaluateAsync<bool>("image => Math.abs(image.getBoundingClientRect().height - image.parentElement.clientHeight) < 1"))
         throw new InvalidOperationException($"Gamer logo frame clips or changes size at {width}px viewport.");
     await CheckPageWidthAsync($"Gamer view at {width}px");
     if (width == 390)
@@ -366,7 +377,7 @@ async Task CheckContactAsync()
     await page.SetViewportSizeAsync(1920, 1080);
     await gamerView.ClickAsync();
     await email.ClickAsync();
-    await Expect(dialog).ToHaveCSSAsync("background-color", "rgb(35, 39, 32)");
+    await Expect(dialog).ToHaveCSSAsync("background-color", await ResolveThemeColorAsync(page, "--surface"));
     await Expect(dialog.GetByLabel("Your email", new() { Exact = true })).ToBeVisibleAsync();
     await CheckTextContrastAsync(dialog.Locator(".mud-alert").First);
     await page.ScreenshotAsync(new() { Path = Path.Combine(screenshots, "contact-gamer.png"), Animations = ScreenshotAnimations.Disabled });
@@ -519,12 +530,12 @@ async Task CheckCaseStudyModalsAsync(string directory)
         if (!await scroll.EvaluateAsync<bool>("el => el.scrollHeight > el.clientHeight")) throw new InvalidOperationException("Case-study dialog has no bounded scroll region.");
         if (name == "CCF")
         {
-            await Expect(dialog.Locator(".case-hero-visual > .case-panel")).ToHaveCSSAsync("background-color", "rgb(35, 39, 32)");
+            await Expect(dialog.Locator(".case-hero-visual > .case-panel")).ToHaveCSSAsync("background-color", await ResolveThemeColorAsync(page, "--surface"));
             var tab = dialog.GetByRole(AriaRole.Tab, new() { Name = "Prepare an event", Exact = true });
             await tab.FocusAsync(); await page.Keyboard.PressAsync("Enter");
             await Expect(tab).ToHaveAttributeAsync("aria-selected", "true");
             await Expect(dialog.Locator(".case-workflow-panel")).ToHaveCSSAsync("padding-left", "24px");
-            await Expect(dialog.Locator(".mud-tab-slider")).ToHaveCSSAsync("background-color", "rgb(176, 220, 74)");
+            await Expect(dialog.Locator(".mud-tab-slider")).ToHaveCSSAsync("background-color", await ResolveThemeColorAsync(page, "--accent"));
             await dialog.Locator(".case-tabs").ScreenshotAsync(new() { Path = Path.Combine(directory, "ccf-workflow-fixed.png"), Animations = ScreenshotAnimations.Disabled });
         }
         else if (name == "Distill")
@@ -625,8 +636,8 @@ async Task CheckHeaderAsync()
         await Expect(page.Locator(".brand-mark img")).ToHaveAttributeAsync("src", "Content/Images/MX Abstract Logo Cleaned_Letters_DarkTheme.png");
         await Expect(page.Locator(".brand-mark")).ToHaveCSSAsync("background-color", "rgb(37, 43, 35)");
         await Expect(page.Locator(".brand-mark")).ToHaveCSSAsync("border-radius", "50%");
-        await Expect(page.Locator(".site-nav a").First).ToHaveCSSAsync("color", gamer ? "rgb(238, 241, 233)" : "rgb(37, 43, 35)");
-        await Expect(page.Locator(".brand-wordmark")).ToHaveCSSAsync("color", gamer ? "rgb(238, 241, 233)" : "rgb(37, 43, 35)");
+        await Expect(page.Locator(".site-nav a").First).ToHaveCSSAsync("color", gamer ? await ResolveThemeColorAsync(page, "--ink") : "rgb(37, 43, 35)");
+        await Expect(page.Locator(".brand-wordmark")).ToHaveCSSAsync("color", gamer ? await ResolveThemeColorAsync(page, "--ink") : "rgb(37, 43, 35)");
         await Expect(favicon).ToHaveAttributeAsync("href", faviconHref);
         await Expect(page.Locator(".site-nav > a")).ToHaveCountAsync(3);
         await Expect(page.Locator(".site-nav a span")).ToHaveTextAsync(new[] { "01", "02", "03" });
@@ -738,6 +749,26 @@ async Task CheckAboutPortraitAsync(bool gamer = false)
     }
 }
 
+async Task CheckSkillGroupsAsync()
+{
+    await Expect(page.Locator(".skill-group h3")).ToHaveTextAsync(new[]
+    {
+        ".NET & APIs", "Languages", "Architecture & leadership", "Data & messaging", "Containers & delivery",
+        "Developer workflow & quality", "Business platforms", "AI-assisted development", "Game development"
+    });
+    await Expect(page.Locator(".skill-group-heading svg[aria-hidden='true']")).ToHaveCountAsync(9);
+    await Expect(page.Locator(".skill-list li")).ToHaveCountAsync(44);
+    await Expect(page.Locator(".skill-list svg")).ToHaveCountAsync(0);
+    await Expect(page.GetByRole(AriaRole.Group, new() { Name = "Data & messaging", Exact = true }).GetByText("SQL Server", new() { Exact = true })).ToBeVisibleAsync();
+    await Expect(page.GetByRole(AriaRole.Group, new() { Name = "Languages", Exact = true }).GetByText("SQL Server", new() { Exact = true })).ToHaveCountAsync(0);
+    if (!await page.Locator(".skill-groups").EvaluateAsync<bool>("""
+        grid => [...grid.children].every(card => {
+            const box = card.getBoundingClientRect(), parent = grid.getBoundingClientRect();
+            return box.left >= parent.left - 1 && box.right <= parent.right + 1 && card.scrollWidth <= card.clientWidth + 1;
+        })
+        """)) throw new InvalidOperationException("Grouped skills must fit their responsive grid.");
+}
+
 async Task CheckDetailAlignmentAsync(string sectionId)
 {
     var aligned = await page.Locator($"#{sectionId} .detail-grid").EvaluateAsync<bool>("""
@@ -753,12 +784,23 @@ async Task CheckDetailAlignmentAsync(string sectionId)
     if (!aligned) throw new InvalidOperationException($"Supporting cards must align in {sectionId}.");
 }
 
+Task<string> ResolveThemeColorAsync(IPage target, string variable) => target.EvaluateAsync<string>("""
+    variable => {
+        const probe = document.createElement('span');
+        probe.style.color = `var(${variable})`;
+        document.body.append(probe);
+        const color = getComputedStyle(probe).color;
+        probe.remove();
+        return color;
+    }
+    """, variable);
+
 async Task CheckSelectorColorsAsync(IPage target, bool gamer = false)
 {
     await Expect(target.GetByRole(AriaRole.Button, new() { Name = "Show Zac Taylor", Exact = true }).Locator(".identity-name"))
-        .ToHaveCSSAsync("color", gamer ? "rgb(187, 196, 177)" : "rgb(37, 43, 35)");
+        .ToHaveCSSAsync("color", gamer ? await ResolveThemeColorAsync(target, "--muted") : "rgb(37, 43, 35)");
     await Expect(target.GetByRole(AriaRole.Button, new() { Name = "Show Monatrox", Exact = true }).Locator(".identity-name"))
-        .ToHaveCSSAsync("color", gamer ? "rgb(238, 241, 233)" : "rgb(98, 105, 92)");
+        .ToHaveCSSAsync("color", gamer ? await ResolveThemeColorAsync(target, "--ink") : "rgb(98, 105, 92)");
 }
 
 async Task CheckPersonalLabelsAsync()
