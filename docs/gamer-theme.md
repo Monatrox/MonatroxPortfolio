@@ -17,7 +17,7 @@ The full fourteen-choice gallery and controlled grid experiment were committed a
 
 The controlled 1440p software-renderer comparison found less raster work with a tiny repeating grid image than with two full-document gradients. Flatline intentionally keeps no page grid. Those local results are not real-device GPU/FPS guarantees.
 
-Skills grouping remains the existing draft; final experience/content still awaits Zac's list.
+Skills use nine capability-led groups with confirmed additions and a non-exhaustive introduction; see [skills refresh](skills-refresh.md).
 
 ## Checks
 
@@ -27,6 +27,6 @@ bash scripts/dev.sh validate
 node Tests/MonatroxPortfolio.BrowserTests/gamer-theme.cjs http://127.0.0.1:5422/
 ```
 
-The focused loopback-only browser check blocks non-GET/HEAD requests. It checks professional CSS isolation, both identities, 320–3840px containment, wide system fonts, all 44 skills/nine group icons, original foreground assets, static page-scrolling artwork, gallery removal, no extra bottom reserve, no handoff refetch, and keyboard/case-study modal behavior. Where local pre-cleanup references exist under ignored `artifacts/neon-flatline-final/baseline/`, it also compares both views pixel-for-pixel and verifies that gamer page height shrank by only the removed 132px gallery reserve.
+The focused loopback-only browser check blocks non-GET/HEAD requests. It checks professional CSS isolation, both identities, 320–3840px containment, wide system fonts, all 77 displayed skill entries/nine group icons, original foreground assets, static page-scrolling artwork, gallery removal, no extra bottom reserve, no handoff refetch, and keyboard/case-study modal behavior. Where local pre-cleanup references exist under ignored `artifacts/neon-flatline-final/baseline/`, it also compares both views pixel-for-pixel while the current checks independently require zero gallery bottom reserve.
 
 The main .NET browser suite checks the final gamer background too; its contact tests require the isolated local SMTP-capture setup, never a production mail endpoint. Physical-device/GPU and complete accessibility audits remain separate.

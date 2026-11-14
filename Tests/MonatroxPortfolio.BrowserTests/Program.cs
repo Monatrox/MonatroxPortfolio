@@ -168,8 +168,8 @@ await Expect(page.Locator("#main-content")).ToBeFocusedAsync();
 await Expect(skills).ToHaveAttributeAsync("aria-expanded", "false");
 await skills.ClickAsync();
 await Expect(skills).ToHaveAttributeAsync("aria-expanded", "true");
-await Expect(page.GetByRole(AriaRole.Heading, new() { Name = ".NET & APIs", Exact = true })).ToBeVisibleAsync();
-await Expect(page.GetByText("Rider", new() { Exact = true })).ToBeVisibleAsync();
+await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Web Development & APIs", Exact = true })).ToBeVisibleAsync();
+await Expect(page.GetByText("Rider, DataGrip, and other JetBrains tools", new() { Exact = true })).ToBeVisibleAsync();
 foreach (var width in new[] { 1920, 1366, 1024 })
 {
     await page.SetViewportSizeAsync(width, 1080);
@@ -226,7 +226,7 @@ foreach (var width in new[] { 320, 390, 768 })
     await CheckAboutPortraitAsync();
     await CheckPageWidthAsync($"Homepage at {width}px");
     await skills.ClickAsync();
-    await Expect(page.GetByText("Rider", new() { Exact = true })).ToBeVisibleAsync();
+    await Expect(page.GetByText("Rider, DataGrip, and other JetBrains tools", new() { Exact = true })).ToBeVisibleAsync();
     await CheckPageWidthAsync($"Expanded skills at {width}px");
     await skills.ClickAsync();
     if (width == 390)
@@ -753,14 +753,26 @@ async Task CheckSkillGroupsAsync()
 {
     await Expect(page.Locator(".skill-group h3")).ToHaveTextAsync(new[]
     {
-        ".NET & APIs", "Languages", "Architecture & leadership", "Data & messaging", "Containers & delivery",
-        "Developer workflow & quality", "Business platforms", "AI-assisted development", "Game development"
+        "Languages & Scripting", "Web Development & APIs", "Architecture & System Design", "Data & Messaging",
+        "Testing & Diagnostics", "Developer Tooling & Automation", "AI Tooling & Agent Workflows",
+        "Hosting, Deployment & Orchestration", "Project Management & Technical Leadership"
     });
     await Expect(page.Locator(".skill-group-heading svg[aria-hidden='true']")).ToHaveCountAsync(9);
-    await Expect(page.Locator(".skill-list li")).ToHaveCountAsync(44);
+    await Expect(page.Locator(".skill-list li")).ToHaveCountAsync(77);
     await Expect(page.Locator(".skill-list svg")).ToHaveCountAsync(0);
-    await Expect(page.GetByRole(AriaRole.Group, new() { Name = "Data & messaging", Exact = true }).GetByText("SQL Server", new() { Exact = true })).ToBeVisibleAsync();
-    await Expect(page.GetByRole(AriaRole.Group, new() { Name = "Languages", Exact = true }).GetByText("SQL Server", new() { Exact = true })).ToHaveCountAsync(0);
+    await Expect(page.Locator(".skills-intro")).ToContainTextAsync("not an exhaustive inventory");
+    await Expect(page.GetByRole(AriaRole.Group, new() { Name = "Languages & Scripting", Exact = true }).Locator("li")).ToHaveTextAsync(new[] { "C#", "C++", "Python", "SQL", "JavaScript", "TypeScript", "Bash", "Rust" });
+    var tooling = page.GetByRole(AriaRole.Group, new() { Name = "Developer Tooling & Automation", Exact = true });
+    await Expect(tooling.GetByText("Postman, Insomnia, and Bruno", new() { Exact = true })).ToBeVisibleAsync();
+    await Expect(tooling.GetByText("Unreal Engine and Unity", new() { Exact = true })).ToBeVisibleAsync();
+    await Expect(tooling.GetByText("Rider, DataGrip, and other JetBrains tools", new() { Exact = true })).ToBeVisibleAsync();
+    await Expect(tooling.GetByText("Engineering standards & technical reviews", new() { Exact = true })).ToHaveCountAsync(0);
+    await Expect(page.GetByRole(AriaRole.Group, new() { Name = "Project Management & Technical Leadership", Exact = true }).GetByText("Engineering standards & technical reviews", new() { Exact = true })).ToBeVisibleAsync();
+    await Expect(page.GetByRole(AriaRole.Group, new() { Name = "Testing & Diagnostics", Exact = true }).GetByText("Testcontainers & containerized dependency tests", new() { Exact = true })).ToBeVisibleAsync();
+    await Expect(page.GetByRole(AriaRole.Group, new() { Name = "Hosting, Deployment & Orchestration", Exact = true }).GetByText("IIS server administration", new() { Exact = true })).ToBeVisibleAsync();
+    await Expect(page.GetByRole(AriaRole.Group, new() { Name = "AI Tooling & Agent Workflows", Exact = true }).GetByText("Custom AI skill files & agent instructions", new() { Exact = true })).ToBeVisibleAsync();
+    await Expect(page.GetByRole(AriaRole.Group, new() { Name = "Data & Messaging", Exact = true }).GetByText("SQL Server", new() { Exact = true })).ToBeVisibleAsync();
+    await Expect(page.GetByRole(AriaRole.Group, new() { Name = "Languages & Scripting", Exact = true }).GetByText("SQL Server", new() { Exact = true })).ToHaveCountAsync(0);
     if (!await page.Locator(".skill-groups").EvaluateAsync<bool>("""
         grid => [...grid.children].every(card => {
             const box = card.getBoundingClientRect(), parent = grid.getBoundingClientRect();

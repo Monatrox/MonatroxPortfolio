@@ -49,7 +49,7 @@ public sealed class ApiTests
         }
         var profile = await client.GetFromJsonAsync<ProfileDto>("/api/profile");
         Assert.Equal("Monatrox", profile!.Alias);
-        Assert.Equal(44, profile.Skills.Length);
+        Assert.Equal(81, profile.Skills.Length);
         var projects = await client.GetFromJsonAsync<ProjectDto[]>("/api/projects");
         Assert.NotNull(projects);
         Assert.Equal(new[] { "ccf", "distill", "portfolio" }, projects.Select(x => x.Id));
@@ -64,7 +64,7 @@ public sealed class ApiTests
         command.CommandText = "SELECT COUNT(*) FROM sqlite_master WHERE name IN ('__ProfileMigrations','__ProjectsMigrations')";
         Assert.Equal(2L, await command.ExecuteScalarAsync());
         command.CommandText = "SELECT COUNT(*) FROM Profile_Skills";
-        Assert.Equal(44L, await command.ExecuteScalarAsync());
+        Assert.Equal(81L, await command.ExecuteScalarAsync());
         command.CommandText = "SELECT COUNT(*) FROM Projects_Projects";
         Assert.Equal(3L, await command.ExecuteScalarAsync());
     }
