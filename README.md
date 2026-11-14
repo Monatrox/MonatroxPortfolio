@@ -1,6 +1,6 @@
 # MonatroxPortfolio
 
-.NET 10 modular monolith API, prerendered Blazor WebAssembly/MudBlazor frontend, EF Core/SQLite, Aspire + Podman and smtp4dev. Project-page authoring: [docs/project-pages.md](docs/project-pages.md). Contact/email behavior: [docs/contact.md](docs/contact.md). Current design: [docs/professional-design.md](docs/professional-design.md); accepted header uses original white/lime logo in avatar bubble inside floating capsule. CI/CD and production bootstrap: [docs/deployment.md](docs/deployment.md). Books/games gallery and artwork sources: [docs/influences.md](docs/influences.md). Hosting milestone: [docs/wasm-migration.md](docs/wasm-migration.md). Original baseline: [docs/v1-plan.md](docs/v1-plan.md).
+.NET 10 modular monolith API, prerendered Blazor WebAssembly/MudBlazor frontend, EF Core/SQLite, Aspire + Podman and smtp4dev. Project-page authoring: [docs/project-pages.md](docs/project-pages.md). Contact/email behavior: [docs/contact.md](docs/contact.md). Current design: [docs/professional-design.md](docs/professional-design.md); accepted header uses original white/lime logo in avatar bubble inside floating capsule. CI/CD and production bootstrap: [docs/deployment.md](docs/deployment.md). Books/games gallery and artwork sources: [docs/influences.md](docs/influences.md). Inline contact and sharing metadata: [docs/portfolio-finishing-touches.md](docs/portfolio-finishing-touches.md). Résumé download and editable source: [docs/resume.md](docs/resume.md). Hosting milestone: [docs/wasm-migration.md](docs/wasm-migration.md). Original baseline: [docs/v1-plan.md](docs/v1-plan.md).
 
 ## Branch policy
 
@@ -9,6 +9,8 @@ Use **`develop`** for integration and branch new features from it. It contains t
 The workflow definition on `develop` permits **main pushes only**, with no PR/manual triggers. Keeping the definition preserves CI/CD across approved release merges, without running pipelines on develop; see [deployment details](docs/deployment.md#branch-and-trigger-policy).
 
 ## Run locally
+
+**Always use the Aspire AppHost (`bash scripts/dev.sh`) for local debugging and visual review.** Let it manage migrations, API, frontend and smtp4dev together. Do not substitute standalone preview processes with disabled SMTP. Published-output/container commands below are for isolated automated verification, not the local debugging workflow.
 
 Prerequisites: SDK **10.0.114** selected by `global.json`, ASP.NET Core/.NET runtime **10.0.14**, working rootless Podman, NuGet/image registry access. Aspire's AppHost SDK supplies orchestration tooling; a separate Aspire CLI installation is not required by these commands.
 
@@ -32,7 +34,7 @@ bash scripts/dev.sh         # Aspire: migrations -> API -> Blazor; smtp4dev alon
 
 - Portfolio: http://127.0.0.1:5420
 - Browser API gateway: http://127.0.0.1:5420/api/profile and `/api/projects`, `/api/projects/{id}`, `/api/projects/{id}/page`
-- Independently hosted API: http://127.0.0.1:5410/api/profile
+- AppHost-managed API: http://127.0.0.1:5410/api/profile
 - smtp4dev inbox: http://127.0.0.1:5430
 - Aspire dashboard: http://127.0.0.1:15400 (login link printed in AppHost output)
 
@@ -57,11 +59,11 @@ Imports validate every module document and discovered project file before writes
 
 Project link/thumbnail references accept HTTP(S), relative paths, and root-relative web paths such as `/images/project.png`. Network-path URLs (`//host`), backslashes, control characters, and file/script schemes are rejected.
 
-Provided content preserves the old source's biography and career/education, retaining all 44 original skill IDs within 81 skill records, presented as 77 list entries across nine groups. The skills section is explicitly non-exhaustive; confirmed IIS/Azure/MCP/AI-tooling experience and project-backed engineering practices are included. LinkedIn/GitHub use supplied real URLs; Discord shows `monatrox` with Copy rather than a guessed profile link. Email opens validated Contact Me modal. Five dummy projects and their placeholder dialog were removed; CCF, Distill and this portfolio's architecture demo are published. Importer regression fixtures remain test-only. Distill is self-contained, with in-document setup examples and one repository-root link rather than file links. CCF and Distill have reference-derived draft case studies in scrollable homepage dialogs, with the same shared content available at dedicated URLs for direct/new-tab access; claims/evidence are author-supplied, not independently verified. No old databases or Identity data were imported.
+Provided content includes an updated biography and preserves the original career/education, retaining all 44 original skill IDs within 81 skill records, presented as 77 list entries across nine groups. The skills section is explicitly non-exhaustive; confirmed IIS/Azure/MCP/AI-tooling experience and project-backed engineering practices are included. LinkedIn/GitHub use supplied real URLs; Discord shows `monatrox` with Copy rather than a guessed profile link. Email opens validated Contact Me modal. Five dummy projects and their placeholder dialog were removed; CCF, Distill and this portfolio's architecture demo are published. Importer regression fixtures remain test-only. Distill is self-contained, with in-document setup examples and one repository-root link rather than file links. CCF and Distill have reference-derived draft case studies in scrollable homepage dialogs, with the same shared content available at dedicated URLs for direct/new-tab access; claims/evidence are author-supplied, not independently verified. No old databases or Identity data were imported.
 
-### Run without containers
+### Standalone hosts (verification only)
 
-After explicit import, use separate terminals from repository root:
+These low-level commands are for isolated host diagnostics, not local debugging or visual review. Use the AppHost above for normal development and smtp4dev wiring. After explicit import, separate verification terminals can run:
 
 ```bash
 export ConnectionStrings__Portfolio="Data Source=$PWD/data/portfolio.db;Foreign Keys=True"

@@ -43,6 +43,7 @@ try
     await Expect(page.GetByRole(AriaRole.Button, new() { Name = "Show Zac Taylor", Exact = true })).ToBeDisabledAsync();
     await Expect(page.GetByRole(AriaRole.Button, new() { Name = "Show Monatrox", Exact = true })).ToBeDisabledAsync();
     await CheckSelectorColorsAsync(page);
+    await Expect(page.GetByRole(AriaRole.Link, new() { Name = "Download résumé", Exact = true })).ToHaveAttributeAsync("download", "zac-taylor-resume.pdf");
     await page.ScreenshotAsync(new() { Path = Path.Combine(screenshots, "prerender.png"), Animations = ScreenshotAnimations.Disabled });
 }
 finally
@@ -55,6 +56,9 @@ await Expect(page.GetByAltText("MX logo")).ToBeVisibleAsync();
 await Expect(page.Locator("body")).ToHaveCSSAsync("background-color", "rgb(245, 243, 236)");
 var favicon = page.Locator("head link[rel='icon']");
 await Expect(favicon).ToHaveAttributeAsync("type", "image/png");
+await Expect(page.Locator("head link[rel='canonical']")).ToHaveAttributeAsync("href", "https://monatrox.com/");
+await Expect(page.Locator("head meta[property='og:image']")).ToHaveAttributeAsync("content", "https://monatrox.com/Content/Images/portfolio-share.png");
+await Expect(page.Locator("head meta[name='twitter:card']")).ToHaveAttributeAsync("content", "summary_large_image");
 await Expect(favicon).ToHaveAttributeAsync("sizes", "64x64");
 var faviconHref = await favicon.GetAttributeAsync("href") ?? throw new InvalidOperationException("Missing favicon.");
 if (!Regex.IsMatch(faviconHref, @"^favicon\.[a-z0-9]+\.png$")) throw new InvalidOperationException("Favicon must use a fingerprinted URL.");
@@ -78,6 +82,7 @@ var professionalView = page.GetByRole(AriaRole.Button, new() { Name = "Show Zac 
 var gamerView = page.GetByRole(AriaRole.Button, new() { Name = "Show Monatrox", Exact = true });
 await CheckPersonalLabelsAsync();
 await CheckSelectorColorsAsync(page);
+await CheckResumeDownloadAsync(page);
 await Expect(page.Locator(".identity-visual figcaption")).ToHaveTextAsync("Zac Taylor");
 await Expect(professionalView).ToBeVisibleAsync();
 await Expect(gamerView).ToBeVisibleAsync();
@@ -138,6 +143,7 @@ if (!await page.Locator(".portfolio-shell").EvaluateAsync<bool>("""
 await Expect(page.Locator("body")).ToHaveCSSAsync("background-color", await ResolveThemeColorAsync(page, "--page-bg"));
 await CheckPersonalLabelsAsync();
 await CheckSelectorColorsAsync(page, gamer: true);
+await CheckResumeDownloadAsync(page);
 await Expect(page.Locator(".identity-visual figcaption")).ToHaveTextAsync("Monatrox");
 await Expect(page).ToHaveTitleAsync("Monatrox");
 await Expect(page.GetByRole(AriaRole.Heading, new() { Name = "Monatrox", Exact = true })).ToBeVisibleAsync();
@@ -200,6 +206,7 @@ var projects = page.GetByTestId("project-grid");
 await Expect(projects.GetByRole(AriaRole.Button)).ToHaveCountAsync(0);
 await Expect(projects.GetByRole(AriaRole.Link)).ToHaveCountAsync(3);
 await Expect(projects.Locator(".project-reference")).ToHaveTextAsync(["ccf", "distill", "portfolio"]);
+await CheckProjectCardAlignmentAsync();
 var project = projects.GetByRole(AriaRole.Link, new() { Name = "Read CCF case study", Exact = true });
 await project.FocusAsync();
 await page.Keyboard.PressAsync("Enter");
@@ -284,6 +291,7 @@ await Expect(staticPage.GetByRole(AriaRole.Combobox, new() { Name = "Header desi
 await Expect(staticPage.Locator(".brand-mark")).ToHaveCSSAsync("border-radius", "50%");
 await Expect(staticPage.Locator("head link[rel='icon']")).ToHaveAttributeAsync("href", faviconHref);
 await Expect(staticPage.Locator("#about img")).ToHaveAttributeAsync("src", "Content/Images/zac-taylor-about.jpg");
+await CheckResumeDownloadAsync(staticPage);
 foreach (var status in new[] { 404, 503 })
 {
     await using var failureContext = await browser.NewContextAsync();
@@ -307,7 +315,7 @@ foreach (var status in new[] { 404, 503 })
     await failureContext.UnrouteAsync("**/api/profile");
     await failurePage.GetByRole(AriaRole.Button, new() { Name = "Retry", Exact = true }).ClickAsync();
     await Expect(failurePage.GetByText("Team Lead at Falkon Technologies", new() { Exact = true })).ToBeVisibleAsync();
-    await Expect(failurePage.GetByRole(AriaRole.Alert)).ToHaveCountAsync(0);
+    await Expect(failurePage.Locator(".page-message [role='alert']")).ToHaveCountAsync(0);
     if (requests.Any(address => address.GetLeftPart(UriPartial.Authority) != url.GetLeftPart(UriPartial.Authority)))
         throw new InvalidOperationException("Browser API request escaped frontend origin.");
     if (requests.Count(address => address.AbsolutePath == "/api/profile") != 2)
@@ -319,6 +327,24 @@ if (circuitRequests.Count != 0) throw new InvalidOperationException("Unexpected 
 if (errors.Count != 0) throw new InvalidOperationException(string.Join(Environment.NewLine, errors));
 Console.WriteLine("WASM smoke passed: prerendered HTML without JS, WebAssembly runtime, no handoff refetch/circuits/autofocus, offline local interactions, permanent avatar-bubble capsule with original white/lime logo in both modes/mobile sizes, stable prerender/interactive/no-JS selector colors, mode-specific About portraits, aligned supporting cards, personal copy without mode labels, identity-first landing screen/stacked selectors/opposed icons/portrait-logo swap/below-fold details, light/dark state-preserving switch, project grid, keyboard/dialog focus, mobile widths/reduced motion, same-origin 404/503 recovery, CCF/Distill/Portfolio case studies with no-JS body and no handoff refetch, scrollable case-study dialogs with focus/scroll restoration and native new-tab links, gamer context, padded workflow tabs with colored indicators, inline Markdown, literal code copy, native disclosures and offline calculator, LinkedIn/GitHub links, Discord clipboard fallback, local-capture-only contact form, validation/draft-preserving failures and throttling.");
 return 0;
+
+async Task CheckResumeDownloadAsync(IPage target)
+{
+    var link = target.GetByRole(AriaRole.Link, new() { Name = "Download résumé", Exact = true });
+    await Expect(link).ToHaveAttributeAsync("href", "/Content/Resume/zac-taylor-resume.pdf");
+    await Expect(link).ToHaveAttributeAsync("download", "zac-taylor-resume.pdf");
+    await Expect(link).ToHaveAttributeAsync("data-enhance-nav", "false");
+    await CheckTextContrastAsync(link);
+    var before = target.Url;
+    await link.FocusAsync();
+    var download = await target.RunAndWaitForDownloadAsync(() => target.Keyboard.PressAsync("Enter"));
+    if (download.SuggestedFilename != "zac-taylor-resume.pdf" || await download.FailureAsync() is not null)
+        throw new InvalidOperationException("Résumé download failed or exposed a variant filename.");
+    var file = await download.PathAsync() ?? throw new InvalidOperationException("Résumé download has no file.");
+    var bytes = await File.ReadAllBytesAsync(file);
+    if (!bytes.AsSpan().StartsWith("%PDF-"u8)) throw new InvalidOperationException("Résumé download is not a PDF.");
+    await Expect(target).ToHaveURLAsync(before);
+}
 
 async Task CheckTextContrastAsync(ILocator element)
 {
@@ -345,6 +371,23 @@ async Task CheckTextContrastAsync(ILocator element)
 
 async Task CheckContactAsync()
 {
+    async Task CheckEmptyMessageLabelAsync(ILocator form)
+    {
+        var textarea = form.GetByLabel("Message", new() { Exact = true });
+        await Expect(textarea).ToHaveValueAsync("");
+        if (!await textarea.EvaluateAsync<bool>("""
+            textarea => {
+                const label = textarea.closest('.mud-input-control').querySelector('label');
+                const name = textarea.closest('form').querySelector('.contact-identity-fields label');
+                const style = getComputedStyle(label), other = getComputedStyle(name);
+                const transform = new DOMMatrixReadOnly(style.transform);
+                return style.overflowX === 'visible' && style.overflowY === 'visible' &&
+                    style.fontSize === other.fontSize && style.fontFamily === other.fontFamily &&
+                    Math.abs(transform.a - 1) < .001 && Math.abs(transform.d - 1) < .001;
+            }
+            """)) throw new InvalidOperationException("Empty Message label must keep the original unshrunk typography without clipping its descenders.");
+        await Expect(form.GetByText("Message", new() { Exact = true })).ToHaveCSSAsync("color", await ResolveThemeColorAsync(page, "--muted"));
+    }
     await page.SetViewportSizeAsync(1366, 900);
     await Expect(page.Locator(".social-links a")).ToHaveCountAsync(2);
     await Expect(page.GetByRole(AriaRole.Link, new() { Name = "LinkedIn", Exact = false })).ToHaveAttributeAsync("href", "https://www.linkedin.com/in/zactaylor-dev");
@@ -353,12 +396,43 @@ async Task CheckContactAsync()
     await context.GrantPermissionsAsync(["clipboard-read", "clipboard-write"]);
     await page.GetByRole(AriaRole.Button, new() { Name = "Copy Discord username monatrox", Exact = true }).ClickAsync();
     if (await page.EvaluateAsync<string>("navigator.clipboard.readText()") != "monatrox") throw new InvalidOperationException("Discord copy changed username.");
+    var inline = page.Locator("#contact");
+    await CheckEmptyMessageLabelAsync(inline);
+    await Expect(inline.GetByRole(AriaRole.Heading, new() { Name = "Get in Contact", Exact = true })).ToBeVisibleAsync();
+    await Expect(inline.GetByRole(AriaRole.Button, new() { Name = "Cancel", Exact = true })).ToHaveCountAsync(0);
+    await inline.GetByRole(AriaRole.Button, new() { Name = "Send message", Exact = true }).ClickAsync();
+    await Expect(inline.GetByText("Enter your name.", new() { Exact = true })).ToBeVisibleAsync();
+    await inline.GetByLabel("Your name", new() { Exact = true }).FillAsync("Inline verification");
+    await inline.GetByLabel("Your email", new() { Exact = true }).FillAsync("inline@example.com");
+    await inline.GetByLabel("Message", new() { Exact = true }).FillAsync("Inline local capture only");
+    await gamerView.ClickAsync();
+    await Expect(inline.GetByLabel("Message", new() { Exact = true })).ToHaveValueAsync("Inline local capture only");
+    foreach (var width in new[] { 1366, 390, 320 })
+    {
+        await page.SetViewportSizeAsync(width, 900);
+        await CheckPageWidthAsync($"Inline contact at {width}px");
+        if (!await inline.EvaluateAsync<bool>("""
+            section => {
+                const bounds = section.getBoundingClientRect(), panel = section.querySelector('.contact-panel').getBoundingClientRect();
+                const fields = [...section.querySelectorAll('.contact-identity-fields > div')].map(field => field.getBoundingClientRect());
+                return Math.abs(panel.left - bounds.left) <= 1 && Math.abs(panel.right - bounds.right) <= 1 && fields.length === 2 &&
+                    (innerWidth > 680 ? Math.abs(fields[0].top - fields[1].top) <= 1 : fields[1].top >= fields[0].bottom - 1);
+            }
+            """)) throw new InvalidOperationException("Inline contact must fill content width with responsive name/email fields.");
+        await inline.ScreenshotAsync(new() { Path = Path.Combine(screenshots, $"contact-inline-{width}.png"), Animations = ScreenshotAnimations.Disabled });
+    }
+    await page.SetViewportSizeAsync(1366, 900);
+    await professionalView.ClickAsync();
     var email = page.GetByRole(AriaRole.Button, new() { Name = "Email — Contact Me", Exact = true });
     await email.FocusAsync(); await page.Keyboard.PressAsync("Enter");
     var dialog = page.GetByRole(AriaRole.Dialog);
     // Never send a synthetic browser message through a real delivery provider.
     await Expect(dialog.GetByText("Local preview: messages are captured by smtp4dev, not delivered to zac@monatrox.com.", new() { Exact = true })).ToBeVisibleAsync();
     await CheckTextContrastAsync(dialog.Locator(".mud-alert").First);
+    await Expect(dialog.GetByLabel("Your name", new() { Exact = true })).ToHaveValueAsync("");
+    await CheckEmptyMessageLabelAsync(dialog);
+    var formNames = await page.Locator("form").EvaluateAllAsync<string[]>("forms => forms.map(form => form.id)");
+    if (formNames.Length != 2 || formNames.Distinct().Count() != 2) throw new InvalidOperationException("Contact form handlers must be distinct.");
     await dialog.GetByRole(AriaRole.Button, new() { Name = "Send message", Exact = true }).ClickAsync();
     await Expect(dialog.GetByText("Enter your name.", new() { Exact = true })).ToBeVisibleAsync();
     await CheckTextContrastAsync(dialog.GetByText("Enter your name.", new() { Exact = true }));
@@ -377,6 +451,14 @@ async Task CheckContactAsync()
     await dialog.GetByRole(AriaRole.Button, new() { Name = "Done", Exact = true }).ClickAsync();
     await Expect(dialog).ToHaveCountAsync(0);
     await Expect(email).ToBeFocusedAsync();
+    await Expect(inline.GetByLabel("Message", new() { Exact = true })).ToHaveValueAsync("Inline local capture only");
+    await Expect(inline.GetByText("Local preview: messages are captured by smtp4dev, not delivered to zac@monatrox.com.", new() { Exact = true })).ToBeVisibleAsync();
+    await inline.GetByRole(AriaRole.Button, new() { Name = "Send message", Exact = true }).ClickAsync();
+    await Expect(inline.GetByRole(AriaRole.Status)).ToContainTextAsync("Captured locally in smtp4dev. Not delivered to Zac’s inbox.");
+    await inline.GetByRole(AriaRole.Button, new() { Name = "Send another message", Exact = true }).ClickAsync();
+    await Expect(inline.GetByLabel("Message", new() { Exact = true })).ToHaveValueAsync("");
+    await Expect(staticPage.Locator("#contact").GetByLabel("Your name", new() { Exact = true })).ToBeDisabledAsync();
+    await Expect(staticPage.Locator("#contact").GetByRole(AriaRole.Button, new() { Name = "Send message", Exact = true })).ToBeDisabledAsync();
     await page.SetViewportSizeAsync(1920, 1080);
     await gamerView.ClickAsync();
     await email.ClickAsync();
@@ -414,6 +496,15 @@ async Task CheckContactAsync()
     await failedDialog.GetByRole(AriaRole.Button, new() { Name = "Send message", Exact = true }).ClickAsync();
     await Expect(failedDialog.GetByText("Too many attempts. Please wait 10 minutes before trying again.", new() { Exact = true })).ToBeVisibleAsync();
     await Expect(failedDialog.GetByLabel("Message", new() { Exact = true })).ToHaveValueAsync("Keep this draft");
+    await failedDialog.GetByRole(AriaRole.Button, new() { Name = "Cancel", Exact = true }).ClickAsync();
+    await Expect(failedDialog).ToHaveCountAsync(0);
+    var failedInline = target.Locator("#contact");
+    await failedInline.GetByLabel("Your name", new() { Exact = true }).FillAsync("Inline visitor");
+    await failedInline.GetByLabel("Your email", new() { Exact = true }).FillAsync("visitor@example.com");
+    await failedInline.GetByLabel("Message", new() { Exact = true }).FillAsync("Keep inline draft");
+    await failedInline.GetByRole(AriaRole.Button, new() { Name = "Send message", Exact = true }).ClickAsync();
+    await Expect(failedInline.GetByText("Too many attempts. Please wait 10 minutes before trying again.", new() { Exact = true })).ToBeVisibleAsync();
+    await Expect(failedInline.GetByLabel("Message", new() { Exact = true })).ToHaveValueAsync("Keep inline draft");
 }
 
 async Task CheckProjectPagesAsync()
@@ -429,6 +520,9 @@ async Task CheckProjectPagesAsync()
         await page.GotoAsync(new Uri(url, "projects/" + id).ToString());
         await Expect(page.Locator(".mud-layout")).ToHaveAttributeAsync("data-renderer", "WebAssembly");
         await Expect(page.GetByRole(AriaRole.Heading, new() { Name = title, Exact = true })).ToBeVisibleAsync();
+        await Expect(page.Locator("head link[rel='canonical']")).ToHaveAttributeAsync("href", "https://monatrox.com/projects/" + id);
+        await Expect(page.Locator("head meta[property='og:title']")).ToHaveAttributeAsync("content", title + " — Zac Taylor");
+        await Expect(page.Locator("head meta[name='description']")).ToHaveCountAsync(1);
         await Expect(page.Locator(".case-section")).ToHaveCountAsync(5);
         if (browserApiRequests.Count != before) throw new InvalidOperationException("Project page refetched on prerender handoff.");
         if (id == "ccf")
@@ -504,7 +598,7 @@ async Task CheckProjectPagesAsync()
     await failedPage.GotoAsync(url.ToString());
     await Expect(failedPage.Locator(".mud-layout")).ToHaveAttributeAsync("data-renderer", "WebAssembly");
     await failedPage.GetByRole(AriaRole.Link, new() { Name = "Read CCF case study", Exact = true }).ClickAsync();
-    await Expect(failedPage.GetByRole(AriaRole.Alert)).ToContainTextAsync("Project page is unavailable. Please retry.");
+    await Expect(failedPage.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Alert)).ToContainTextAsync("Project page is unavailable. Please retry.");
     await failure.UnrouteAsync("**/api/projects/ccf/page");
     await failedPage.GetByRole(AriaRole.Button, new() { Name = "Retry", Exact = true }).ClickAsync();
     await Expect(failedPage.GetByRole(AriaRole.Dialog).GetByRole(AriaRole.Heading, new() { Name = "CCF", Exact = true, Level = 1 })).ToBeVisibleAsync();
@@ -527,6 +621,8 @@ async Task CheckCaseStudyModalsAsync(string directory)
         await Expect(dialog.GetByRole(AriaRole.Heading, new() { Name = name, Exact = true, Level = 1 })).ToBeVisibleAsync();
         if (page.Url != originalUrl) throw new InvalidOperationException("Case-study card navigated instead of opening dialog.");
         await Expect(page).ToHaveTitleAsync(originalTitle);
+        await Expect(page.Locator("head link[rel='canonical']")).ToHaveAttributeAsync("href", "https://monatrox.com/");
+        await Expect(page.Locator("head meta[property='og:url']")).ToHaveAttributeAsync("content", "https://monatrox.com/");
         await Expect(dialog.Locator(".site-header, .site-footer")).ToHaveCountAsync(0);
         await Expect(dialog.GetByRole(AriaRole.Link, new() { Name = "Open full page" })).ToHaveAttributeAsync("target", "_blank");
         var scroll = dialog.Locator(".case-dialog-scroll");
@@ -622,6 +718,22 @@ async Task CheckPageWidthAsync(string label)
     }
 }
 
+async Task CheckSocialControlRowsAsync()
+{
+    if (!await page.Locator(".social-links").EvaluateAsync<bool>("""
+        group => {
+            const rows = [];
+            const controls = [...group.querySelectorAll('.social-pair > a, .social-pair > button')];
+            for (const control of controls) {
+                const box = control.getBoundingClientRect(), center = (box.top + box.bottom) / 2;
+                const row = rows.find(row => Math.abs(row.center - center) <= 1);
+                if (row) row.count++; else rows.push({center, count: 1});
+            }
+            return controls.length === 4 && (rows.length === 1 || (rows.length === 2 && rows.every(row => row.count === 2)));
+        }
+        """)) throw new InvalidOperationException("Find me controls must stay in one row or wrap 2+2, never 3+1.");
+}
+
 async Task CheckHeaderAsync()
 {
     var requestsBefore = browserApiRequests.Count;
@@ -652,7 +764,21 @@ async Task CheckHeaderAsync()
             if (width <= 420) await Expect(page.Locator(".brand-wordmark")).ToBeHiddenAsync();
             else await Expect(page.Locator(".brand-wordmark")).ToBeVisibleAsync();
             await CheckPageWidthAsync($"Header at {width}px");
+            await CheckSocialControlRowsAsync();
             await Expect(page.Locator(".site-header-inner")).ToHaveCSSAsync("border-radius", width <= 680 ? "20px" : "999px");
+            if (width <= 460)
+            {
+                await Expect(page.Locator(".brand-mark")).ToHaveCSSAsync("width", "32px");
+                await Expect(page.Locator(".brand-mark")).ToHaveCSSAsync("height", "32px");
+                var tight = width <= 340 || width is >= 421 and <= 440;
+                await Expect(page.Locator(".site-header-inner")).ToHaveCSSAsync("padding-left", tight ? "2px" : "10px");
+                await Expect(page.Locator(".site-header-inner")).ToHaveCSSAsync("padding-right", tight ? "2px" : "10px");
+            }
+            if (gamer)
+            {
+                var offset = await page.Locator(".portfolio-shell").EvaluateAsync<string>("shell => getComputedStyle(shell, '::before').backgroundPositionY.split(',')[1].trim()");
+                if (offset != (width <= 460 ? "-24px" : "0%")) throw new InvalidOperationException("EKG offset must apply only at phone widths.");
+            }
             if (!await page.Locator(".site-nav").EvaluateAsync<bool>("""
                 nav => {
                     const links = [...nav.children].map(link => link.getBoundingClientRect());
@@ -717,8 +843,21 @@ async Task CheckHeaderAsync()
             {
                 await page.SetViewportSizeAsync(width, 844);
                 await CheckPageWidthAsync($"Wide-system-font header at {width}px");
-                if (!await page.Locator(".site-header-inner").EvaluateAsync<bool>("el => el.querySelector('.site-nav').getBoundingClientRect().right <= el.getBoundingClientRect().right + 1"))
-                    throw new InvalidOperationException($"Wide-system-font navigation escapes its container at {width}px.");
+                await CheckSocialControlRowsAsync();
+                try
+                {
+                    // Document width can fit before the header's responsive geometry settles.
+                    await page.WaitForFunctionAsync("""
+                        () => {
+                            const el = document.querySelector('.site-header-inner');
+                            return el.querySelector('.site-nav').getBoundingClientRect().right <= el.getBoundingClientRect().right + 1;
+                        }
+                        """, options: new() { Timeout = 3000 });
+                }
+                catch (TimeoutException error)
+                {
+                    throw new InvalidOperationException($"Wide-system-font navigation escapes its container at {width}px.", error);
+                }
             }
         }
         await page.Locator(".site-header").ScreenshotAsync(new()
@@ -752,10 +891,57 @@ async Task CheckAboutPortraitAsync(bool gamer = false)
     }
 }
 
+async Task CheckProjectCardAlignmentAsync()
+{
+    const string aligned = """
+        () => {
+            const grid = document.querySelector('[data-testid="project-grid"]');
+            const cards = [...grid.querySelectorAll('.project-card')];
+            const columns = getComputedStyle(grid).gridTemplateColumns.split(' ').length;
+            for (let start = 0; start < cards.length; start += columns) {
+                const row = cards.slice(start, start + columns);
+                for (const selector of ['.project-card-top', '.project-preview', '.project-card-footer']) {
+                    const boxes = row.map(card => card.querySelector(selector).getBoundingClientRect());
+                    if (!boxes.every(box => Math.abs(box.top - boxes[0].top) <= 1 && Math.abs(box.bottom - boxes[0].bottom) <= 1)) return false;
+                }
+                if (!row.every(card => card.scrollHeight <= card.clientHeight + 1)) return false;
+            }
+            return true;
+        }
+        """;
+    var description = projects.Locator(".project-description").Nth(1);
+    var original = await description.InnerTextAsync();
+    foreach (var gamer in new[] { false, true })
+    {
+        await (gamer ? gamerView : professionalView).ClickAsync();
+        await page.Locator(".hero-statement").ClickAsync();
+        await page.Mouse.MoveAsync(0, 0);
+        foreach (var width in new[] { 1366, 1024, 768, 390, 320 })
+        {
+            await page.SetViewportSizeAsync(width, 900);
+            await CheckPageWidthAsync($"Project alignment at {width}px");
+            await page.WaitForFunctionAsync(aligned, null, new() { Timeout = 3000 });
+        }
+        await page.SetViewportSizeAsync(1366, 900);
+        try
+        {
+            await description.EvaluateAsync("(element, text) => element.textContent = text", string.Join(" ", Enumerable.Repeat(original, 4)));
+            await page.WaitForFunctionAsync(aligned, null, new() { Timeout = 3000 });
+        }
+        finally { await description.EvaluateAsync("(element, text) => element.textContent = text", original); }
+        await projects.ScreenshotAsync(new() { Path = Path.Combine(screenshots, $"project-alignment-{(gamer ? "gamer" : "professional")}.png"), Animations = ScreenshotAnimations.Disabled });
+    }
+    await professionalView.ClickAsync();
+    await page.SetViewportSizeAsync(1920, 1080);
+}
+
 async Task CheckInfluencesAsync()
 {
     var toggle = page.GetByRole(AriaRole.Button, new() { Name = "Influences", Exact = true });
     var content = page.Locator("#influences-content");
+    var booksView = content.GetByRole(AriaRole.Button, new() { Name = "Show books and professional profile", Exact = true });
+    var gamesView = content.GetByRole(AriaRole.Button, new() { Name = "Show games and gamer profile", Exact = true });
+    var apiBefore = browserApiRequests.Count;
     async Task CheckCoversAsync(string collection)
     {
         await content.Locator("img").EvaluateAllAsync<object?>("images => Promise.all(images.map(image => { image.loading = 'eager'; return image.decode(); }))");
@@ -763,6 +949,17 @@ async Task CheckInfluencesAsync()
         {
             await page.SetViewportSizeAsync(width, 900);
             await CheckPageWidthAsync($"{collection} influences at {width}px");
+            if (!await content.Locator(".influences-toolbar").EvaluateAsync<bool>("""
+                toolbar => {
+                    const text = toolbar.querySelector('.influences-description').getBoundingClientRect();
+                    const control = toolbar.querySelector('.influences-view-switch').getBoundingClientRect();
+                    return (text.right <= control.left + 1 || text.bottom <= control.top + 1) &&
+                        [...toolbar.querySelectorAll('button')].every(button => {
+                            const box = button.getBoundingClientRect();
+                            return box.width >= 44 && box.height >= 44 && box.left >= 0 && box.right <= innerWidth;
+                        });
+                }
+                """)) throw new InvalidOperationException("Influences switch must fit beside/below the description with accessible touch targets.");
             if (!await content.EvaluateAsync<bool>("""
                 content => [...content.querySelectorAll('.influence-item')].every((card, index, cards) => {
                     const frame = card.querySelector('.influence-cover').getBoundingClientRect();
@@ -792,7 +989,14 @@ async Task CheckInfluencesAsync()
     if (influenceArtworkRequests.Count - beforeBooks != 1 || !influenceArtworkRequests.Last().EndsWith("books-atlas.webp", StringComparison.Ordinal))
         throw new InvalidOperationException("Books must load with one batched artwork request.");
     var beforeGames = influenceArtworkRequests.Count;
-    await gamerView.ClickAsync();
+    await Expect(booksView).ToHaveAttributeAsync("aria-pressed", "true");
+    await Expect(gamesView).ToHaveAttributeAsync("aria-pressed", "false");
+    await gamesView.FocusAsync();
+    await page.Keyboard.PressAsync("Enter");
+    await Expect(gamesView).ToHaveAttributeAsync("aria-pressed", "true");
+    await Expect(booksView).ToHaveAttributeAsync("aria-pressed", "false");
+    await Expect(gamerView).ToHaveAttributeAsync("aria-pressed", "true");
+    await Expect(gamesView).ToBeFocusedAsync();
     await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "true");
     await Expect(content.Locator(".influences-description")).ToHaveTextAsync("Some of the most influential games of my life, nowhere near all-inclusive");
     await Expect(content.Locator("figcaption")).ToHaveTextAsync(new[]
@@ -807,9 +1011,13 @@ async Task CheckInfluencesAsync()
     if (influenceArtworkRequests.Count - beforeGames != 1 || !influenceArtworkRequests.Last().EndsWith("games-atlas.webp", StringComparison.Ordinal))
         throw new InvalidOperationException("Games must load with one batched artwork request.");
     await Expect(content.Locator("h3")).ToHaveCountAsync(0);
-    await professionalView.ClickAsync();
+    await booksView.FocusAsync();
+    await page.Keyboard.PressAsync("Space");
+    await Expect(booksView).ToHaveAttributeAsync("aria-pressed", "true");
+    await Expect(professionalView).ToHaveAttributeAsync("aria-pressed", "true");
     await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "true");
     await Expect(content.Locator(".influence-item")).ToHaveCountAsync(8);
+    if (browserApiRequests.Count != apiBefore) throw new InvalidOperationException("Influences switch must reuse loaded data without API refetches.");
     await toggle.ClickAsync();
     await Expect(content).ToHaveCSSAsync("height", "0px");
     await page.SetViewportSizeAsync(1920, 1080);

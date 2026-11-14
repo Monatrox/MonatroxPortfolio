@@ -6,7 +6,16 @@
 
 @if (!Embedded)
 {
-    <PageTitle>@(Page?.Document.Hero.Title ?? "Project") — @(GamerView ? "Monatrox" : "Zac Taylor")</PageTitle>
+    @if (Page is not null && Error is null)
+    {
+        <PageMetadata Title="@($"{Page.Document.Hero.Title} — {(GamerView ? "Monatrox" : "Zac Taylor")}")"
+                      Description="@Page.Document.Hero.Subtitle" Path="@($"/projects/{Uri.EscapeDataString(Page.ProjectId)}")" />
+    }
+    else
+    {
+        <PageTitle>Project — @(GamerView ? "Monatrox" : "Zac Taylor")</PageTitle>
+        <HeadContent><meta name="robots" content="noindex" /></HeadContent>
+    }
 }
 
 @if (Error is not null)

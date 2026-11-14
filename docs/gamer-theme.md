@@ -8,7 +8,7 @@ The shared business layout, header, section order, responsive behavior, original
 
 - `Hosts/MonatroxPortfolio.Blazor/wwwroot/gamer-theme.css` matches gamer elements only.
 - `Hosts/MonatroxPortfolio.Blazor/wwwroot/Content/Images/neon-flatline.svg` is the original selected static artwork: one left-side peak/dip with trailing lines across the screen.
-- Artwork starts at the document top, spans the full page width and fades within its 1100px-high area. It scrolls with the page, not the viewport.
+- Artwork starts at the document top, spans the full page width and fades within its 1100px-high area. It scrolls with the page, not the viewport. At phone widths ≤460px, only the SVG layer moves up 24px to clear the identity label; its fade/glow, page anchor and all wider layouts remain unchanged.
 - The theme picker, preview state/cascades, extra bottom padding, unused styles/artwork, experimental image derivatives, lab JavaScript, generators and gallery profiler have been removed. No new dependency was added.
 
 ## History

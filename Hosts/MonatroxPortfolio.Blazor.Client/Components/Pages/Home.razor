@@ -8,7 +8,9 @@
 @inject IJSRuntime JS
 @inject ILogger<Home> Logger
 
-<PageTitle>@(IsGamer ? "Monatrox" : "Zac Taylor — Engineering & Technical Leadership")</PageTitle>
+<PageMetadata Title="@(IsGamer ? "Monatrox" : "Zac Taylor — Engineering & Technical Leadership")"
+              Description="Zac Taylor's portfolio: backend engineering, technical leadership, and independently built software. Explore projects, experience, and ways to get in contact."
+              Path="/" />
 
 @if (Error is not null)
 {
@@ -53,27 +55,44 @@ else
         <div class="hero-contact">
             <div class="social-links" role="group" aria-label="Social profiles">
                 <span class="eyebrow">Find me</span>
-                @foreach (var link in Profile.SocialLinks)
+                @foreach (var pair in Enumerable.Range(0, Profile.SocialLinks.Length + 1).Chunk(2))
                 {
-                    @if (link.Id == "discord" && link.Url == "#")
-                    {
-                        <MudButton Class="social-contact" OnClick="CopyDiscordAsync" Disabled="@(!RendererInfo.IsInteractive)" aria-label="Copy Discord username monatrox">Discord · monatrox <span aria-hidden="true">⧉</span></MudButton>
-                    }
-                    else if (link.Url == "#")
-                    {
-                        <span class="social-placeholder" title="URL awaiting update">@link.Name</span>
-                    }
-                    else
-                    {
-                        <MudLink Href="@link.Url" Underline="Underline.None">@link.Name <span aria-hidden="true">↗</span></MudLink>
-                    }
+                    <div class="social-pair">
+                        @foreach (var index in pair)
+                        {
+                            @if (index == Profile.SocialLinks.Length)
+                            {
+                                <MudButton Class="social-contact" OnClick="OpenContactAsync" Disabled="@(!RendererInfo.IsInteractive)" aria-label="Email — Contact Me" aria-haspopup="dialog">Email <MudIcon Icon="@Icons.Material.Filled.MailOutline" Size="Size.Small" /></MudButton>
+                            }
+                            else
+                            {
+                                var link = Profile.SocialLinks[index];
+                                @if (link.Id == "discord" && link.Url == "#")
+                                {
+                                    <MudButton Class="social-contact" OnClick="CopyDiscordAsync" Disabled="@(!RendererInfo.IsInteractive)" aria-label="Copy Discord username monatrox">Discord · monatrox <span aria-hidden="true">⧉</span></MudButton>
+                                }
+                                else if (link.Url == "#")
+                                {
+                                    <span class="social-placeholder" title="URL awaiting update">@link.Name</span>
+                                }
+                                else
+                                {
+                                    <MudLink Href="@link.Url" Underline="Underline.None">@link.Name <span aria-hidden="true">↗</span></MudLink>
+                                }
+                            }
+                        }
+                    </div>
                 }
-                <MudButton Class="social-contact" OnClick="OpenContactAsync" Disabled="@(!RendererInfo.IsInteractive)" aria-label="Email — Contact Me" aria-haspopup="dialog">Email <MudIcon Icon="@Icons.Material.Filled.MailOutline" Size="Size.Small" /></MudButton>
                 <span class="contact-copy-status" role="status" aria-live="polite">@_discordCopyStatus</span>
             </div>
             <div class="hero-actions">
                 <MudButton Href="#projects" Variant="Variant.Filled" Color="Color.Primary" EndIcon="@Icons.Material.Filled.ArrowForward" Class="primary-action">Explore projects</MudButton>
                 <MudLink Href="#background" Underline="Underline.None" Class="secondary-action">My background <span aria-hidden="true">↗</span></MudLink>
+            </div>
+            <div class="resume-download" role="group" aria-label="Résumé">
+                <MudButton Href="/Content/Resume/zac-taylor-resume.pdf" download="zac-taylor-resume.pdf" data-enhance-nav="false"
+                           Variant="Variant.Text" StartIcon="@Icons.Material.Filled.Download" aria-describedby="resume-format">Download résumé</MudButton>
+                <span id="resume-format">PDF · 1 page</span>
             </div>
         </div>
         <MudLink Href="#about" Underline="Underline.None" Class="hero-scroll">More about me <span aria-hidden="true">↓</span></MudLink>
@@ -192,6 +211,13 @@ else
         <MudCollapse Expanded="_influencesExpanded" id="influences-content">
             <Influences IsGamer="@IsGamer" Expanded="@_influencesExpanded" />
         </MudCollapse>
+    </section>
+
+    <section class="contact-section" id="contact" aria-labelledby="contact-title">
+        <div class="section-heading"><div><p class="eyebrow">05 / Contact</p><h2 id="contact-title">Get in Contact<span class="name-period" aria-hidden="true">.</span></h2></div></div>
+        <MudPaper Elevation="0" Class="detail-panel contact-panel">
+            <ContactForm FormName="contact-inline" />
+        </MudPaper>
     </section>
 }
 
