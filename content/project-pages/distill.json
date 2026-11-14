@@ -11,7 +11,7 @@
       "eyebrow": "Architecture & developer guide · v0.1.0",
       "title": "Distill",
       "subtitle": "A Rust service for structured logs and aggregates.",
-      "introMarkdown": "Applications send events to named channels. Each channel decides which events retain their full detail, how the stream is summarized, and where the results are stored.",
+      "introMarkdown": "**[View on GitHub ↗](https://github.com/Monatrox/distill)**\n\nApplications send events to named channels. Each channel decides which events retain their full detail, how the stream is summarized, and where the results are stored.",
       "tags": [
         "Rust / Tokio / Axum",
         "RabbitMQ",
@@ -560,7 +560,7 @@
     ],
     "notes": [
       "Based on source revision `338b655` and the DistillTesting consumer, reviewed 7 November 2026. Examples are abbreviated and setup depends on the deployment. Local qualification results are recorded evidence, not a live CI status or production guarantee.",
-      "[Repository ↗](https://github.com/Monatrox/distill)"
+      "[View on GitHub ↗](https://github.com/Monatrox/distill)"
     ],
     "introduction": []
   }

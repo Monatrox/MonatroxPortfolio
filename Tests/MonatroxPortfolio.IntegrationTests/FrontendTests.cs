@@ -319,6 +319,14 @@ public sealed class FrontendTests
         Assert.Equal(1, upstream.PageRequests);
         Assert.Equal(0, upstream.ProfileRequests);
         Assert.Equal(0, upstream.ProjectRequests);
+        if (id is "distill" or "portfolio")
+        {
+            var repository = id == "distill" ? "https://github.com/Monatrox/distill" : "https://github.com/Monatrox/MonatroxPortfolio";
+            var href = $"href=\"{repository}\"";
+            Assert.Equal(2, Regex.Matches(html, Regex.Escape(href)).Count);
+            Assert.Contains(href, Regex.Match(html, "<header class=\"case-hero\">.*?</header>", RegexOptions.Singleline).Value);
+            Assert.Contains(href, Regex.Match(html, "<aside class=\"case-notes\".*?</aside>", RegexOptions.Singleline).Value);
+        }
         if (id == "ccf") Assert.Contains("No production records are loaded.", html);
         else if (id == "distill")
         {
