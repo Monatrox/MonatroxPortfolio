@@ -3,9 +3,10 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.6.0" />
+    <!-- Patch AppHost/dashboard credential disclosure (GHSA-f7vh-h5g3-7jrh). -->
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.6.5" />
     <!-- Patch Aspire's transitive MessagePack dependency (GHSA-qhrr-8q5h-9q3h). -->
-    <PackageVersion Include="MessagePack" Version="2.5.303" />
+    <PackageVersion Include="MessagePack" Version="2.5.307" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.9" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.9" />
     <!-- Override EF's vulnerable native SQLite bundle (GHSA-2m69-gcr7-jv3q). -->
