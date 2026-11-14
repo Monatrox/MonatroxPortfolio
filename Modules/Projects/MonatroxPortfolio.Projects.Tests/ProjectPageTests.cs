@@ -14,14 +14,24 @@ public sealed class ProjectPageTests
     private static string Json(params ProjectImportDto[] items) => JsonSerializer.Serialize(items, ContentJson.Options);
 
     [Fact]
-    public void Distill_is_self_contained_with_only_a_repository_root_link()
+    public void Distill_is_self_contained_with_only_repository_root_links()
     {
         var json = Json(Read("distill"));
         Assert.DoesNotContain("/blob/", json);
         Assert.DoesNotContain("/tree/", json);
-        Assert.Single(System.Text.RegularExpressions.Regex.Matches(json, @"https://github\.com/Monatrox/distill"));
+        Assert.Equal(2, System.Text.RegularExpressions.Regex.Matches(json, @"https://github\.com/Monatrox/distill").Count);
         Assert.Contains("connection_string_env", json);
         Assert.Contains("not a live CI status or production guarantee", json);
+    }
+
+    [Theory]
+    [InlineData("distill", "https://github.com/Monatrox/distill")]
+    [InlineData("portfolio", "https://github.com/Monatrox/MonatroxPortfolio")]
+    public void Repository_links_lead_the_hero_and_finish_the_notes(string id, string repository)
+    {
+        var page = Read(id).Page!;
+        Assert.StartsWith($"**[View on GitHub ↗]({repository})**\n\n", page.Hero.IntroMarkdown);
+        Assert.Equal($"[View on GitHub ↗]({repository})", page.Notes[^1]);
     }
 
     [Theory]
