@@ -1,0 +1,63 @@
+<MudText Typo="Typo.body2" Class="influences-description" id="influences-description">@(IsGamer ? "Some of the most influential games of my life, nowhere near all-inclusive" : "Books that shape the way I think about my work")</MudText>
+@{
+    var items = IsGamer ? Games : Books;
+    var rows = (items.Length + 3) / 4;
+    var atlas = IsGamer ? "Content/Images/Influences/games-atlas.webp?v=f04633398272" : "Content/Images/Influences/books-atlas.webp?v=720cd2cfb98c";
+}
+<ul class="influence-grid" aria-label="@(IsGamer ? "Games" : "Books")" aria-describedby="influences-description">
+    @foreach (var (item, index) in items.Select((item, index) => (item, index)))
+    {
+        <li class="influence-item">
+            <MudPaper Elevation="0" Class="influence-card detail-panel">
+                <figure>
+                    <div class="influence-cover">
+                        @if (Expanded)
+                        {
+                            <MudImage Src="@atlas" Alt="@($"{(IsGamer ? "Artwork for" : "Cover of")} {item.Title}")"
+                                      Style="@($"width:400%;height:{rows * 100}%;left:-{index % 4 * 100}%;top:-{index / 4 * 100}%;")"
+                                      ObjectFit="ObjectFit.Fill" loading="eager" decoding="async" />
+                        }
+                    </div>
+                    <figcaption>@item.Title</figcaption>
+                </figure>
+            </MudPaper>
+        </li>
+    }
+</ul>
+
+@code {
+    [Parameter] public bool IsGamer { get; set; }
+    [Parameter] public bool Expanded { get; set; }
+
+    private static readonly (string Title, string Cover)[] Books =
+    [
+        ("Accelerate", "accelerate"),
+        ("The Phoenix Project", "the-phoenix-project"),
+        ("The Unicorn Project", "the-unicorn-project"),
+        ("Team Topologies", "team-topologies"),
+        ("Atomic Habits", "atomic-habits"),
+        ("Extreme Ownership", "extreme-ownership"),
+        ("The DevOps Handbook", "the-devops-handbook"),
+        ("No Rules Rules", "no-rules-rules")
+    ];
+
+    private static readonly (string Title, string Cover)[] Games =
+    [
+        ("The Legend of Zelda: Majora's Mask", "Games/majoras-mask"),
+        ("Super Mario 64", "Games/super-mario-64"),
+        ("Halo: Combat Evolved", "Games/halo-combat-evolved"),
+        ("Star Wars: Knights of the Old Republic", "Games/knights-of-the-old-republic"),
+        ("Counter-Strike: Source", "Games/counter-strike-source"),
+        ("Empire Earth II", "Games/empire-earth-ii"),
+        ("Rome: Total War", "Games/rome-total-war"),
+        ("Supreme Commander: Forged Alliance", "Games/supreme-commander-forged-alliance"),
+        ("Mass Effect Trilogy", "Games/mass-effect-trilogy"),
+        ("StarCraft II", "Games/starcraft-ii"),
+        ("Minecraft", "Games/minecraft"),
+        ("Garry's Mod", "Games/garrys-mod"),
+        ("Rocket League", "Games/rocket-league"),
+        ("Overwatch", "Games/overwatch"),
+        ("Diablo III", "Games/diablo-iii"),
+        ("Path of Exile", "Games/path-of-exile")
+    ];
+}

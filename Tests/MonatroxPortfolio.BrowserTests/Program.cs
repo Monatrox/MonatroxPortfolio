@@ -22,11 +22,13 @@ page.Console += (_, message) => { if (message.Type == "error") errors.Add(messag
 page.SetDefaultTimeout(30000);
 SetDefaultExpectTimeout(30000);
 var browserApiRequests = new List<string>();
+var influenceArtworkRequests = new List<string>();
 var circuitRequests = new List<string>();
 page.Request += (_, request) =>
 {
     var path = new Uri(request.Url).AbsolutePath;
     if (path.StartsWith("/api/", StringComparison.Ordinal)) browserApiRequests.Add(path);
+    if (path.StartsWith("/Content/Images/Influences/", StringComparison.Ordinal)) influenceArtworkRequests.Add(path);
     if (path.StartsWith("/_blazor", StringComparison.Ordinal)) circuitRequests.Add(request.Url);
 };
 page.WebSocket += (_, socket) =>
@@ -192,6 +194,7 @@ foreach (var width in new[] { 1920, 1366, 1024 })
 await page.SetViewportSizeAsync(1920, 1080);
 await page.Locator("#background-content").ScreenshotAsync(new() { Path = Path.Combine(screenshots, "background-aligned.png"), Animations = ScreenshotAnimations.Disabled });
 await background.ClickAsync();
+await CheckInfluencesAsync();
 
 var projects = page.GetByTestId("project-grid");
 await Expect(projects.GetByRole(AriaRole.Button)).ToHaveCountAsync(0);
@@ -749,6 +752,69 @@ async Task CheckAboutPortraitAsync(bool gamer = false)
     }
 }
 
+async Task CheckInfluencesAsync()
+{
+    var toggle = page.GetByRole(AriaRole.Button, new() { Name = "Influences", Exact = true });
+    var content = page.Locator("#influences-content");
+    async Task CheckCoversAsync(string collection)
+    {
+        await content.Locator("img").EvaluateAllAsync<object?>("images => Promise.all(images.map(image => { image.loading = 'eager'; return image.decode(); }))");
+        foreach (var width in new[] { 1366, 768, 390, 320 })
+        {
+            await page.SetViewportSizeAsync(width, 900);
+            await CheckPageWidthAsync($"{collection} influences at {width}px");
+            if (!await content.EvaluateAsync<bool>("""
+                content => [...content.querySelectorAll('.influence-item')].every((card, index, cards) => {
+                    const frame = card.querySelector('.influence-cover').getBoundingClientRect();
+                    const image = card.querySelector('img');
+                    const atlas = image.getBoundingClientRect();
+                    return Math.abs(frame.width / frame.height - 2 / 3) < .01 && image.complete && image.naturalWidth === 1280 &&
+                        Math.abs(atlas.width - frame.width * 4) < 1 && Math.abs(atlas.height - frame.height * Math.ceil(cards.length / 4)) < 1 &&
+                        Math.abs(atlas.left - frame.left + frame.width * (index % 4)) < 1 &&
+                        Math.abs(atlas.top - frame.top + frame.height * Math.floor(index / 4)) < 1 && card.scrollWidth <= card.clientWidth + 1;
+                })
+                """)) throw new InvalidOperationException("Influence artwork must decode, remain undistorted and fit matching portrait frames.");
+        }
+        await page.SetViewportSizeAsync(1366, 900);
+        await content.ScreenshotAsync(new() { Path = Path.Combine(screenshots, $"{collection}-influences.png"), Animations = ScreenshotAnimations.Disabled });
+    }
+    await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "false");
+    if (influenceArtworkRequests.Count != 0) throw new InvalidOperationException("Collapsed galleries must not request artwork.");
+    var beforeBooks = influenceArtworkRequests.Count;
+    await toggle.FocusAsync();
+    await page.Keyboard.PressAsync("Enter");
+    await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "true");
+    await Expect(content.Locator(".influences-description")).ToHaveTextAsync("Books that shape the way I think about my work");
+    await Expect(content.Locator("h3")).ToHaveCountAsync(0);
+    await Expect(content.Locator(".influences-description")).ToHaveCSSAsync("font-size", "14px");
+    await Expect(content.Locator("figcaption")).ToHaveTextAsync(new[] { "Accelerate", "The Phoenix Project", "The Unicorn Project", "Team Topologies", "Atomic Habits", "Extreme Ownership", "The DevOps Handbook", "No Rules Rules" });
+    await CheckCoversAsync("books");
+    if (influenceArtworkRequests.Count - beforeBooks != 1 || !influenceArtworkRequests.Last().EndsWith("books-atlas.webp", StringComparison.Ordinal))
+        throw new InvalidOperationException("Books must load with one batched artwork request.");
+    var beforeGames = influenceArtworkRequests.Count;
+    await gamerView.ClickAsync();
+    await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "true");
+    await Expect(content.Locator(".influences-description")).ToHaveTextAsync("Some of the most influential games of my life, nowhere near all-inclusive");
+    await Expect(content.Locator("figcaption")).ToHaveTextAsync(new[]
+    {
+        "The Legend of Zelda: Majora's Mask", "Super Mario 64", "Halo: Combat Evolved",
+        "Star Wars: Knights of the Old Republic", "Counter-Strike: Source", "Empire Earth II",
+        "Rome: Total War", "Supreme Commander: Forged Alliance", "Mass Effect Trilogy", "StarCraft II",
+        "Minecraft", "Garry's Mod", "Rocket League", "Overwatch", "Diablo III", "Path of Exile"
+    });
+    await Expect(content.GetByText("Satisfactory", new() { Exact = true })).ToHaveCountAsync(0);
+    await CheckCoversAsync("games");
+    if (influenceArtworkRequests.Count - beforeGames != 1 || !influenceArtworkRequests.Last().EndsWith("games-atlas.webp", StringComparison.Ordinal))
+        throw new InvalidOperationException("Games must load with one batched artwork request.");
+    await Expect(content.Locator("h3")).ToHaveCountAsync(0);
+    await professionalView.ClickAsync();
+    await Expect(toggle).ToHaveAttributeAsync("aria-expanded", "true");
+    await Expect(content.Locator(".influence-item")).ToHaveCountAsync(8);
+    await toggle.ClickAsync();
+    await Expect(content).ToHaveCSSAsync("height", "0px");
+    await page.SetViewportSizeAsync(1920, 1080);
+}
+
 async Task CheckSkillGroupsAsync()
 {
     await Expect(page.Locator(".skill-group h3")).ToHaveTextAsync(new[]
@@ -760,7 +826,7 @@ async Task CheckSkillGroupsAsync()
     await Expect(page.Locator(".skill-group-heading svg[aria-hidden='true']")).ToHaveCountAsync(9);
     await Expect(page.Locator(".skill-list li")).ToHaveCountAsync(77);
     await Expect(page.Locator(".skill-list svg")).ToHaveCountAsync(0);
-    await Expect(page.Locator(".skills-intro")).ToContainTextAsync("not an exhaustive inventory");
+    await Expect(page.Locator(".skills-intro")).ToHaveTextAsync("A selection of technologies and practices from my experience, not an exhaustive inventory.");
     await Expect(page.GetByRole(AriaRole.Group, new() { Name = "Languages & Scripting", Exact = true }).Locator("li")).ToHaveTextAsync(new[] { "C#", "C++", "Python", "SQL", "JavaScript", "TypeScript", "Bash", "Rust" });
     var tooling = page.GetByRole(AriaRole.Group, new() { Name = "Developer Tooling & Automation", Exact = true });
     await Expect(tooling.GetByText("Postman, Insomnia, and Bruno", new() { Exact = true })).ToBeVisibleAsync();

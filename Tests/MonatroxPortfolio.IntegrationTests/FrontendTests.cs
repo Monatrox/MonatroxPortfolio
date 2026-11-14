@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -102,7 +103,7 @@ public sealed class FrontendTests
         Assert.Contains("Canary testing", html);
         Assert.Contains("Feature flags &amp; dark deployments", html);
         Assert.DoesNotContain("Code review &amp; pull requests", html);
-        Assert.Contains("not an exhaustive inventory", html);
+        Assert.Contains("A selection of technologies and practices from my experience, not an exhaustive inventory.", html);
         Assert.Contains("IIS server administration", html);
         Assert.Contains("Azure deployments", html);
         Assert.Contains("Custom AI skill files", html);
@@ -120,6 +121,37 @@ public sealed class FrontendTests
         Assert.Contains("Blazor-WebAssembly-Component-State:", html);
         Assert.DoesNotContain("\"type\":\"server\"", html);
         Assert.DoesNotContain(upstream.Address, html);
+        Assert.Equal(1, upstream.ProfileRequests);
+        Assert.Equal(1, upstream.ProjectRequests);
+    }
+
+    [Fact]
+    public async Task Influences_prerenders_ordered_books_without_fetching_artwork_or_extra_API_reads()
+    {
+        await using var upstream = new UpstreamApi();
+        await upstream.StartAsync();
+        await using var factory = new FrontendFactory(upstream.Address);
+        using var client = factory.CreateClient();
+        var html = await client.GetStringAsync("/");
+        var influences = html[html.IndexOf("id=\"influences\"", StringComparison.Ordinal)..];
+        Assert.Contains("aria-label=\"Influences\"", influences);
+        Assert.Contains("aria-controls=\"influences-content\"", influences);
+        Assert.Matches("<p[^>]*id=\"influences-description\"[^>]*>Books that shape the way I think about my work</p>", influences);
+        Assert.Contains("aria-describedby=\"influences-description\"", influences);
+        Assert.DoesNotContain(">Books</h3>", influences);
+        Assert.Equal(8, Regex.Matches(influences, "class=\"influence-item\"").Count);
+        Assert.DoesNotContain("src=\"Content/Images/Influences/", influences);
+        Assert.DoesNotContain("-atlas.webp", influences);
+        var previous = -1;
+        foreach (var title in new[] { "Accelerate", "The Phoenix Project", "The Unicorn Project", "Team Topologies", "Atomic Habits", "Extreme Ownership", "The DevOps Handbook", "No Rules Rules" })
+        {
+            var index = influences.IndexOf($">{title}</figcaption>", StringComparison.Ordinal);
+            Assert.True(index > previous, $"Missing or out-of-order book: {title}");
+            previous = index;
+        }
+        Assert.DoesNotContain("itrevolution.com", influences);
+        Assert.DoesNotContain("penguinrandomhouse.com", influences);
+        Assert.DoesNotContain("macmillan.com", influences);
         Assert.Equal(1, upstream.ProfileRequests);
         Assert.Equal(1, upstream.ProjectRequests);
     }

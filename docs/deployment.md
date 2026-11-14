@@ -7,7 +7,7 @@ Status: production is running on Docker behind Nginx, live Google Workspace cont
 - `develop` is the integration branch, created from main and including the completed skills grouping and Neon Flatline work. Start future feature branches from develop and merge completed work back into develop.
 - `main` remains the production/release branch. Do not merge or push to main without explicit release approval: successful main pushes can publish images and automatically deploy the live site.
 - `.github/workflows/portfolio.yml` is retained on develop, but its sole trigger is `push` with `branches: [main]`. Develop pushes and PRs do not start this workflow; manual dispatch is not declared. Existing main-only publication/deployment job guards remain.
-- Keeping the workflow file avoids deleting production CI/CD during an eventual approved release merge. That merge will also adopt the main-push-only trigger policy. Main itself was not changed when develop was created; its previous PR/manual verification triggers remain there until an approved release.
+- Keeping the workflow file preserves production CI/CD across approved release merges. The first release from develop also carries the main-push-only trigger policy into main; future release merges must retain that definition.
 - No repository-wide Actions disable, production variable/secret change, default-branch change or production deployment accompanies this branch setup.
 
 ## What runs

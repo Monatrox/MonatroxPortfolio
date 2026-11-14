@@ -13,7 +13,8 @@ const baseline = path.join(output, 'baseline');
  try {
   const context = await browser.newContext({ viewport: { width: 1366, height: 900 }, reducedMotion: 'reduce' });
   await context.route('**/*', route => ['GET', 'HEAD'].includes(route.request().method()) ? route.continue() : route.abort());
-  const page = await context.newPage(), errors = [];
+  const page = await context.newPage(), errors = [], artworkRequests = [];
+  page.on('request', request => { const pathname = new URL(request.url()).pathname; if (pathname.startsWith('/Content/Images/Influences/')) artworkRequests.push(pathname); });
   page.on('pageerror', error => errors.push(error.message));
   page.on('response', response => { if (response.status() >= 400) errors.push(`${response.status()} ${response.url()}`); });
   await page.goto(origin.toString());
@@ -85,6 +86,47 @@ const baseline = path.join(output, 'baseline');
     assert.equal(await page.getByAltText('Monatrox portrait', { exact: true }).getAttribute('src'), 'Content/Images/monatrox-about.jpg');
    }
   }
+  assert.equal(artworkRequests.length, 0, 'Collapsed collections must not load artwork.');
+  const beforeBooks = artworkRequests.length;
+  const influences = page.getByRole('button', { name: 'Influences', exact: true });
+  await professional.click(); await influences.focus(); await page.keyboard.press('Enter');
+  assert.equal(await influences.getAttribute('aria-expanded'), 'true');
+  assert.equal(await page.locator('#influences-content .influences-description').innerText(), 'Books that shape the way I think about my work');
+  assert.equal(await page.locator('#influences-content h3').count(), 0);
+  assert.equal(await page.locator('.influences-description').evaluate(element => getComputedStyle(element).fontSize), '14px');
+  assert.deepEqual(await page.locator('#influences-content figcaption').allTextContents(), ['Accelerate', 'The Phoenix Project', 'The Unicorn Project', 'Team Topologies', 'Atomic Habits', 'Extreme Ownership', 'The DevOps Handbook', 'No Rules Rules']);
+  async function checkInfluenceCovers(collection) {
+   await page.locator('#influences-content img').evaluateAll(images => Promise.all(images.map(image => { image.loading = 'eager'; return image.decode(); })));
+   for (const width of [1366, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 900 });
+    assert(await page.locator('#influences-content').evaluate(content => document.documentElement.scrollWidth <= innerWidth + 1 && [...content.querySelectorAll('.influence-item')].every((card, index, cards) => {
+     const frame = card.querySelector('.influence-cover').getBoundingClientRect(), image = card.querySelector('img');
+     const atlas = image.getBoundingClientRect();
+     return Math.abs(frame.width / frame.height - 2 / 3) < .01 && image.naturalWidth === 1280 &&
+      Math.abs(atlas.width - frame.width * 4) < 1 && Math.abs(atlas.height - frame.height * Math.ceil(cards.length / 4)) < 1 &&
+      Math.abs(atlas.left - frame.left + frame.width * (index % 4)) < 1 && Math.abs(atlas.top - frame.top + frame.height * Math.floor(index / 4)) < 1 && card.scrollWidth <= card.clientWidth + 1;
+    })), `Influences clips/distorts covers at ${width}px.`);
+    await page.locator('#influences-content').screenshot({ path: path.join(output, `${collection}-${width}.png`), animations: 'disabled' });
+   }
+  }
+  await checkInfluenceCovers('books');
+  assert.deepEqual(artworkRequests.slice(beforeBooks), ['/Content/Images/Influences/books-atlas.webp']);
+  const beforeGames = artworkRequests.length;
+  await gamer.click();
+  await page.getByText('Some of the most influential games of my life, nowhere near all-inclusive', { exact: true }).waitFor();
+  assert.equal(await influences.getAttribute('aria-expanded'), 'true');
+  assert.deepEqual(await page.locator('#influences-content figcaption').allTextContents(), ["The Legend of Zelda: Majora's Mask", 'Super Mario 64', 'Halo: Combat Evolved', 'Star Wars: Knights of the Old Republic', 'Counter-Strike: Source', 'Empire Earth II', 'Rome: Total War', 'Supreme Commander: Forged Alliance', 'Mass Effect Trilogy', 'StarCraft II', 'Minecraft', "Garry's Mod", 'Rocket League', 'Overwatch', 'Diablo III', 'Path of Exile']);
+  assert.equal(await page.locator('#influences-content').getByText('Satisfactory', { exact: true }).count(), 0);
+  assert.equal(await page.getByRole('list', { name: 'Games', exact: true }).count(), 1);
+  await checkInfluenceCovers('games');
+  assert.deepEqual(artworkRequests.slice(beforeGames), ['/Content/Images/Influences/games-atlas.webp']);
+  console.log('Artwork requests: books=1, games=1; none while collapsed.');
+  assert.equal(await page.locator('#influences-content h3').count(), 0);
+  await professional.click();
+  await page.getByText('Books that shape the way I think about my work', { exact: true }).waitFor();
+  assert.equal(await page.locator('#influences-content .influence-item').count(), 8);
+  await influences.click();
+  await page.setViewportSize({ width: 1366, height: 900 });
   assert.equal(handoffRequests, 0, 'Mode switching refetched API data.');
   await page.getByRole('link', { name: 'Read CCF case study', exact: true }).click();
   await page.getByRole('dialog').getByRole('heading', { name: 'CCF', level: 1, exact: true }).waitFor();
