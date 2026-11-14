@@ -5,7 +5,7 @@
 - LinkedIn: https://www.linkedin.com/in/zactaylor-dev
 - GitHub: https://github.com/Monatrox
 - Discord: visible username `monatrox` with Copy; no guessed profile URL. Numeric Discord user ID is separate from username, not an old discriminator suffix. A future profile link can use `https://discord.com/users/<numeric-ID>`.
-- Email button opens **Contact Me**. Name, reply address and message are validated, then posted through the same-origin API gateway. Dialog restores focus, preserves draft on errors and prevents double-submit while sending.
+- Email button opens **Contact Me**. Home also ends with a permanent **Get in Contact** section. Both use the same form component with independent drafts and distinct form IDs. Name, reply address and message are validated, then posted through the same-origin API gateway. Both preserve drafts on errors and prevent double-submit while sending; the dialog also restores focus. Inline availability is prerendered/transferred without a handoff refetch. See [finishing touches](portfolio-finishing-touches.md).
 
 **Development:** Aspire configures smtp4dev, not outbound delivery. The form identifies local capture before submission and confirms capture—not delivery—afterward. Inspect captured messages at http://127.0.0.1:5430. Development From is `portfolio@monatrox.invalid`.
 
@@ -61,6 +61,8 @@ Aspire intentionally overrides SMTP settings for local capture. Use approved dep
 
 Browser smoke verifies external URLs, Discord clipboard, disabled prerender/no-JS actions, light/dark/mobile form, client validation, actual local SMTP capture, focus return, and draft preservation for 503/429 responses. It refuses to send a synthetic form message unless UI explicitly reports local capture. Existing case-study/identity checks remain.
 
-Latest local verification: **98 .NET tests pass**, EF models unchanged, Debug/Aspire and trimmed published Release browser smoke pass. Actual smtp4dev messages were inspected: To `zac@monatrox.com`, visitor Reply-To, fixed development From and `text/plain` body. Info/error/success feedback colors were tuned and rendered text contrast checked at ≥4.5:1 in light/dark modes. Gitleaks scans source snapshots; no SMTP secrets are committed or included in published images.
+Current shared-form revision: **120 .NET tests**, ten deployment/policy checks, and full browser smoke against the Aspire-managed frontend/API/smtp4dev stack pass. Published-container parity was also checked during the initial extraction. Inline and modal send paths are exercised only against disposable local SMTP capture; production delivery/settings are not changed in this pass.
+
+Original contact implementation verification: **98 .NET tests passed**, EF models unchanged, Debug/Aspire and trimmed published Release browser smoke pass. Actual smtp4dev messages were inspected: To `zac@monatrox.com`, visitor Reply-To, fixed development From and `text/plain` body. Info/error/success feedback colors were tuned and rendered text contrast checked at ≥4.5:1 in light/dark modes. Gitleaks scans source snapshots; no SMTP secrets are committed or included in published images.
 
 Transport test checks actual SMTP DATA, fixed envelope/From/To/Reply-To and plain-text body. Application tests cover forged recipient fields, injection, disabled cross-origin preflight, oversize/chunked bodies, malformed requests, honeypot and limits. Production inbox receipt was confirmed by the site owner; no full accessibility/device audit or comprehensive abuse/security review is claimed.

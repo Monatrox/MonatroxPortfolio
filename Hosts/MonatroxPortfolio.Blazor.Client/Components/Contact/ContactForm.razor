@@ -1,0 +1,105 @@
+@implements IDisposable
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Net
+@using System.Text.Json
+@inject PortfolioApiClient Api
+
+<div class="contact-form">
+    <p>Messages for <strong>zac@monatrox.com</strong>.</p>
+    @if (_receipt is not null)
+    {
+        <MudAlert Severity="Severity.Success" role="status" Class="mt-4">
+            @(_receipt.CapturedLocally ? "Captured locally in smtp4dev. Not delivered to Zac’s inbox." : "Message handed to the email service for delivery.")
+        </MudAlert>
+        @if (OnDone.HasDelegate)
+        { <MudButton OnClick="OnDone" Color="Color.Primary" Class="mt-4">Done</MudButton> }
+        else
+        { <MudButton OnClick="() => _receipt = null" Color="Color.Primary" Class="mt-4">Send another message</MudButton> }
+    }
+    else
+    {
+        @if (Info is null && Error is null)
+        { <MudProgressCircular Indeterminate="true" Size="Size.Small" aria-label="Checking email service" /> }
+        @if (Info?.CapturedLocally == true)
+        { <MudAlert Severity="Severity.Info" Class="mt-4">Local preview: messages are captured by smtp4dev, not delivered to zac@monatrox.com.</MudAlert> }
+        @if (Error is not null)
+        { <MudAlert Severity="Severity.Error" role="alert" Class="mt-4">@Error</MudAlert> }
+        @if (Info is null || !Info.Available)
+        { <MudButton OnClick="LoadInfoAsync" Disabled="@(_sending || !RendererInfo.IsInteractive)" Class="mt-2">Retry email service</MudButton> }
+        <EditForm Model="_form" OnValidSubmit="SendAsync" FormName="@FormName" id="@FormName">
+            <DataAnnotationsValidator />
+            <div class="contact-identity-fields">
+                <MudTextField T="string" Label="Your name" @bind-Value="_form.Name" For="@(() => _form.Name)" Immediate="true" MaxLength="100" Disabled="@(_sending || !RendererInfo.IsInteractive)" autocomplete="name" Class="mt-4" />
+                <MudTextField T="string" Label="Your email" @bind-Value="_form.Email" For="@(() => _form.Email)" Immediate="true" InputType="InputType.Email" MaxLength="254" Disabled="@(_sending || !RendererInfo.IsInteractive)" autocomplete="email" Class="mt-4" />
+            </div>
+            <MudTextField T="string" Label="Message" @bind-Value="_form.Message" For="@(() => _form.Message)" Immediate="true" Lines="6" MaxLength="5000" Counter="5000" Disabled="@(_sending || !RendererInfo.IsInteractive)" Class="mt-4" />
+            <div class="contact-honeypot" aria-hidden="true"><label>Website<input @bind="_form.Website" tabindex="-1" autocomplete="off" disabled="@(_sending || !RendererInfo.IsInteractive)" /></label></div>
+            <p class="contact-privacy">No message database is kept by this site. The email service and recipient mailbox may retain messages.</p>
+            <div class="contact-actions">
+                <MudButton ButtonType="ButtonType.Submit" Variant="Variant.Filled" Color="Color.Primary" Disabled="@(_sending || !RendererInfo.IsInteractive || Info?.Available != true)">@(_sending ? "Sending…" : "Send message")</MudButton>
+                @if (OnCancel.HasDelegate)
+                { <MudButton OnClick="OnCancel" Disabled="@_sending">Cancel</MudButton> }
+            </div>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public string FormName { get; set; } = "";
+    [Parameter] public EventCallback OnDone { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+    [PersistentState] public ContactDeliveryInfoDto? Info { get; set; }
+    [PersistentState] public string? Error { get; set; }
+    private readonly ContactFields _form = new();
+    private readonly CancellationTokenSource _lifetime = new();
+    private ContactReceiptDto? _receipt;
+    private bool _sending;
+    private sealed class ContactFields
+    {
+        [Required(ErrorMessage = "Enter your name."), StringLength(100)] public string Name { get; set; } = "";
+        [Required(ErrorMessage = "Enter your email."), EmailAddress(ErrorMessage = "Enter a valid email address."), StringLength(254)] public string Email { get; set; } = "";
+        [Required(ErrorMessage = "Enter a message."), StringLength(5000)] public string Message { get; set; } = "";
+        public string Website { get; set; } = "";
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        if (Info is null && Error is null) await LoadInfoAsync();
+    }
+    private async Task LoadInfoAsync()
+    {
+        Error = null;
+        try
+        {
+            Info = await Api.GetContactInfoAsync(_lifetime.Token);
+            if (!Info.Available) Error = "Email service is unavailable. Please try again later or use LinkedIn.";
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested) { }
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException or InvalidDataException)
+        { Error = "Email service is unavailable. Please try again later or use LinkedIn."; }
+    }
+    private async Task SendAsync()
+    {
+        if (_sending || !RendererInfo.IsInteractive || Info?.Available != true) return;
+        _sending = true; Error = null;
+        try
+        {
+            _receipt = await Api.SendContactAsync(new(_form.Name, _form.Email, _form.Message, _form.Website), _lifetime.Token);
+            _form.Name = ""; _form.Email = ""; _form.Message = "";
+        }
+        catch (OperationCanceledException) when (_lifetime.IsCancellationRequested) { }
+        catch (HttpRequestException ex)
+        {
+            Error = ex.StatusCode switch
+            {
+                HttpStatusCode.TooManyRequests => "Too many attempts. Please wait 10 minutes before trying again.",
+                HttpStatusCode.BadRequest => "Please check your name, email and message.",
+                _ => "Message could not be confirmed. Your draft is still here; please retry later."
+            };
+        }
+        catch (Exception ex) when (ex is TaskCanceledException or JsonException or InvalidDataException)
+        { Error = "Message could not be confirmed. Your draft is still here; please retry later."; }
+        finally { _sending = false; }
+    }
+    public void Dispose() { _lifetime.Cancel(); _lifetime.Dispose(); }
+}

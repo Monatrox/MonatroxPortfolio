@@ -1,8 +1,16 @@
-<MudText Typo="Typo.body2" Class="influences-description" id="influences-description">@(IsGamer ? "Some of the most influential games of my life, nowhere near all-inclusive" : "Books that shape the way I think about my work")</MudText>
+<div class="influences-toolbar">
+    <MudText Typo="Typo.body2" Class="influences-description" id="influences-description">@(IsGamer ? "Some of the most influential games of my life, nowhere near all-inclusive" : "Books that shape the way I think about my work")</MudText>
+    <div class="influences-view-switch" role="group" aria-label="Influences and profile view">
+        <MudIconButton Icon="@Icons.Material.Filled.MenuBook" OnClick="() => SelectView.InvokeAsync(false)" Disabled="@(!RendererInfo.IsInteractive)"
+                       aria-label="Show books and professional profile" aria-pressed="@((!IsGamer).ToString().ToLowerInvariant())" title="Books / Professional view" />
+        <MudIconButton Icon="@Icons.Material.Filled.SportsEsports" OnClick="() => SelectView.InvokeAsync(true)" Disabled="@(!RendererInfo.IsInteractive)"
+                       aria-label="Show games and gamer profile" aria-pressed="@IsGamer.ToString().ToLowerInvariant()" title="Games / Gamer view" />
+    </div>
+</div>
 @{
     var items = IsGamer ? Games : Books;
     var rows = (items.Length + 3) / 4;
-    var atlas = IsGamer ? "Content/Images/Influences/games-atlas.webp?v=f04633398272" : "Content/Images/Influences/books-atlas.webp?v=720cd2cfb98c";
+    var atlas = IsGamer ? "Content/Images/Influences/games-atlas.webp?v=4f3e9fdfe166" : "Content/Images/Influences/books-atlas.webp?v=720cd2cfb98c";
 }
 <ul class="influence-grid" aria-label="@(IsGamer ? "Games" : "Books")" aria-describedby="influences-description">
     @foreach (var (item, index) in items.Select((item, index) => (item, index)))
@@ -28,6 +36,7 @@
 @code {
     [Parameter] public bool IsGamer { get; set; }
     [Parameter] public bool Expanded { get; set; }
+    [CascadingParameter(Name = "SelectView")] public EventCallback<bool> SelectView { get; set; }
 
     private static readonly (string Title, string Cover)[] Books =
     [
